@@ -3,7 +3,10 @@ import os
 from websockets.sync.client import connect
 from uuid import uuid4
 import sys
+from dotenv import load_dotenv  # для загрузки переменных из .env
 
+# Загружаем .env
+load_dotenv()
 
 class MaxClient:
     def __init__(self, phone_number):
@@ -89,7 +92,6 @@ class MaxClient:
         token_resp = json.loads(self.websocket.recv())
         self.auth_token = token_resp['payload']['tokenAttrs']['LOGIN']['token']
 
-        # Сохраняем токен
         with open("token.txt", "w") as f:
             f.write(self.auth_token)
 
@@ -123,11 +125,14 @@ class MaxClient:
 
 
 if __name__ == "__main__":
-    phone_number = "+79493531398"
+    phone_number = os.getenv("PHONE_NUMBER")  # Читаем из .env
+
+    if not phone_number:
+        print("PHONE_NUMBER is not set in .env")
+        sys.exit(1)
 
     client = MaxClient(phone_number)
 
-    # Проверяем, есть ли сохранённый токен
     if os.path.exists("token.txt"):
         with open("token.txt", "r") as f:
             client.auth_token = f.read().strip()
@@ -135,10 +140,9 @@ if __name__ == "__main__":
     else:
         client.authenticate()
 
-    # Получаем чаты
     data = client.get_chats()
-
     chats = data["payload"]["chats"]
+
     for chat in chats:
         chat_id = chat["id"]
         chat_type = chat["type"]
