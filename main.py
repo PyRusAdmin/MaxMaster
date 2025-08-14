@@ -1,12 +1,14 @@
 import json
 import os
-from websockets.sync.client import connect
-from uuid import uuid4
 import sys
+from uuid import uuid4
+
 from dotenv import load_dotenv  # для загрузки переменных из .env
+from websockets.sync.client import connect
 
 # Загружаем .env
 load_dotenv()
+
 
 class MaxClient:
     def __init__(self, phone_number):
