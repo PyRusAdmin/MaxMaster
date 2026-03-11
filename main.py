@@ -1,7 +1,14 @@
-import asyncio
+import json
 import os
-
+import sys
+from uuid import uuid4
+from pymax import SocketMaxClient
+from pymax.payloads import UserAgentPayload
 from dotenv import load_dotenv
+from websockets.sync.client import connect
+
+import asyncio
+
 from pymax import MaxClient, Message
 from pymax.filters import Filters
 
@@ -35,35 +42,6 @@ async def on_message(msg: Message) -> None:
 @client.on_start
 async def on_start() -> None:
     print(f"Клиент запущен. Ваш ID: {client.me.id}")
-
-    # Посмотреть все публичные методы клиента
-    methods = [m for m in dir(client) if not m.startswith('_') and callable(getattr(client, m))]
-    print("Доступные методы:", methods)
-
-    # Номер телефона в международном формате (без +)
-    phone = "79493477926"  # замените на нужный номер
-
-    print(f"\n🔍 Ищем пользователя по номеру: {phone}")
-    try:
-        # Поиск по телефону
-        result = await client.search_by_phone(phone=phone)
-        print(f"✓ Результат поиска: {type(result)}")
-        print(f"Данные: {result}")
-
-        # Если результат — объект пользователя, покажем поля
-        if result and not isinstance(result, (str, int, bool)):
-            print("\n📋 Доступные поля пользователя:")
-            for attr in dir(result):
-                if not attr.startswith('_'):
-                    try:
-                        val = getattr(result, attr)
-                        if not callable(val):
-                            print(f"  {attr}: {val}")
-                    except:
-                        pass
-
-    except Exception as e:
-        print(f"❌ Ошибка при поиске: {type(e).__name__}: {e}")
 
     # Получение истории
     history = await client.fetch_history(chat_id=0)

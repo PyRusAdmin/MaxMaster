@@ -1,4 +1,4 @@
 websockets~=14.1
-dotenv~=0.9.9
-python-dotenv~=1.1.0
-pymax
+python-dotenv~=1.2.2
+maxapi-python
+requests
