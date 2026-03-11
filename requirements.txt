@@ -4,3 +4,4 @@ maxapi-python
 requests
 rich
 loguru
+openpyxl~=3.1.5
