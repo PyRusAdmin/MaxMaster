@@ -49,31 +49,63 @@ def extract_user_data(result) -> dict:
 
 def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -> str:
     """Сохраняет данные пользователей в Excel таблицу."""
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Пользователи"
-
-    # Собираем все возможные заголовки из всех записей
-    all_headers = set()
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    
+    # Если файл существует, загружаем его
+    if os.path.exists(filename):
+        from openpyxl import load_workbook
+        wb = load_workbook(filename)
+        ws = wb.active
+    else:
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Пользователи"
+        
+        # Собираем все возможные заголовки из всех записей
+        all_headers = set()
+        for user in users_data:
+            all_headers.update(user.keys())
+        
+        # Сортируем заголовки для удобства
+        headers = sorted(list(all_headers))
+        
+        # Записываем заголовки
+        for col, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col, value=header)
+    
+    # Получаем текущие заголовки из файла
+    headers = [cell.value for cell in ws[1] if cell.value]
+    
+    # Добавляем новые заголовки, если они появились
+    all_headers = set(headers)
     for user in users_data:
         all_headers.update(user.keys())
-
-    # Сортируем заголовки для удобства
-    headers = sorted(list(all_headers))
-
-    # Записываем заголовки
-    for col, header in enumerate(headers, 1):
-        ws.cell(row=1, column=col, value=header)
-
-    # Записываем данные
-    for row_idx, user in enumerate(users_data, 2):
+    new_headers = sorted(list(all_headers))
+    
+    # Если добавились новые заголовки, перезаписываем шапку
+    if new_headers != headers:
+        for col, header in enumerate(new_headers, 1):
+            ws.cell(row=1, column=col, value=header)
+        headers = new_headers
+    
+    # Находим последнюю заполненную строку
+    last_row = ws.max_row
+    
+    # Если это первый запуск (только заголовки), начинаем со строки 2
+    if last_row == 1 and len(users_data) > 0:
+        start_row = 2
+    else:
+        start_row = last_row + 1
+    
+    # Записываем новые данные
+    for row_idx, user in enumerate(users_data, start_row):
         for col_idx, header in enumerate(headers, 1):
             value = user.get(header, "")
             # Преобразуем списки в строку
             if isinstance(value, list):
                 value = " | ".join(str(v) for v in value)
             ws.cell(row=row_idx, column=col_idx, value=value)
-
+    
     # Автоширина колонок
     for col in ws.columns:
         max_length = 0
@@ -86,9 +118,8 @@ def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -
                 pass
         adjusted_width = min(max_length + 2, 50)
         ws.column_dimensions[column].width = adjusted_width
-
+    
     # Сохраняем
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
     wb.save(filename)
     return filename
 
@@ -121,7 +152,7 @@ async def on_start() -> None:
     # Номер телефона в международном формате (без +)
     numbers = read_file()
 
-    users_data = []  # Список для хранения данных всех пользователей
+    excel_file = "output/users.xlsx"  # Фиксированное имя файла
 
     for phone in numbers:
 
@@ -138,27 +169,25 @@ async def on_start() -> None:
             if result and not isinstance(result, (str, int, bool)):
                 user_data = extract_user_data(result)
                 user_data['searched_phone'] = phone  # Добавляем номер, по которому искали
-                users_data.append(user_data)
 
                 logger.info("\n📋 Доступные поля пользователя:")
                 for attr, val in user_data.items():
                     logger.info(f"  {attr}: {val}")
+                
+                # Сохраняем данные в Excel после каждого успешного поиска
+                save_to_excel([user_data], excel_file)
+                logger.info(f"💾 Данные сохранены в {excel_file}")
 
         except Exception as e:
             logger.info(f"❌ Ошибка при поиске: {type(e).__name__}: {e}")
-            # Сохраняем информацию об ошибке
-            users_data.append({
+            # Сохраняем информацию об ошибке в Excel
+            error_data = {
                 'searched_phone': phone,
                 'error': f"{type(e).__name__}: {e}"
-            })
+            }
+            save_to_excel([error_data], excel_file)
 
-    # Сохраняем все данные в Excel
-    if users_data:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"output/users_{timestamp}.xlsx"
-        saved_file = save_to_excel(users_data, filename)
-        logger.info(f"\n💾 Данные сохранены в файл: {saved_file}")
-        logger.info(f"Всего записей: {len(users_data)}")
+    logger.info(f"\n✅ Обработка завершена. Файл: {excel_file}")
 
     # Получение истории
     history = await client.fetch_history(chat_id=0)
