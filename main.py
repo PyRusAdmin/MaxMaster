@@ -1,6 +1,5 @@
 import asyncio
 import os
-import time
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -15,7 +14,7 @@ from read_file import read_file
 logger.add("logs/log.log", rotation="1 MB")
 
 load_dotenv()
-
+SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
 phone_number = os.getenv("PHONE_NUMBER")
 
 client = MaxClient(
@@ -25,7 +24,6 @@ client = MaxClient(
 
 
 def extract_user_data(result) -> dict:
-    """Извлекает все доступные данные из объекта пользователя."""
     user_data = {}
 
     if not result or isinstance(result, (str, int, bool)):
@@ -36,24 +34,36 @@ def extract_user_data(result) -> dict:
             try:
                 val = getattr(result, attr)
                 if not callable(val):
-                    # Обрабатываем update_time — конвертируем из миллисекунд в дату
                     if attr == 'update_time' and isinstance(val, (int, float)):
-                        # Это timestamp в миллисекундах
                         dt = datetime.fromtimestamp(val / 1000)
                         user_data[attr] = dt.strftime("%Y-%m-%d %H:%M:%S")
-                    # Обрабатываем ссылки на фото
-                    elif attr in ('base_url', 'base_raw_url') and isinstance(val, str) and val.startswith(
-                            'https://i.oneme.ru'):
-                        user_data[f'{attr} (фото)'] = val
-                    # Обрабатываем списки объектов (например, names)
                     elif isinstance(val, list) and val and hasattr(val[0], '__dict__'):
                         user_data[attr] = [str(item) for item in val]
                     else:
-                        user_data[attr] = val
+                        user_data[attr] = val  # просто сохраняем как есть
             except Exception:
                 pass
 
     return user_data
+
+
+HEADERS_RU = {
+    'account_status': 'Статус аккаунта',
+    'base_raw_url': 'Фото (raw URL)',
+    'base_url': 'Фото (URL)',
+    'description': 'Описание',
+    'error': 'Ошибка',
+    'gender': 'Пол',
+    'id': 'ID пользователя',
+    'link': 'Ссылка на профиль',
+    'menu_button': 'Кнопка меню',
+    'names': 'Имя',
+    'options': 'Платформы',
+    'photo_id': 'ID фото',
+    'searched_phone': 'Искомый телефон',
+    'update_time': 'Последняя активность',
+    'web_app': 'Веб-приложение',
+}
 
 
 def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -> str:
@@ -63,31 +73,34 @@ def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -
         from openpyxl import load_workbook
         wb = load_workbook(filename)
         ws = wb.active
-        # Берём существующие заголовки
         headers = [cell.value for cell in ws[1] if cell.value]
+        # Восстанавливаем ключи из русских заголовков (обратный маппинг)
+        ru_to_key = {v: k for k, v in HEADERS_RU.items()}
+        header_keys = [ru_to_key.get(h, h) for h in headers]
     else:
         wb = Workbook()
         ws = wb.active
         ws.title = "Пользователи"
         headers = []
+        header_keys = []
 
-    # Добавляем новые заголовки если появились
-    all_keys = set(headers)
+    # Добавляем новые ключи если появились
+    all_keys = set(header_keys)
     for user in users_data:
         all_keys.update(user.keys())
 
-    new_headers = sorted(all_keys)
-    if new_headers != headers:
-        for col, header in enumerate(new_headers, 1):
-            ws.cell(row=1, column=col, value=header)
-        headers = new_headers
+    new_keys = sorted(all_keys)
+    if new_keys != header_keys:
+        for col, key in enumerate(new_keys, 1):
+            ws.cell(row=1, column=col, value=HEADERS_RU.get(key, key))  # пишем русское название
+        header_keys = new_keys
 
-    # Записываем строки начиная с первой пустой
+    # Записываем строки
     start_row = ws.max_row + 1 if ws.max_row > 1 else 2
 
     for row_idx, user in enumerate(users_data, start_row):
-        for col_idx, header in enumerate(headers, 1):
-            value = user.get(header, "")
+        for col_idx, key in enumerate(header_keys, 1):
+            value = user.get(key, "")
             if isinstance(value, list):
                 value = " | ".join(str(v) for v in value)
             ws.cell(row=row_idx, column=col_idx, value=value)
@@ -133,7 +146,7 @@ async def on_start() -> None:
 
     for phone in numbers:
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(SLEEP_TIME)
 
         logger.info(f"\n🔍 Ищем пользователя по номеру: {phone}")
         try:
