@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -26,10 +27,10 @@ client = MaxClient(
 def extract_user_data(result) -> dict:
     """Извлекает все доступные данные из объекта пользователя."""
     user_data = {}
-    
+
     if not result or isinstance(result, (str, int, bool)):
         return user_data
-    
+
     for attr in dir(result):
         if not attr.startswith('_'):
             try:
@@ -42,7 +43,7 @@ def extract_user_data(result) -> dict:
                         user_data[attr] = val
             except Exception:
                 pass
-    
+
     return user_data
 
 
@@ -51,19 +52,19 @@ def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -
     wb = Workbook()
     ws = wb.active
     ws.title = "Пользователи"
-    
+
     # Собираем все возможные заголовки из всех записей
     all_headers = set()
     for user in users_data:
         all_headers.update(user.keys())
-    
+
     # Сортируем заголовки для удобства
     headers = sorted(list(all_headers))
-    
+
     # Записываем заголовки
     for col, header in enumerate(headers, 1):
         ws.cell(row=1, column=col, value=header)
-    
+
     # Записываем данные
     for row_idx, user in enumerate(users_data, 2):
         for col_idx, header in enumerate(headers, 1):
@@ -72,7 +73,7 @@ def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -
             if isinstance(value, list):
                 value = " | ".join(str(v) for v in value)
             ws.cell(row=row_idx, column=col_idx, value=value)
-    
+
     # Автоширина колонок
     for col in ws.columns:
         max_length = 0
@@ -85,7 +86,7 @@ def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -
                 pass
         adjusted_width = min(max_length + 2, 50)
         ws.column_dimensions[column].width = adjusted_width
-    
+
     # Сохраняем
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     wb.save(filename)
@@ -124,6 +125,8 @@ async def on_start() -> None:
 
     for phone in numbers:
 
+        time.sleep(2)
+
         logger.info(f"\n🔍 Ищем пользователя по номеру: {phone}")
         try:
             # Поиск по телефону
@@ -136,7 +139,7 @@ async def on_start() -> None:
                 user_data = extract_user_data(result)
                 user_data['searched_phone'] = phone  # Добавляем номер, по которому искали
                 users_data.append(user_data)
-                
+
                 logger.info("\n📋 Доступные поля пользователя:")
                 for attr, val in user_data.items():
                     logger.info(f"  {attr}: {val}")
