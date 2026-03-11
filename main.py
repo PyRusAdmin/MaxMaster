@@ -36,8 +36,17 @@ def extract_user_data(result) -> dict:
             try:
                 val = getattr(result, attr)
                 if not callable(val):
+                    # Обрабатываем update_time — конвертируем из миллисекунд в дату
+                    if attr == 'update_time' and isinstance(val, (int, float)):
+                        # Это timestamp в миллисекундах
+                        dt = datetime.fromtimestamp(val / 1000)
+                        user_data[attr] = dt.strftime("%Y-%m-%d %H:%M:%S")
+                    # Обрабатываем ссылки на фото
+                    elif attr in ('base_url', 'base_raw_url') and isinstance(val, str) and val.startswith(
+                            'https://i.oneme.ru'):
+                        user_data[f'{attr} (фото)'] = val
                     # Обрабатываем списки объектов (например, names)
-                    if isinstance(val, list) and val and hasattr(val[0], '__dict__'):
+                    elif isinstance(val, list) and val and hasattr(val[0], '__dict__'):
                         user_data[attr] = [str(item) for item in val]
                     else:
                         user_data[attr] = val
@@ -48,78 +57,46 @@ def extract_user_data(result) -> dict:
 
 
 def save_to_excel(users_data: list[dict], filename: str = "output/users.xlsx") -> str:
-    """Сохраняет данные пользователей в Excel таблицу."""
     os.makedirs(os.path.dirname(filename), exist_ok=True)
-    
-    # Если файл существует, загружаем его
+
     if os.path.exists(filename):
         from openpyxl import load_workbook
         wb = load_workbook(filename)
         ws = wb.active
+        # Берём существующие заголовки
+        headers = [cell.value for cell in ws[1] if cell.value]
     else:
         wb = Workbook()
         ws = wb.active
         ws.title = "Пользователи"
-        
-        # Собираем все возможные заголовки из всех записей
-        all_headers = set()
-        for user in users_data:
-            all_headers.update(user.keys())
-        
-        # Сортируем заголовки для удобства
-        headers = sorted(list(all_headers))
-        
-        # Записываем заголовки
-        for col, header in enumerate(headers, 1):
-            ws.cell(row=1, column=col, value=header)
-    
-    # Получаем текущие заголовки из файла
-    headers = [cell.value for cell in ws[1] if cell.value]
-    
-    # Добавляем новые заголовки, если они появились
-    all_headers = set(headers)
+        headers = []
+
+    # Добавляем новые заголовки если появились
+    all_keys = set(headers)
     for user in users_data:
-        all_headers.update(user.keys())
-    new_headers = sorted(list(all_headers))
-    
-    # Если добавились новые заголовки, перезаписываем шапку
+        all_keys.update(user.keys())
+
+    new_headers = sorted(all_keys)
     if new_headers != headers:
         for col, header in enumerate(new_headers, 1):
             ws.cell(row=1, column=col, value=header)
         headers = new_headers
-    
-    # Находим последнюю заполненную строку
-    last_row = ws.max_row
-    
-    # Если это первый запуск (только заголовки), начинаем со строки 2
-    if last_row == 1 and len(users_data) > 0:
-        start_row = 2
-    else:
-        start_row = last_row + 1
-    
-    # Записываем новые данные
+
+    # Записываем строки начиная с первой пустой
+    start_row = ws.max_row + 1 if ws.max_row > 1 else 2
+
     for row_idx, user in enumerate(users_data, start_row):
         for col_idx, header in enumerate(headers, 1):
             value = user.get(header, "")
-            # Преобразуем списки в строку
             if isinstance(value, list):
                 value = " | ".join(str(v) for v in value)
             ws.cell(row=row_idx, column=col_idx, value=value)
-    
-    # Автоширина колонок
+
+    # Автоширина
     for col in ws.columns:
-        max_length = 0
-        column = col[0].column_letter
-        for cell in col:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except Exception:
-                pass
-        adjusted_width = min(max_length + 2, 50)
-        ws.column_dimensions[column].width = adjusted_width
-    
-    # Сохраняем
+        max_len = max((len(str(cell.value or "")) for cell in col), default=0)
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)
+
     wb.save(filename)
     return filename
 
@@ -156,7 +133,7 @@ async def on_start() -> None:
 
     for phone in numbers:
 
-        time.sleep(2)
+        await asyncio.sleep(5)
 
         logger.info(f"\n🔍 Ищем пользователя по номеру: {phone}")
         try:
@@ -173,7 +150,7 @@ async def on_start() -> None:
                 logger.info("\n📋 Доступные поля пользователя:")
                 for attr, val in user_data.items():
                     logger.info(f"  {attr}: {val}")
-                
+
                 # Сохраняем данные в Excel после каждого успешного поиска
                 save_to_excel([user_data], excel_file)
                 logger.info(f"💾 Данные сохранены в {excel_file}")
