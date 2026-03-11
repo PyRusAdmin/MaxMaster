@@ -47,29 +47,31 @@ async def on_start() -> None:
     logger.info("Доступные методы:", methods)
 
     # Номер телефона в международном формате (без +)
-    phone = "79493477926"  # замените на нужный номер
+    numbers = read_file()
 
-    logger.info(f"\n🔍 Ищем пользователя по номеру: {phone}")
-    try:
-        # Поиск по телефону
-        result = await client.search_by_phone(phone=phone)
-        logger.info(f"✓ Результат поиска: {type(result)}")
-        logger.info(f"Данные: {result}")
+    for phone in numbers:
 
-        # Если результат — объект пользователя, покажем поля
-        if result and not isinstance(result, (str, int, bool)):
-            logger.info("\n📋 Доступные поля пользователя:")
-            for attr in dir(result):
-                if not attr.startswith('_'):
-                    try:
-                        val = getattr(result, attr)
-                        if not callable(val):
-                            logger.info(f"  {attr}: {val}")
-                    except:
-                        pass
+        logger.info(f"\n🔍 Ищем пользователя по номеру: {phone}")
+        try:
+            # Поиск по телефону
+            result = await client.search_by_phone(phone=phone)
+            logger.info(f"✓ Результат поиска: {type(result)}")
+            logger.info(f"Данные: {result}")
 
-    except Exception as e:
-        logger.info(f"❌ Ошибка при поиске: {type(e).__name__}: {e}")
+            # Если результат — объект пользователя, покажем поля
+            if result and not isinstance(result, (str, int, bool)):
+                logger.info("\n📋 Доступные поля пользователя:")
+                for attr in dir(result):
+                    if not attr.startswith('_'):
+                        try:
+                            val = getattr(result, attr)
+                            if not callable(val):
+                                logger.info(f"  {attr}: {val}")
+                        except:
+                            pass
+
+        except Exception as e:
+            logger.info(f"❌ Ошибка при поиске: {type(e).__name__}: {e}")
 
     # Получение истории
     history = await client.fetch_history(chat_id=0)
@@ -79,8 +81,6 @@ async def on_start() -> None:
 
 
 async def main():
-    read_file()
-
     await client.start()  # подключение и авторизация
 
 
