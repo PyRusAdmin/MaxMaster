@@ -1,16 +1,11 @@
-import json
-import os
-import sys
-from uuid import uuid4
-from pymax import SocketMaxClient
-from pymax.payloads import UserAgentPayload
-from dotenv import load_dotenv
-from websockets.sync.client import connect
-
 import asyncio
+import os
 
+from dotenv import load_dotenv
 from pymax import MaxClient, Message
+from pymax import SocketMaxClient
 from pymax.filters import Filters
+from rich import print  # https://rich.readthedocs.io/en/stable/
 
 load_dotenv()
 

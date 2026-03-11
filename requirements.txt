@@ -2,3 +2,4 @@ websockets~=14.1
 python-dotenv~=1.2.2
 maxapi-python
 requests
+rich
