@@ -3,7 +3,7 @@ import datetime
 import re
 import sys
 from typing import Any
-
+from loguru import logger
 import qrcode
 from pymax.payloads import (
     Capability,
@@ -47,7 +47,7 @@ class AuthMixin(ClientProtocol):
         .. note::
             Используется только в пользовательском flow аутентификации.
         """
-        self.logger.info("Requesting auth code")
+        logger.info("Requesting auth code")
 
         payload = RequestCodePayload(
             phone=phone, type=AuthType.START_AUTH, language=language
@@ -58,7 +58,7 @@ class AuthMixin(ClientProtocol):
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
-        self.logger.debug(
+        logger.debug(
             "Code request response opcode=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
@@ -67,7 +67,7 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data["token"]
         else:
-            self.logger.error("Invalid payload data received")
+            logger.error("Invalid payload data received")
             raise ValueError("Invalid payload data received")
 
     async def resend_code(self, phone: str, language: str = "ru") -> str:
@@ -83,7 +83,7 @@ class AuthMixin(ClientProtocol):
         :raises ValueError: Если полученные данные имеют неверный формат.
         :raises Error: Если сервер вернул ошибку.
         """
-        self.logger.info("Resending auth code")
+        logger.info("Resending auth code")
 
         payload = RequestCodePayload(
             phone=phone, type=AuthType.RESEND, language=language
@@ -94,7 +94,7 @@ class AuthMixin(ClientProtocol):
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
-        self.logger.debug(
+        logger.debug(
             "Code resend response opcode=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
@@ -103,7 +103,7 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data["token"]
         else:
-            self.logger.error("Invalid payload data received")
+            logger.error("Invalid payload data received")
             raise ValueError("Invalid payload data received")
 
     async def _send_code(self, code: str, token: str) -> dict[str, Any]:

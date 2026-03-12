@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import logging
 import socket
 import ssl
 import time
@@ -11,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID
 
+from loguru import logger
 from typing_extensions import override
 
 from .crud import Database
@@ -33,8 +33,6 @@ if TYPE_CHECKING:
 
     from .types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 
-from loguru import logger
-
 
 class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
     allowed_device_types: set[str] = {"WEB"}
@@ -49,8 +47,6 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
     :type session_name: str, optional
     :param work_dir: Рабочая директория для хранения базы данных.
     :type work_dir: str, optional
-    :param logger: Пользовательский логгер. Если не передан, используется логгер модуля с именем f"{__name__}.MaxClient".
-    :type logger: logging.Logger | None
     :param headers: Заголовки для подключения к WebSocket.
     :type headers: UserAgentPayload
     :param token: Токен авторизации. Если не передан, будет выполнен процесс логина по номеру телефона.
@@ -91,7 +87,6 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
             first_name: str = "",
             last_name: str | None = None,
             device_id: UUID | None = None,
-            logger: logging.Logger | None = None,
             reconnect: bool = True,
             reconnect_delay: float = 1.0,
     ) -> None:
@@ -276,7 +271,7 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
                 logger.info("Reconnecting after post-login tasks failure")
                 await asyncio.sleep(self.reconnect_delay)
         else:
-            self.logger.info("Login successful, token saved to database, exiting...")
+            logger.info("Login successful, token saved to database, exiting...")
 
     async def start(self) -> None:
         """
@@ -330,10 +325,10 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
                 logger.info("Reconnect disabled or stop requested — exiting start()")
                 break
 
-            logger.info("Reconnect enabled — restarting client")
+            self.logger.info("Reconnect enabled — restarting client")
             await asyncio.sleep(self.reconnect_delay)
 
-        logger.info("Client exited cleanly")
+        self.logger.info("Client exited cleanly")
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
@@ -349,9 +344,9 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 await self._recv_task
             except asyncio.CancelledError:
-                logger.debug("Socket recv_task cancelled")
+                self.logger.debug("Socket recv_task cancelled")
             except Exception as e:
-                logger.exception("Socket recv_task failed: %s", e)
+                self.logger.exception("Socket recv_task failed: %s", e)
 
     @override
     async def _cleanup_client(self):
@@ -362,7 +357,7 @@ class SocketMaxClient(SocketMixin, MaxClient):
             except asyncio.CancelledError:
                 pass
             except Exception:
-                logger.debug(
+                self.logger.debug(
                     "Background task raised during cancellation (socket)",
                     exc_info=True,
                 )
@@ -389,8 +384,8 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 self._socket.close()
             except Exception:
-                logger.debug("Error closing socket during cleanup", exc_info=True)
+                self.logger.debug("Error closing socket during cleanup", exc_info=True)
             self._socket = None
 
         self.is_connected = False
-        logger.info("Client start() cleaned up (socket)")
+        self.logger.info("Client start() cleaned up (socket)")

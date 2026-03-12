@@ -24,7 +24,7 @@ class SocketMixin(BaseTransport):
     @property
     def sock(self) -> socket.socket:
         if self._socket is None or not self.is_connected:
-            self.logger.critical("Socket not connected when access attempted")
+            logger.critical("Socket not connected when access attempted")
             raise SocketNotConnectedError()
         return self._socket
 
@@ -77,7 +77,7 @@ class SocketMixin(BaseTransport):
         if payload_bytes is None:
             payload_bytes = b""
         payload_len = len(payload_bytes) & 0xFFFFFF
-        self.logger.debug("Packing message: payload size=%d bytes", len(payload_bytes))
+        logger.debug("Packing message: payload size=%d bytes", len(payload_bytes))
         payload_len_b = payload_len.to_bytes(4, "big")
         return ver_b + cmd_b + seq_b + opcode_b + payload_len_b + payload_bytes
 
@@ -93,7 +93,7 @@ class SocketMixin(BaseTransport):
         if user_agent is None:
             user_agent = UserAgentPayload()
         if sys.version_info[:2] == (3, 12):
-            self.logger.warning(
+            logger.warning(
                 """
 ===============================================================
          ⚠️⚠️ \033[0;31mWARNING: Python 3.12 detected!\033[0m ⚠️⚠️
@@ -101,7 +101,7 @@ Socket connections may be unstable, SSL issues are possible.
 ===============================================================
     """
             )
-        self.logger.info("Connecting to socket %s:%s", self.host, self.port)
+        logger.info("Connecting to socket %s:%s", self.host, self.port)
         loop = asyncio.get_running_loop()
         raw_sock = await loop.run_in_executor(
             None, lambda: socket.create_connection((self.host, self.port))
@@ -114,7 +114,7 @@ Socket connections may be unstable, SSL issues are possible.
         self._pending = {}
         self._recv_task = asyncio.create_task(self._recv_loop())
         self._outgoing_task = asyncio.create_task(self._outgoing_loop())
-        self.logger.info("Socket connected, starting handshake")
+        logger.info("Socket connected, starting handshake")
         return await self._handshake(user_agent)
 
     def _recv_exactly(self, sock: socket.socket, n: int) -> bytes:
@@ -131,7 +131,7 @@ Socket connections may be unstable, SSL issues are possible.
     ) -> bytes | None:
         header = await loop.run_in_executor(None, lambda: self._recv_exactly(sock=sock, n=10))
         if not header or len(header) < 10:
-            self.logger.info("Socket connection closed; exiting recv loop")
+            logger.info("Socket connection closed; exiting recv loop")
             self.is_connected = False
             try:
                 sock.close()
@@ -152,18 +152,18 @@ Socket connections may be unstable, SSL issues are possible.
             min_read = min(remaining, 8192)
             chunk = await loop.run_in_executor(None, lambda: self._recv_exactly(sock, min_read))
             if not chunk:
-                self.logger.error("Connection closed while reading payload")
+                logger.error("Connection closed while reading payload")
                 break
             payload.extend(chunk)
             remaining -= len(chunk)
 
         if remaining > 0:
-            self.logger.error("Incomplete payload received; skipping packet")
+            logger.error("Incomplete payload received; skipping packet")
             return None
 
         raw = header + payload
         if len(raw) < 10 + payload_length:
-            self.logger.error(
+            logger.error(
                 "Incomplete packet: expected %d bytes, got %d",
                 10 + payload_length,
                 len(raw),
@@ -173,7 +173,7 @@ Socket connections may be unstable, SSL issues are possible.
 
         data = self._unpack_packet(raw)
         if not data:
-            self.logger.warning("Failed to unpack packet, skipping")
+            logger.warning("Failed to unpack packet, skipping")
             return None
 
         payload_objs = data.get("payload")
@@ -185,7 +185,7 @@ Socket connections may be unstable, SSL issues are possible.
 
     async def _recv_loop(self) -> None:
         if self._socket is None:
-            self.logger.warning("Recv loop started without socket instance")
+            logger.warning("Recv loop started without socket instance")
             return
 
         sock = self._socket

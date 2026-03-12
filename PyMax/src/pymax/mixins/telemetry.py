@@ -24,14 +24,14 @@ class TelemetryMixin(ClientProtocol):
             payload_data = data.get("payload", {})
             if payload_data and payload_data.get("error"):
                 error = payload_data.get("error")
-                self.logger.error("Navigation event error: %s", error)
+                logger.error("Navigation event error: %s", error)
         except Exception:
-            self.logger.warning("Failed to send navigation event", exc_info=True)
+            logger.warning("Failed to send navigation event", exc_info=True)
             return
 
     async def _send_cold_start(self) -> None:
         if not self.me:
-            self.logger.error("Cannot send cold start, user not set")
+            logger.error("Cannot send cold start, user not set")
             return
 
         payload = NavigationEventPayload(
@@ -53,7 +53,7 @@ class TelemetryMixin(ClientProtocol):
 
     async def _send_random_navigation(self) -> None:
         if not self.me:
-            self.logger.error("Cannot send navigation event, user not set")
+            logger.error("Cannot send navigation event, user not set")
             return
 
         screen_from = self._current_screen
@@ -96,7 +96,7 @@ class TelemetryMixin(ClientProtocol):
 
     async def _start(self) -> None:
         if not self.is_connected:
-            self.logger.error("Cannot start telemetry, client not connected")
+            logger.error("Cannot start telemetry, client not connected")
             return
 
         await self._send_cold_start()
@@ -106,13 +106,13 @@ class TelemetryMixin(ClientProtocol):
                 try:
                     await self._send_random_navigation()
                 except SocketNotConnectedError:
-                    self.logger.debug("Socket disconnected, exiting telemetry task")
+                    logger.debug("Socket disconnected, exiting telemetry task")
                     break
                 except Exception:
-                    self.logger.warning("Failed to send random navigation")
+                    logger.warning("Failed to send random navigation")
                 await asyncio.sleep(self._get_random_sleep_time())
 
         except asyncio.CancelledError:
-            self.logger.debug("Telemetry task cancelled")
+            logger.debug("Telemetry task cancelled")
         except Exception:
-            self.logger.warning("Telemetry task failed", exc_info=True)
+            logger.warning("Telemetry task failed", exc_info=True)

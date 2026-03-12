@@ -3,8 +3,7 @@ import json
 from typing import Any
 
 import websockets
-from typing_extensions import override
-
+from loguru import logger
 from pymax.exceptions import WebSocketNotConnectedError
 from pymax.interfaces import BaseTransport
 from pymax.payloads import UserAgentPayload
@@ -17,13 +16,14 @@ from pymax.static.enum import Opcode
 from pymax.types import (
     Chat,
 )
+from typing_extensions import override
 
 
 class WebSocketMixin(BaseTransport):
     @property
     def ws(self) -> websockets.ClientConnection:
         if self._ws is None or not self.is_connected:
-            self.logger.critical("WebSocket not connected when access attempted")
+            logger.critical("WebSocket not connected when access attempted")
             raise WebSocketNotConnectedError
         return self._ws
 
@@ -39,10 +39,10 @@ class WebSocketMixin(BaseTransport):
         if user_agent is None:
             user_agent = UserAgentPayload()
 
-        self.logger.info("Connecting to WebSocket %s", self.uri)
+        logger.info("Connecting to WebSocket %s", self.uri)
 
         if self._ws is not None or self.is_connected:
-            self.logger.warning("WebSocket already connected")
+            logger.warning("WebSocket already connected")
             return
 
         self._ws = await websockets.connect(
@@ -57,15 +57,15 @@ class WebSocketMixin(BaseTransport):
         self._pending = {}
         self._recv_task = asyncio.create_task(self._recv_loop())
         self._outgoing_task = asyncio.create_task(self._outgoing_loop())
-        self.logger.info("WebSocket connected, starting handshake")
+        logger.info("WebSocket connected, starting handshake")
         return await self._handshake(user_agent)
 
     async def _recv_loop(self) -> None:
         if self._ws is None:
-            self.logger.warning("Recv loop started without websocket instance")
+            logger.warning("Recv loop started without websocket instance")
             return
 
-        self.logger.debug("Receive loop started")
+        logger.debug("Receive loop started")
         while True:
             try:
                 raw = await self._ws.recv()
@@ -82,7 +82,7 @@ class WebSocketMixin(BaseTransport):
                 await self._dispatch_incoming(data)
 
             except websockets.exceptions.ConnectionClosed as e:
-                self.logger.info(
+                logger.info(
                     f"WebSocket connection closed with error: {e.code}, {e.reason}; exiting recv loop"
                 )
                 for fut in self._pending.values():
@@ -96,7 +96,7 @@ class WebSocketMixin(BaseTransport):
 
                 break
             except Exception:
-                self.logger.exception("Error in recv_loop; backing off briefly")
+                logger.exception("Error in recv_loop; backing off briefly")
                 await asyncio.sleep(RECV_LOOP_BACKOFF_DELAY)
 
     @override
@@ -120,7 +120,7 @@ class WebSocketMixin(BaseTransport):
         self._pending[seq_key] = fut
 
         try:
-            self.logger.debug(
+            logger.debug(
                 "Sending frame opcode=%s cmd=%s seq=%s",
                 opcode,
                 cmd,
@@ -128,17 +128,17 @@ class WebSocketMixin(BaseTransport):
             )
             await ws.send(json.dumps(msg))
             data = await asyncio.wait_for(fut, timeout=timeout)
-            self.logger.debug(
+            logger.debug(
                 "Received frame for seq=%s opcode=%s",
                 data.get("seq"),
                 data.get("opcode"),
             )
             return data
         except asyncio.TimeoutError:
-            self.logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
+            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
             raise RuntimeError("Send and wait failed")
         except Exception:
-            self.logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
+            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
             raise RuntimeError("Send and wait failed")
         finally:
             self._pending.pop(seq_key, None)

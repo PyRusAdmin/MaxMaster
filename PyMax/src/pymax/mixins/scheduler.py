@@ -2,7 +2,7 @@ import asyncio
 import traceback
 from collections.abc import Awaitable, Callable
 from typing import Any
-
+from loguru import logger
 from pymax.protocols import ClientProtocol
 
 
@@ -17,7 +17,7 @@ class SchedulerMixin(ClientProtocol):
                     await result
             except Exception as e:
                 tb = traceback.format_exc()
-                self.logger.error(f"Error in scheduled task {func}: {e}")
+                logger.error(f"Error in scheduled task {func}: {e}")
                 raise
             await asyncio.sleep(interval)
 

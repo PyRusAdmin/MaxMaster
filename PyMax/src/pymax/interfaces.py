@@ -1,15 +1,13 @@
 import asyncio
 import contextlib
 import json
-import logging
 import time
 import traceback
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from typing_extensions import Self
-
+from loguru import logger
 from pymax.exceptions import SocketNotConnectedError, WebSocketNotConnectedError
 from pymax.filters import BaseFilter
 from pymax.payloads import BaseWebSocketMessage, SyncPayload, UserAgentPayload
@@ -20,6 +18,7 @@ from pymax.types import (
     Channel, Chat, ChatType, Dialog, Me, Message, MessageStatus, ReactionCounter, ReactionInfo, User,
 )
 from pymax.utils import MixinsUtils
+from typing_extensions import Self
 
 
 class BaseClient(ClientProtocol):
@@ -31,7 +30,7 @@ class BaseClient(ClientProtocol):
         try:
             return await coro
         except Exception as e:
-            self.logger.error(f"Unhandled exception in {context}: {e}\n{traceback.format_exc()}")
+            logger.error(f"Unhandled exception in {context}: {e}\n{traceback.format_exc()}")
 
     def _create_safe_task(
             self, coro: Awaitable[Any], name: str | None = None
@@ -43,7 +42,7 @@ class BaseClient(ClientProtocol):
                 raise
             except Exception as e:
                 tb = traceback.format_exc()
-                self.logger.error(f"Unhandled exception in task {name or coro}: {e}\n{tb}")
+                logger.error(f"Unhandled exception in task {name or coro}: {e}\n{tb}")
                 raise
 
         task = asyncio.create_task(runner(), name=name)
@@ -58,7 +57,7 @@ class BaseClient(ClientProtocol):
             except asyncio.CancelledError:
                 pass
             except Exception:
-                self.logger.debug("Background task raised during cancellation", exc_info=True)
+                logger.debug("Background task raised during cancellation", exc_info=True)
             self._background_tasks.discard(task)
 
         if self._recv_task:
@@ -82,11 +81,11 @@ class BaseClient(ClientProtocol):
             try:
                 await self._ws.close()
             except Exception:
-                self.logger.debug("Error closing ws during cleanup", exc_info=True)
+                logger.debug("Error closing ws during cleanup", exc_info=True)
             self._ws = None
 
         self.is_connected = False
-        self.logger.info("Client start() cleaned up")
+        logger.info("Client start() cleaned up")
 
     async def idle(self):
         """
@@ -101,7 +100,7 @@ class BaseClient(ClientProtocol):
         """
         Выводит в лог текущий статус клиента для отладки.
         """
-        self.logger.info("Pymax")
+        logger.info("Pymax")
         self.logger.info("---------")
         self.logger.info(f"Connected: {self.is_connected}")
         if self.me is not None:

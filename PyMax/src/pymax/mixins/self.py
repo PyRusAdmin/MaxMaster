@@ -1,10 +1,10 @@
 from http import HTTPStatus
-from http import HTTPStatus
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
 import aiohttp
+from loguru import logger
 from pymax.exceptions import Error
 from pymax.files import Photo
 from pymax.payloads import (
@@ -23,7 +23,7 @@ from pymax.utils import MixinsUtils
 
 class SelfMixin(ClientProtocol):
     async def _request_photo_upload_url(self) -> str:
-        self.logger.info("Requesting profile photo upload URL")
+        logger.info("Requesting profile photo upload URL")
 
         data = await self._send_and_wait(
             opcode=Opcode.PHOTO_UPLOAD,
@@ -36,7 +36,7 @@ class SelfMixin(ClientProtocol):
         return data["payload"]["url"]
 
     async def _upload_profile_photo(self, upload_url: str, photo: Photo) -> str:
-        self.logger.info("Uploading profile photo")
+        logger.info("Uploading profile photo")
 
         parsed_url = urlparse(upload_url)
         photo_id = parse_qs(parsed_url.query)["photoIds"][0]
@@ -57,7 +57,7 @@ class SelfMixin(ClientProtocol):
                     "Failed to upload profile photo.", message="UploadError", title="Upload Error"
                 )
 
-            self.logger.info("Upload successful")
+            logger.info("Upload successful")
             data = await response.json()
             return data["photos"][photo_id][
                 "token"
@@ -130,7 +130,7 @@ class SelfMixin(ClientProtocol):
         :return: Объект FolderUpdate с информацией о созданной папке.
         :rtype: FolderUpdate
         """
-        self.logger.info("Creating folder")
+        logger.info("Creating folder")
 
         payload = CreateFolderPayload(
             id=str(uuid4()),
@@ -155,7 +155,7 @@ class SelfMixin(ClientProtocol):
         :return: Объект FolderList с информацией о папках.
         :rtype: FolderList
         """
-        self.logger.info("Fetching folders")
+        logger.info("Fetching folders")
 
         payload = GetFolderPayload(folder_sync=folder_sync).model_dump(by_alias=True)
 
@@ -190,7 +190,7 @@ class SelfMixin(ClientProtocol):
         :return: Объект FolderUpdate с результатом или None.
         :rtype: FolderUpdate | None
         """
-        self.logger.info("Updating folder")
+        logger.info("Updating folder")
 
         payload = UpdateFolderPayload(
             id=folder_id,
@@ -216,7 +216,7 @@ class SelfMixin(ClientProtocol):
         :return: Объект FolderUpdate с результатом операции или None.
         :rtype: FolderUpdate | None
         """
-        self.logger.info("Deleting folder")
+        logger.info("Deleting folder")
 
         payload = DeleteFolderPayload(folder_ids=[folder_id]).model_dump(by_alias=True)
         data = await self._send_and_wait(opcode=Opcode.FOLDERS_DELETE, payload=payload)
@@ -232,7 +232,7 @@ class SelfMixin(ClientProtocol):
         :return: True, если операция выполнена успешно.
         :rtype: bool
         """
-        self.logger.info("Closing all other sessions")
+        logger.info("Closing all other sessions")
 
         data = await self._send_and_wait(opcode=Opcode.SESSIONS_CLOSE, payload={})
 
@@ -248,7 +248,7 @@ class SelfMixin(ClientProtocol):
         :return: True, если выход выполнен успешно.
         :rtype: bool
         """
-        self.logger.info("Logging out")
+        logger.info("Logging out")
 
         data = await self._send_and_wait(opcode=Opcode.LOGOUT, payload={})
 

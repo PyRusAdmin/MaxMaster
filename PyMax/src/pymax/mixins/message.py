@@ -6,7 +6,7 @@ from pathlib import Path
 import aiohttp
 from aiofiles import open as aio_open
 from aiohttp import ClientSession, TCPConnector
-
+from loguru import logger
 from pymax.exceptions import Error
 from pymax.files import File, Photo, Video
 from pymax.formatting import Formatting
@@ -50,7 +50,7 @@ class MessageMixin(ClientProtocol):
 
     async def _upload_file(self, file: File) -> None | Attach:
         try:
-            self.logger.info("Uploading file")
+            logger.info("Uploading file")
 
             payload = UploadPayload().model_dump(by_alias=True)
             data = await self._send_and_wait(
@@ -63,18 +63,18 @@ class MessageMixin(ClientProtocol):
             url = data.get("payload", {}).get("info", [None])[0].get("url", None)
             file_id = data.get("payload", {}).get("info", [None])[0].get("fileId", None)
             if not url or not file_id:
-                self.logger.error("No upload URL or file ID received")
+                logger.error("No upload URL or file ID received")
                 return None
 
-            self.logger.debug("Got upload URL and file_id=%s", file_id)
+            logger.debug("Got upload URL and file_id=%s", file_id)
 
             if file.path:
                 file_size = Path(file.path).stat().st_size
-                self.logger.info("File size from path: %.2f MB", file_size / (1024 * 1024))
+                logger.info("File size from path: %.2f MB", file_size / (1024 * 1024))
             else:
                 file_bytes = await file.read()
                 file_size = len(file_bytes)
-                self.logger.info("File size from URL: %.2f MB", file_size / (1024 * 1024))
+                logger.info("File size from URL: %.2f MB", file_size / (1024 * 1024))
 
             connector = TCPConnector(limit=0)
             timeout = aiohttp.ClientTimeout(total=None, sock_read=None, sock_connect=30)
@@ -92,12 +92,12 @@ class MessageMixin(ClientProtocol):
             async def file_generator():
                 bytes_sent = 0
                 chunk_num = 0
-                self.logger.debug("Starting file streaming from: %s", file.path)
+                logger.debug("Starting file streaming from: %s", file.path)
                 async with aio_open(file.path, "rb") as f:
                     while True:
                         chunk = await f.read(self.CHUNK_SIZE)
                         if not chunk:
-                            self.logger.info(
+                            logger.info(
                                 "File streaming complete: %d bytes in %d chunks",
                                 bytes_sent,
                                 chunk_num,
@@ -109,7 +109,7 @@ class MessageMixin(ClientProtocol):
                         bytes_sent += len(chunk)
                         chunk_num += 1
                         if chunk_num % 10 == 0:
-                            self.logger.info(
+                            logger.info(
                                 "Upload progress: %.1f MB in %d chunks",
                                 bytes_sent / (1024 * 1024),
                                 chunk_num,
@@ -126,7 +126,7 @@ class MessageMixin(ClientProtocol):
                     bytes_sent += len(chunk)
                     chunk_num += 1
                     if chunk_num % 10 == 0:
-                        self.logger.info(
+                        logger.info(
                             "Upload progress: %.1f MB in %d chunks",
                             bytes_sent / (1024 * 1024),
                             chunk_num,
@@ -139,19 +139,19 @@ class MessageMixin(ClientProtocol):
             else:
                 data_to_send = bytes_generator(file_bytes)
 
-            self.logger.info("Starting file upload: %s", file.file_name)
+            logger.info("Starting file upload: %s", file.file_name)
 
             async with (
                 ClientSession(connector=connector, timeout=timeout) as session,
                 session.post(url=url, headers=headers, data=data_to_send) as response,
             ):
-                self.logger.debug("Server response status: %d", response.status)
+                logger.debug("Server response status: %d", response.status)
                 if response.status != HTTPStatus.OK:
-                    self.logger.error("Upload failed with status %s", response.status)
+                    logger.error("Upload failed with status %s", response.status)
                     self._file_upload_waiters.pop(int(file_id), None)
                     return None
 
-                self.logger.debug(
+                logger.debug(
                     "File sent successfully. Waiting for server confirmation "
                     "(timeout=%d seconds, fileId=%s)",
                     DEFAULT_TIMEOUT,
@@ -159,10 +159,10 @@ class MessageMixin(ClientProtocol):
                 )
                 try:
                     await asyncio.wait_for(fut, timeout=DEFAULT_TIMEOUT)
-                    self.logger.info("File upload completed successfully (fileId=%s)", file_id)
+                    logger.info("File upload completed successfully (fileId=%s)", file_id)
                     return Attach(_type=AttachType.FILE, file_id=file_id)
                 except asyncio.TimeoutError:
-                    self.logger.warning(
+                    logger.warning(
                         "Timed out waiting for file processing notification for fileId=%s",
                         file_id,
                     )

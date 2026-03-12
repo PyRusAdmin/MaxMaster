@@ -1,6 +1,7 @@
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from loguru import logger
 from pymax.filters import BaseFilter
 from pymax.protocols import ClientProtocol
 from pymax.types import Chat, Message, ReactionInfo
@@ -38,7 +39,7 @@ class HandlerMixin(ClientProtocol):
             handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_handlers.append((handler, filter))
-            self.logger.debug(f"on_message handler set: {handler}, filter: {filter}")
+            logger.debug(f"on_message handler set: {handler}, filter: {filter}")
             return handler
 
         return decorator
@@ -62,7 +63,7 @@ class HandlerMixin(ClientProtocol):
             handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_edit_handlers.append((handler, filter))
-            self.logger.debug(f"on_message_edit handler set: {handler}, filter: {filter}")
+            logger.debug(f"on_message_edit handler set: {handler}, filter: {filter}")
             return handler
 
         return decorator
@@ -86,7 +87,7 @@ class HandlerMixin(ClientProtocol):
             handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_delete_handlers.append((handler, filter))
-            self.logger.debug(f"on_message_delete handler set: {handler}, filter: {filter}")
+            logger.debug(f"on_message_delete handler set: {handler}, filter: {filter}")
             return handler
 
         return decorator
@@ -104,7 +105,7 @@ class HandlerMixin(ClientProtocol):
         :rtype: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]
         """
         self._on_reaction_change_handlers.append(handler)
-        self.logger.debug("on_reaction_change handler set: %r", handler)
+        logger.debug("on_reaction_change handler set: %r", handler)
         return handler
 
     def on_chat_update(
@@ -119,7 +120,7 @@ class HandlerMixin(ClientProtocol):
         :rtype: Callable[[Chat], Any | Awaitable[Any]]
         """
         self._on_chat_update_handlers.append(handler)
-        self.logger.debug("on_chat_update handler set: %r", handler)
+        logger.debug("on_chat_update handler set: %r", handler)
         return handler
 
     def on_raw_receive(
@@ -134,7 +135,7 @@ class HandlerMixin(ClientProtocol):
         :rtype: Callable[[dict[str, Any]], Any | Awaitable[Any]]
         """
         self._on_raw_receive_handlers.append(handler)
-        self.logger.debug("on_raw_receive handler set: %r", handler)
+        logger.debug("on_raw_receive handler set: %r", handler)
         return handler
 
     def on_start(
@@ -149,7 +150,7 @@ class HandlerMixin(ClientProtocol):
         :rtype: Callable[[], Any | Awaitable[Any]]
         """
         self._on_start_handler = handler
-        self.logger.debug("on_start handler set: %r", handler)
+        logger.debug("on_start handler set: %r", handler)
         return handler
 
     def task(self, seconds: float, minutes: float = 0, hours: float = 0):
@@ -176,7 +177,7 @@ class HandlerMixin(ClientProtocol):
             handler: Callable[[], Any | Awaitable[Any]],
         ) -> Callable[[], Any | Awaitable[Any]]:
             self._scheduled_tasks.append((handler, seconds + minutes * 60 + hours * 3600))
-            self.logger.debug(
+            logger.debug(
                 f"task scheduled: {handler}, interval: {seconds + minutes * 60 + hours * 3600}s"
             )
             return handler
@@ -198,7 +199,7 @@ class HandlerMixin(ClientProtocol):
         :return: Обработчик.
         :rtype: Callable[[Message], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_message_handler (alias) used")
+        logger.debug("add_message_handler (alias) used")
         self._on_message_handlers.append((handler, filter))
         return handler
 
@@ -213,7 +214,7 @@ class HandlerMixin(ClientProtocol):
         :return: Установленный обработчик.
         :rtype: Callable[[], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_on_start_handler (alias) used")
+        logger.debug("add_on_start_handler (alias) used")
         self._on_start_handler = handler
         return handler
 

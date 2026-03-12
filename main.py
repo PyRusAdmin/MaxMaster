@@ -65,7 +65,6 @@ client = MaxClient(
     phone=phone,
     work_dir="cache",
     reconnect=False,
-    logger=None,
     headers=headers,
 )
 

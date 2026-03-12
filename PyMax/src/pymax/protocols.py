@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 class ClientProtocol(ABC):
     def __init__(self, logger: Logger) -> None:
         super().__init__()
-        self.logger = logger
+        logger = logger
         self._users: dict[int, User] = {}
         self.chats: list[Chat] = []
         self._database: Database
