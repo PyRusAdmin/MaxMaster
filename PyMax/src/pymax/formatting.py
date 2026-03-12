@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import re
 
-from PyMax.src.pymax import Element
 from PyMax.src.pymax.static.enum import FormattingType
+from PyMax.src.pymax.types import Element
 
 
 class Formatting:

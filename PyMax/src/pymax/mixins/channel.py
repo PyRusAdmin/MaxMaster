@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from PyMax.src.pymax.types import Channel, Member
 from PyMax.src.pymax.exceptions import ResponseStructureError
 from PyMax.src.pymax.payloads import ResolveLinkPayload, JoinChatPayload, GetGroupMembersPayload, \

@@ -14,7 +14,7 @@ from loguru import logger
 from typing_extensions import override
 
 from PyMax.src.pymax.crud import Database
-from PyMax.src.pymax.exceptions import InvalidPhoneError, WebSocketNotConnectedError, SocketNotConnectedError
+from PyMax.src.pymax.exceptions import WebSocketNotConnectedError, SocketNotConnectedError
 from PyMax.src.pymax.filters import BaseFilter
 from PyMax.src.pymax.interfaces import BaseClient
 from PyMax.src.pymax.mixins.api import ApiMixin
@@ -28,18 +28,6 @@ from PyMax.src.pymax.mixins.websocket import WebSocketMixin
 from PyMax.src.pymax.payloads import UserAgentPayload
 from PyMax.src.pymax.static.constant import HOST, PORT, WEBSOCKET_URI, SESSION_STORAGE_DB
 
-# from crud import Database
-# from exceptions import (
-#     InvalidPhoneError,
-#     SocketNotConnectedError,
-#     WebSocketNotConnectedError,
-# )
-# from filters import BaseFilter
-# from interfaces import BaseClient
-
-# from payloads import UserAgentPayload
-# from static.constant import HOST, PORT, SESSION_STORAGE_DB, WEBSOCKET_URI
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -48,7 +36,8 @@ if TYPE_CHECKING:
     from types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 
 
-class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixin, UserMixin, WebSocketMixin, BaseClient):
+class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixin, UserMixin, WebSocketMixin,
+                BaseClient):
     allowed_device_types: set[str] = {"WEB"}
     """
     Основной клиент для работы с WebSocket API сервиса Max.

@@ -1,4 +1,4 @@
-# УСТАНОВИТЬ ЗАВИСИМОСТИ - pip install maxapi-python aiogram==3.22.0
+# -*- coding: utf-8 -*-
 import asyncio  # Для асинхронности
 import aiohttp  # Для асинхронных реквестов
 from io import BytesIO  # Для хранения ответов файлом в RAM

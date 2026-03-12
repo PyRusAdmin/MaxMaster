@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 import time
 
-from PyMax.src.pymax.types import Message, Chat
 from PyMax.src.pymax.exceptions import Error
-from PyMax.src.pymax.payloads import CreateGroupPayload, CreateGroupMessage, CreateGroupAttach, InviteUsersPayload, \
-    RemoveUsersPayload, ChangeGroupSettingsPayload, ChangeGroupSettingsOptions, ChangeGroupProfilePayload, \
+from PyMax.src.pymax.payloads import CreateGroupPayload, CreateGroupMessage, CreateGroupAttach, RemoveUsersPayload, \
+    ChangeGroupSettingsPayload, ChangeGroupSettingsOptions, ChangeGroupProfilePayload, \
     InviteUsersPayload, ReworkInviteLinkPayload, GetChatInfoPayload, LeaveChatPayload, FetchChatsPayload
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.types import Message, Chat
 from PyMax.src.pymax.utils import MixinsUtils
 
 

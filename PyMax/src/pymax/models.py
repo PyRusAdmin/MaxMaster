@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel

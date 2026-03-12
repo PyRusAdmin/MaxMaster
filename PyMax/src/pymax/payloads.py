@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from typing import Any, Literal
 
 from pydantic import AliasChoices, BaseModel, Field

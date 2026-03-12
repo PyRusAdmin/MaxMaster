@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import mimetypes
 from abc import ABC, abstractmethod
 from pathlib import Path

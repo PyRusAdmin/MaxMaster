@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
+from PyMax.src.pymax.payloads import SyncPayload, UserAgentPayload
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.enum import Opcode
-from PyMax.src.pymax.payloads import SyncPayload, UserAgentPayload
 
 if TYPE_CHECKING:
     from PyMax.src.pymax.types import Chat

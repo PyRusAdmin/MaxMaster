@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
