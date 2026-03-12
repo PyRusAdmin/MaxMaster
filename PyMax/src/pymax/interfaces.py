@@ -8,17 +8,11 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from loguru import logger
-from pymax.exceptions import SocketNotConnectedError, WebSocketNotConnectedError
-from pymax.filters import BaseFilter
-from pymax.payloads import BaseWebSocketMessage, SyncPayload, UserAgentPayload
-from pymax.protocols import ClientProtocol
-from pymax.static.constant import DEFAULT_PING_INTERVAL, DEFAULT_TIMEOUT
-from pymax.static.enum import Opcode
-from pymax.types import (
-    Channel, Chat, ChatType, Dialog, Me, Message, MessageStatus, ReactionCounter, ReactionInfo, User,
-)
-from pymax.utils import MixinsUtils
 from typing_extensions import Self
+
+from PyMax.src.pymax import WebSocketNotConnectedError
+from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.protocols import ClientProtocol
 
 
 class BaseClient(ClientProtocol):
@@ -32,9 +26,7 @@ class BaseClient(ClientProtocol):
         except Exception as e:
             logger.error(f"Unhandled exception in {context}: {e}\n{traceback.format_exc()}")
 
-    def _create_safe_task(
-            self, coro: Awaitable[Any], name: str | None = None
-    ) -> asyncio.Task[Any | None]:
+    def _create_safe_task(self, coro: Awaitable[Any], name: str | None = None) -> asyncio.Task[Any | None]:
         async def runner():
             try:
                 return await coro
@@ -147,19 +139,12 @@ class BaseClient(ClientProtocol):
 
 class BaseTransport(ClientProtocol):
     @abstractmethod
-    async def connect(
-            self, user_agent: UserAgentPayload | None = None
-    ) -> dict[str, Any] | None:
+    async def connect(self, user_agent: UserAgentPayload | None = None) -> dict[str, Any] | None:
         ...
 
     @abstractmethod
-    async def _send_and_wait(
-            self,
-            opcode: Opcode,
-            payload: dict[str, Any],
-            cmd: int = 0,
-            timeout: float = DEFAULT_TIMEOUT,
-    ) -> dict[str, Any]:
+    async def _send_and_wait(self, opcode: Opcode, payload: dict[str, Any], cmd: int = 0,
+                             timeout: float = DEFAULT_TIMEOUT,) -> dict[str, Any]:
         ...
 
     @abstractmethod

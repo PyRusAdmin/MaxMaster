@@ -42,7 +42,7 @@ class WebSocketMixin(BaseTransport):
         logger.info("Connecting to WebSocket %s", self.uri)
 
         if self._ws is not None or self.is_connected:
-            logger.warning("WebSocket already connected")
+            logger.warning("WebSocket уже подключен")
             return
 
         self._ws = await websockets.connect(
