@@ -4,19 +4,19 @@ import sys
 from datetime import datetime
 
 from dotenv import load_dotenv
-from pymax import MaxClient
 from loguru import logger
 from openpyxl import Workbook
-from peewee import SqliteDatabase, Model, CharField, DateTimeField, fn
+from peewee import SqliteDatabase, Model, CharField, DateTimeField
+from pymax import MaxClient, Message
+from pymax import SocketMaxClient
+from rich import box
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
-from rich.prompt import Prompt
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
-from rich import box
+from rich.prompt import Prompt
+from rich.table import Table
 from rich.text import Text
-from rich.live import Live
-from rich.align import Align
 
 from read_file import read_file
 
@@ -56,9 +56,10 @@ db.connect()
 db.create_tables([PhoneQueue], safe=True)
 
 # ─── Max клиент ───────────────────────────────────────────────────────────────
+
 client = MaxClient(
     phone=PHONE_NUMBER,
-    work_dir="cache",
+    work_dir="cache",  # директория для сессий
 )
 
 # ─── Заголовки Excel ──────────────────────────────────────────────────────────
