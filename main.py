@@ -22,6 +22,10 @@ from PyMax.src.pymax.core import MaxClient
 from PyMax.src.pymax.payloads import UserAgentPayload
 from read_file import read_file
 
+# ─── Версия приложения ────────────────────────────────────────────────────────
+APP_VERSION = "0.0.1"
+APP_DATE = "12.03.2026"
+
 # ─── Логгер ───────────────────────────────────────────────────────────────────
 logger.remove()
 logger.add("logs/log.log", rotation="1 MB", level="INFO")
@@ -31,10 +35,10 @@ logger.add(sys.stderr, level="WARNING")
 load_dotenv()
 SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
 SLEEP_ON_RATELIMIT = float(os.getenv("SLEEP_ON_RATELIMIT", "30"))
-phone = os.getenv("PHONE_NUMBER")
-DB_PATH = os.getenv("DB_PATH", "data/queue.db")
-EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")
-NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")
+phone = os.getenv("PHONE_NUMBER")  # Номер телефона аккаунта
+DB_PATH = os.getenv("DB_PATH", "data/queue.db")  # База номеров для перебора
+EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")  # Полученные номера после перебора
+NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")  # Номера для перебора
 
 # ─── Rich консоль ─────────────────────────────────────────────────────────────
 console = Console()
@@ -188,8 +192,9 @@ def print_header():
     console.clear()
     title = Text("📱  MAX / OneMe Phone Parser", style="bold cyan")
     subtitle = Text("Парсинг пользователей по номерам телефона", style="dim")
+    version = Text(f"Версия: {APP_VERSION} от {APP_DATE}", style="yellow")
     console.print(Panel(
-        Align.center(Text.assemble(title, "\n", subtitle)),
+        Align.center(Text.assemble(title, "\n", subtitle, "\n", version)),
         border_style="cyan",
         padding=(1, 4),
     ))
