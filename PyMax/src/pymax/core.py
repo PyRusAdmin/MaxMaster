@@ -18,8 +18,12 @@ from PyMax.src.pymax.exceptions import InvalidPhoneError, WebSocketNotConnectedE
 from PyMax.src.pymax.filters import BaseFilter
 from PyMax.src.pymax.interfaces import BaseClient
 from PyMax.src.pymax.mixins.api import ApiMixin
+from PyMax.src.pymax.mixins.auth import AuthMixin
 from PyMax.src.pymax.mixins.handler import HandlerMixin
+from PyMax.src.pymax.mixins.scheduler import SchedulerMixin
 from PyMax.src.pymax.mixins.socket import SocketMixin
+from PyMax.src.pymax.mixins.telemetry import TelemetryMixin
+from PyMax.src.pymax.mixins.user import UserMixin
 from PyMax.src.pymax.mixins.websocket import WebSocketMixin
 from PyMax.src.pymax.payloads import UserAgentPayload
 from PyMax.src.pymax.static.constant import HOST, PORT, WEBSOCKET_URI, SESSION_STORAGE_DB
@@ -44,7 +48,7 @@ if TYPE_CHECKING:
     from types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 
 
-class MaxClient(ApiMixin, HandlerMixin, WebSocketMixin, BaseClient):
+class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixin, UserMixin, WebSocketMixin, BaseClient):
     allowed_device_types: set[str] = {"WEB"}
     """
     Основной клиент для работы с WebSocket API сервиса Max.

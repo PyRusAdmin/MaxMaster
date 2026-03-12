@@ -3,7 +3,7 @@ import random
 import time
 from loguru import logger
 
-from PyMax.src.pymax import SocketNotConnectedError
+from PyMax.src.pymax.exceptions import SocketNotConnectedError
 from PyMax.src.pymax.navigation import Navigation
 from PyMax.src.pymax.payloads import NavigationEventPayload, NavigationPayload, NavigationEventParams
 from PyMax.src.pymax.protocols import ClientProtocol

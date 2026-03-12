@@ -3,7 +3,7 @@ from typing import Any
 
 from loguru import logger
 
-from PyMax.src.pymax import Message, ReactionInfo, Chat
+from PyMax.src.pymax.types import Message, ReactionInfo, Chat
 from PyMax.src.pymax.filters import BaseFilter
 from PyMax.src.pymax.protocols import ClientProtocol
 
