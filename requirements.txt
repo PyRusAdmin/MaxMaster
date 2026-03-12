@@ -1,8 +1,15 @@
 websockets~=14.1
 python-dotenv~=1.2.2
-maxapi-python
 requests
 rich
 loguru
 openpyxl~=3.1.5
 peewee
+sqlmodel>=0.0.24
+websockets>=15.0
+msgpack>=1.1.1
+lz4>=4.4.4
+aiohttp>=3.12.15
+aiofiles>=24.1.0
+qrcode>=8.2
+ua-generator>=2.0.19

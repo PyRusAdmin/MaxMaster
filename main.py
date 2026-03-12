@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from openpyxl import Workbook
 from peewee import SqliteDatabase, Model, CharField, DateTimeField
-from pymax import MaxClient, Message
-from pymax import SocketMaxClient
+
 from rich import box
 from rich.align import Align
 from rich.console import Console
@@ -18,6 +17,8 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
+from PyMax.src.pymax import MaxClient
+from PyMax.src.pymax.payloads import UserAgentPayload
 from read_file import read_file
 
 # ─── Логгер ───────────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ logger.add(sys.stderr, level="WARNING")
 load_dotenv()
 SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
 SLEEP_ON_RATELIMIT = float(os.getenv("SLEEP_ON_RATELIMIT", "30"))
-PHONE_NUMBER = os.getenv("PHONE_NUMBER")
+phone = os.getenv("PHONE_NUMBER")
 DB_PATH = os.getenv("DB_PATH", "data/queue.db")
 EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")
 NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")
@@ -57,9 +58,15 @@ db.create_tables([PhoneQueue], safe=True)
 
 # ─── Max клиент ───────────────────────────────────────────────────────────────
 
+
+headers = UserAgentPayload(device_type="WEB")
+
 client = MaxClient(
-    phone=PHONE_NUMBER,
-    work_dir="cache",  # директория для сессий
+    phone=phone,
+    work_dir="cache",
+    reconnect=False,
+    logger=None,
+    headers=headers,
 )
 
 # ─── Заголовки Excel ──────────────────────────────────────────────────────────
