@@ -10,9 +10,14 @@ from typing import Any
 from loguru import logger
 from typing_extensions import Self
 
-from PyMax.src.pymax import WebSocketNotConnectedError
-from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax import WebSocketNotConnectedError, SocketNotConnectedError, Message, ReactionCounter, ReactionInfo, \
+    Chat, User, Me, Channel, Dialog
+from PyMax.src.pymax.filters import BaseFilter
+from PyMax.src.pymax.payloads import UserAgentPayload, BaseWebSocketMessage, SyncPayload
 from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.constant import DEFAULT_TIMEOUT, DEFAULT_PING_INTERVAL
+from PyMax.src.pymax.static.enum import Opcode, MessageStatus, ChatType
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class BaseClient(ClientProtocol):

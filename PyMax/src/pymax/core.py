@@ -19,6 +19,7 @@ from .exceptions import (
     SocketNotConnectedError,
     WebSocketNotConnectedError,
 )
+from .filters import BaseFilter
 from .interfaces import BaseClient
 from .mixins import ApiMixin, SocketMixin, WebSocketMixin
 from .payloads import UserAgentPayload
@@ -28,8 +29,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     import websockets
-
-    from pymax.filters import BaseFilter
 
     from .types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 

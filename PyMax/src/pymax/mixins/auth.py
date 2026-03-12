@@ -5,23 +5,14 @@ import sys
 from typing import Any
 from loguru import logger
 import qrcode
-from pymax.payloads import (
-    Capability,
-    CheckPasswordChallengePayload,
-    CreateTrackPayload,
-    RegisterPayload,
-    RequestCodePayload,
-    RequestEmailCodePayload,
-    SendCodePayload,
-    SendEmailCodePayload,
-    SetHintPayload,
-    SetPasswordPayload,
-    SetTwoFactorPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.constant import PHONE_REGEX, UNSET, _Unset
-from pymax.static.enum import AuthType, DeviceType, Opcode
-from pymax.utils import MixinsUtils
+
+from PyMax.src.pymax.payloads import RequestCodePayload, SendCodePayload, RegisterPayload, \
+    CheckPasswordChallengePayload, SetPasswordPayload, SetHintPayload, RequestEmailCodePayload, SendEmailCodePayload, \
+    CreateTrackPayload, SetTwoFactorPayload
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.constant import PHONE_REGEX, _Unset, UNSET
+from PyMax.src.pymax.static.enum import AuthType, Opcode, DeviceType, Capability
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class AuthMixin(ClientProtocol):
@@ -245,9 +236,9 @@ class AuthMixin(ClientProtocol):
             else:
                 exp_at = status.get("expiresAt")
                 if (
-                    exp_at
-                    and isinstance(exp_at, (int, float))
-                    and exp_at < datetime.datetime.now().timestamp() * 1000
+                        exp_at
+                        and isinstance(exp_at, (int, float))
+                        and exp_at < datetime.datetime.now().timestamp() * 1000
                 ):
                     logger.warning("QR code expired")
                     return False
@@ -321,7 +312,7 @@ class AuthMixin(ClientProtocol):
                     raise RuntimeError("QR login failed or expired")
 
     async def _submit_reg_info(
-        self, first_name: str, last_name: str | None, token: str
+            self, first_name: str, last_name: str | None, token: str
     ) -> dict[str, Any]:
         try:
             logger.info("Submitting registration info")
@@ -439,10 +430,7 @@ class AuthMixin(ClientProtocol):
         return not payload
 
     async def _set_hint(self, hint: str, track_id: str) -> bool:
-        payload = SetHintPayload(
-            track_id=track_id,
-            hint=hint,
-        ).model_dump(by_alias=True)
+        payload = SetHintPayload(track_id=track_id, hint=hint, ).model_dump(by_alias=True)
 
         data = await self._send_and_wait(opcode=Opcode.AUTH_VALIDATE_HINT, payload=payload)
         payload = data.get("payload", {})
@@ -487,10 +475,10 @@ class AuthMixin(ClientProtocol):
             return True
 
     async def set_password(
-        self,
-        password: str,
-        email: str | None = None,
-        hint: str | None | _Unset = UNSET,
+            self,
+            password: str,
+            email: str | None = None,
+            hint: str | None | _Unset = UNSET,
     ):
         """
         Устанавливает пароль для аккаунта

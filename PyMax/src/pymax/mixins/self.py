@@ -5,20 +5,15 @@ from uuid import uuid4
 
 import aiohttp
 from loguru import logger
-from pymax.exceptions import Error
-from pymax.files import Photo
-from pymax.payloads import (
-    ChangeProfilePayload,
-    CreateFolderPayload,
-    DeleteFolderPayload,
-    GetFolderPayload,
-    UpdateFolderPayload,
-    UploadPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.enum import Opcode
-from pymax.types import FolderList, FolderUpdate, Me
-from pymax.utils import MixinsUtils
+
+from PyMax.src.pymax import Photo
+from PyMax.src.pymax.exceptions import Error
+from PyMax.src.pymax.payloads import UploadPayload, ChangeProfilePayload, CreateFolderPayload, GetFolderPayload, \
+    UpdateFolderPayload, DeleteFolderPayload
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.types import FolderUpdate, FolderList, Me
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class SelfMixin(ClientProtocol):
@@ -64,11 +59,11 @@ class SelfMixin(ClientProtocol):
             ]  # TODO: сделать нормальную типизацию и чекнинг ответа
 
     async def change_profile(
-        self,
-        first_name: str,
-        last_name: str | None = None,
-        description: str | None = None,
-        photo: Photo | None = None,
+            self,
+            first_name: str,
+            last_name: str | None = None,
+            description: str | None = None,
+            photo: Photo | None = None,
     ) -> bool:
         """
         Изменяет информацию профиля текущего пользователя.
@@ -116,7 +111,7 @@ class SelfMixin(ClientProtocol):
         return True
 
     async def create_folder(
-        self, title: str, chat_include: list[int], filters: list[Any] | None = None
+            self, title: str, chat_include: list[int], filters: list[Any] | None = None
     ) -> FolderUpdate:
         """
         Создает новую папку для группировки чатов.
@@ -167,12 +162,12 @@ class SelfMixin(ClientProtocol):
         return FolderList.from_dict(data.get("payload", {}))
 
     async def update_folder(
-        self,
-        folder_id: str,
-        title: str,
-        chat_include: list[int] | None = None,
-        filters: list[Any] | None = None,
-        options: list[Any] | None = None,
+            self,
+            folder_id: str,
+            title: str,
+            chat_include: list[int] | None = None,
+            filters: list[Any] | None = None,
+            options: list[Any] | None = None,
     ) -> FolderUpdate | None:
         """
         Обновляет параметры существующей папки.

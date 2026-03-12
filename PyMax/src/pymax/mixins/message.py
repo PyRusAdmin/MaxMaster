@@ -7,42 +7,20 @@ import aiohttp
 from aiofiles import open as aio_open
 from aiohttp import ClientSession, TCPConnector
 from loguru import logger
-from pymax.exceptions import Error
-from pymax.files import File, Photo, Video
-from pymax.formatting import Formatting
-from pymax.payloads import (
-    AddReactionPayload,
-    AttachFilePayload,
-    AttachPhotoPayload,
-    DeleteMessagePayload,
-    EditMessagePayload,
-    FetchHistoryPayload,
-    GetFilePayload,
-    GetReactionsPayload,
-    GetVideoPayload,
-    MessageElement,
-    PinMessagePayload,
-    ReactionInfoPayload,
-    ReadMessagesPayload,
-    RemoveReactionPayload,
-    ReplyLink,
-    SendMessagePayload,
-    SendMessagePayloadMessage,
-    UploadPayload,
-    VideoAttachPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.constant import DEFAULT_TIMEOUT
-from pymax.static.enum import AttachType, Opcode, ReadAction
-from pymax.types import (
-    Attach,
-    FileRequest,
-    Message,
-    ReactionInfo,
-    ReadState,
-    VideoRequest,
-)
-from pymax.utils import MixinsUtils
+
+from PyMax.src.pymax import File
+from PyMax.src.pymax.exceptions import Error
+from PyMax.src.pymax.files import Video, Photo
+from PyMax.src.pymax.formatting import Formatting
+from PyMax.src.pymax.payloads import UploadPayload, AttachPhotoPayload, AttachFilePayload, VideoAttachPayload, \
+    ReadMessagesPayload, RemoveReactionPayload, GetReactionsPayload, AddReactionPayload, ReactionInfoPayload, \
+    GetFilePayload, GetVideoPayload, FetchHistoryPayload, PinMessagePayload, DeleteMessagePayload, EditMessagePayload, \
+    MessageElement, SendMessagePayloadMessage, SendMessagePayload, ReplyLink
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.constant import DEFAULT_TIMEOUT
+from PyMax.src.pymax.static.enum import Opcode, AttachType, ReadAction
+from PyMax.src.pymax.types import Attach, Message, ReadState, ReactionInfo, FileRequest, VideoRequest
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class MessageMixin(ClientProtocol):
@@ -121,7 +99,7 @@ class MessageMixin(ClientProtocol):
                 bytes_sent = 0
                 chunk_num = 0
                 for i in range(0, len(b), self.CHUNK_SIZE):
-                    chunk = b[i : i + self.CHUNK_SIZE]
+                    chunk = b[i: i + self.CHUNK_SIZE]
                     yield chunk
                     bytes_sent += len(chunk)
                     chunk_num += 1
@@ -220,9 +198,9 @@ class MessageMixin(ClientProtocol):
             try:
                 async with ClientSession(connector=connector, timeout=timeout) as session:
                     async with session.post(
-                        url=url,
-                        headers=headers,
-                        data=file_bytes,
+                            url=url,
+                            headers=headers,
+                            data=file_bytes,
                     ) as response:
                         if response.status != HTTPStatus.OK:
                             logger.error("Upload failed with status %s", response.status)
@@ -334,14 +312,14 @@ class MessageMixin(ClientProtocol):
         return None
 
     async def send_message(
-        self,
-        text: str,
-        chat_id: int,
-        notify: bool = True,
-        attachment: Photo | File | Video | None = None,
-        attachments: list[Photo | File | Video] | None = None,
-        reply_to: int | None = None,
-        use_queue: bool = False,
+            self,
+            text: str,
+            chat_id: int,
+            notify: bool = True,
+            attachment: Photo | File | Video | None = None,
+            attachments: list[Photo | File | Video] | None = None,
+            reply_to: int | None = None,
+            use_queue: bool = False,
     ) -> Message | None:
         """
         Отправляет текстовое сообщение в чат с опциональными вложениями.
@@ -429,13 +407,13 @@ class MessageMixin(ClientProtocol):
         return msg
 
     async def edit_message(
-        self,
-        chat_id: int,
-        message_id: int,
-        text: str,
-        attachment: Photo | File | Video | None = None,
-        attachments: list[Photo | Video | File] | None = None,
-        use_queue: bool = False,
+            self,
+            chat_id: int,
+            message_id: int,
+            text: str,
+            attachment: Photo | File | Video | None = None,
+            attachments: list[Photo | Video | File] | None = None,
+            use_queue: bool = False,
     ) -> Message | None:
         """
         Редактирует текст и/или вложения существующего сообщения.
@@ -517,11 +495,11 @@ class MessageMixin(ClientProtocol):
         return msg
 
     async def delete_message(
-        self,
-        chat_id: int,
-        message_ids: list[int],
-        for_me: bool,
-        use_queue: bool = False,
+            self,
+            chat_id: int,
+            message_ids: list[int],
+            for_me: bool,
+            use_queue: bool = False,
     ) -> bool:
         """
         Удаляет одно или несколько сообщений.
@@ -589,11 +567,11 @@ class MessageMixin(ClientProtocol):
         return True
 
     async def fetch_history(
-        self,
-        chat_id: int,
-        from_time: int | None = None,
-        forward: int = 0,
-        backward: int = 200,
+            self,
+            chat_id: int,
+            from_time: int | None = None,
+            forward: int = 0,
+            backward: int = 200,
     ) -> list[Message] | None:
         """
         Получает историю сообщений из чата.
@@ -639,10 +617,10 @@ class MessageMixin(ClientProtocol):
         return messages
 
     async def get_video_by_id(
-        self,
-        chat_id: int,
-        message_id: int,
-        video_id: int,
+            self,
+            chat_id: int,
+            message_id: int,
+            video_id: int,
     ) -> VideoRequest | None:
         """
         Получает видео
@@ -682,10 +660,10 @@ class MessageMixin(ClientProtocol):
         return video
 
     async def get_file_by_id(
-        self,
-        chat_id: int,
-        message_id: int,
-        file_id: int,
+            self,
+            chat_id: int,
+            message_id: int,
+            file_id: int,
     ) -> FileRequest | None:
         """
         Получает файл
@@ -724,10 +702,10 @@ class MessageMixin(ClientProtocol):
         return file
 
     async def add_reaction(
-        self,
-        chat_id: int,
-        message_id: str,
-        reaction: str,
+            self,
+            chat_id: int,
+            message_id: str,
+            reaction: str,
     ) -> ReactionInfo | None:
         """
         Добавляет реакцию к сообщению.
@@ -771,7 +749,7 @@ class MessageMixin(ClientProtocol):
             return None
 
     async def get_reactions(
-        self, chat_id: int, message_ids: list[str]
+            self, chat_id: int, message_ids: list[str]
     ) -> dict[str, ReactionInfo] | None:
         """
         Получает реакции на сообщения.
@@ -806,9 +784,9 @@ class MessageMixin(ClientProtocol):
         return reactions
 
     async def remove_reaction(
-        self,
-        chat_id: int,
-        message_id: str,
+            self,
+            chat_id: int,
+            message_id: str,
     ) -> ReactionInfo | None:
         """
         Удаляет реакцию с сообщения.
@@ -826,10 +804,7 @@ class MessageMixin(ClientProtocol):
             message_id,
         )
 
-        payload = RemoveReactionPayload(
-            chat_id=chat_id,
-            message_id=message_id,
-        ).model_dump(by_alias=True)
+        payload = RemoveReactionPayload(chat_id=chat_id, message_id=message_id, ).model_dump(by_alias=True)
 
         data = await self._send_and_wait(opcode=Opcode.MSG_CANCEL_REACTION, payload=payload)
 

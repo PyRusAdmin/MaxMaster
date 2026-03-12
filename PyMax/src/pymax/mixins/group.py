@@ -1,33 +1,21 @@
 import time
 
-from pymax.exceptions import Error
-from pymax.payloads import (
-    ChangeGroupProfilePayload,
-    ChangeGroupSettingsOptions,
-    ChangeGroupSettingsPayload,
-    CreateGroupAttach,
-    CreateGroupMessage,
-    CreateGroupPayload,
-    FetchChatsPayload,
-    GetChatInfoPayload,
-    InviteUsersPayload,
-    JoinChatPayload,
-    LeaveChatPayload,
-    RemoveUsersPayload,
-    ReworkInviteLinkPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.enum import Opcode
-from pymax.types import Chat, Message
-from pymax.utils import MixinsUtils
+from PyMax.src.pymax import Message, Chat
+from PyMax.src.pymax.exceptions import Error
+from PyMax.src.pymax.payloads import CreateGroupPayload, CreateGroupMessage, CreateGroupAttach, InviteUsersPayload, \
+    RemoveUsersPayload, ChangeGroupSettingsPayload, ChangeGroupSettingsOptions, ChangeGroupProfilePayload, \
+    JoinChatPayload, ReworkInviteLinkPayload, GetChatInfoPayload, LeaveChatPayload, FetchChatsPayload
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class GroupMixin(ClientProtocol):
     async def create_group(
-        self,
-        name: str,
-        participant_ids: list[int] | None = None,
-        notify: bool = True,
+            self,
+            name: str,
+            participant_ids: list[int] | None = None,
+            notify: bool = True,
     ) -> tuple[Chat, Message] | None:
         """
         Создает группу
@@ -72,10 +60,10 @@ class GroupMixin(ClientProtocol):
         return chat, message
 
     async def invite_users_to_group(
-        self,
-        chat_id: int,
-        user_ids: list[int],
-        show_history: bool = True,
+            self,
+            chat_id: int,
+            user_ids: list[int],
+            show_history: bool = True,
     ) -> Chat | None:
         """
         Приглашает пользователей в группу
@@ -112,10 +100,10 @@ class GroupMixin(ClientProtocol):
         return chat
 
     async def invite_users_to_channel(
-        self,
-        chat_id: int,
-        user_ids: list[int],
-        show_history: bool = True,
+            self,
+            chat_id: int,
+            user_ids: list[int],
+            show_history: bool = True,
     ) -> Chat | None:
         """
         Приглашает пользователей в канал
@@ -131,10 +119,10 @@ class GroupMixin(ClientProtocol):
         return await self.invite_users_to_group(chat_id, user_ids, show_history)
 
     async def remove_users_from_group(
-        self,
-        chat_id: int,
-        user_ids: list[int],
-        clean_msg_period: int,
+            self,
+            chat_id: int,
+            user_ids: list[int],
+            clean_msg_period: int,
     ) -> bool:
         """
         Удаляет пользователей из группы
@@ -170,13 +158,13 @@ class GroupMixin(ClientProtocol):
         return True
 
     async def change_group_settings(
-        self,
-        chat_id: int,
-        all_can_pin_message: bool | None = None,
-        only_owner_can_change_icon_title: bool | None = None,
-        only_admin_can_add_member: bool | None = None,
-        only_admin_can_call: bool | None = None,
-        members_can_see_private_link: bool | None = None,
+            self,
+            chat_id: int,
+            all_can_pin_message: bool | None = None,
+            only_owner_can_change_icon_title: bool | None = None,
+            only_admin_can_add_member: bool | None = None,
+            only_admin_can_call: bool | None = None,
+            members_can_see_private_link: bool | None = None,
     ) -> None:
         """
         Изменяет настройки группы
@@ -217,10 +205,10 @@ class GroupMixin(ClientProtocol):
                 self.chats[idx] = chat
 
     async def change_group_profile(
-        self,
-        chat_id: int,
-        name: str | None,
-        description: str | None = None,
+            self,
+            chat_id: int,
+            name: str | None,
+            description: str | None = None,
     ) -> None:
         """
         Изменяет профиль группы

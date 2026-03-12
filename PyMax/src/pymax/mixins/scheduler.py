@@ -3,12 +3,13 @@ import traceback
 from collections.abc import Awaitable, Callable
 from typing import Any
 from loguru import logger
-from pymax.protocols import ClientProtocol
+
+from PyMax.src.pymax.protocols import ClientProtocol
 
 
 class SchedulerMixin(ClientProtocol):
     async def _run_periodic(
-        self, func: Callable[[], Any | Awaitable[Any]], interval: float
+            self, func: Callable[[], Any | Awaitable[Any]], interval: float
     ) -> None:
         while True:
             try:

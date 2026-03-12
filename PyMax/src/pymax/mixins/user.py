@@ -1,15 +1,12 @@
 from typing import Any, Literal
 from loguru import logger
-from pymax.exceptions import Error, ResponseError, ResponseStructureError
-from pymax.payloads import (
-    ContactActionPayload,
-    FetchContactsPayload,
-    SearchByPhonePayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.enum import ContactAction, Opcode
-from pymax.types import Contact, Session, User
-from pymax.utils import MixinsUtils
+
+from PyMax.src.pymax import User, Session, Contact
+from PyMax.src.pymax.exceptions import Error, ResponseStructureError, ResponseError
+from PyMax.src.pymax.payloads import FetchContactsPayload, SearchByPhonePayload, ContactActionPayload
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.enum import Opcode, ContactAction
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class UserMixin(ClientProtocol):

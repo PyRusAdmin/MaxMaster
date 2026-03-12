@@ -1,7 +1,7 @@
 import re
 
-from pymax.static.enum import FormattingType
-from pymax.types import Element
+from PyMax.src.pymax import Element
+from PyMax.src.pymax.static.enum import FormattingType
 
 
 class Formatting:
@@ -24,7 +24,7 @@ class Formatting:
 
         last_end = 0
         for match in Formatting.MARKUP_BLOCK_PATTERN.finditer(text):
-            between = text[last_end : match.start()]
+            between = text[last_end: match.start()]
             if between:
                 clean_parts.append(between)
                 current_pos += len(between)
@@ -47,7 +47,7 @@ class Formatting:
             if inner_text is not None and fmt_type is not None:
                 next_pos = match.end()
                 has_newline = (next_pos < len(text) and text[next_pos] == "\n") or (
-                    next_pos == len(text)
+                        next_pos == len(text)
                 )
 
                 length = len(inner_text) + (1 if has_newline else 0)

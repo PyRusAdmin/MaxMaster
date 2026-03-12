@@ -4,19 +4,14 @@ from typing import Any
 
 import websockets
 from loguru import logger
-from pymax.exceptions import WebSocketNotConnectedError
-from pymax.interfaces import BaseTransport
-from pymax.payloads import UserAgentPayload
-from pymax.static.constant import (
-    DEFAULT_TIMEOUT,
-    RECV_LOOP_BACKOFF_DELAY,
-    WEBSOCKET_ORIGIN,
-)
-from pymax.static.enum import Opcode
-from pymax.types import (
-    Chat,
-)
+
 from typing_extensions import override
+
+from PyMax.src.pymax import WebSocketNotConnectedError, Chat
+from PyMax.src.pymax.interfaces import BaseTransport
+from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.static.constant import WEBSOCKET_ORIGIN, RECV_LOOP_BACKOFF_DELAY, DEFAULT_TIMEOUT
+from PyMax.src.pymax.static.enum import Opcode
 
 
 class WebSocketMixin(BaseTransport):

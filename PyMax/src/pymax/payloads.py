@@ -2,20 +2,10 @@ from typing import Any, Literal
 
 from pydantic import AliasChoices, BaseModel, Field
 
-from pymax.static.constant import (
-    DEFAULT_APP_VERSION,
-    DEFAULT_BUILD_NUMBER,
-    DEFAULT_CLIENT_SESSION_ID,
-    DEFAULT_DEVICE_LOCALE,
-    DEFAULT_DEVICE_NAME,
-    DEFAULT_DEVICE_TYPE,
-    DEFAULT_LOCALE,
-    DEFAULT_OS_VERSION,
-    DEFAULT_SCREEN,
-    DEFAULT_TIMEZONE,
-    DEFAULT_USER_AGENT,
-)
-from pymax.static.enum import AttachType, AuthType, Capability, ContactAction, ReadAction
+from PyMax.src.pymax.static.constant import DEFAULT_DEVICE_TYPE, DEFAULT_LOCALE, DEFAULT_DEVICE_LOCALE, \
+    DEFAULT_OS_VERSION, DEFAULT_DEVICE_NAME, DEFAULT_USER_AGENT, DEFAULT_APP_VERSION, DEFAULT_SCREEN, DEFAULT_TIMEZONE, \
+    DEFAULT_CLIENT_SESSION_ID, DEFAULT_BUILD_NUMBER
+from PyMax.src.pymax.static.enum import AuthType, AttachType, ContactAction, ReadAction, Capability
 
 
 def to_camel(string: str) -> str:

@@ -27,7 +27,6 @@ exclude_patterns = [
 
 language = "python"
 
-
 autodoc_default_options = {
     "members": True,
     "inherited-members": True,

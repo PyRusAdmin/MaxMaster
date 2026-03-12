@@ -1,16 +1,13 @@
 import asyncio
 import random
 import time
+from loguru import logger
 
-from pymax.exceptions import SocketNotConnectedError
-from pymax.navigation import Navigation
-from pymax.payloads import (
-    NavigationEventParams,
-    NavigationEventPayload,
-    NavigationPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.enum import Opcode
+from PyMax.src.pymax import SocketNotConnectedError
+from PyMax.src.pymax.navigation import Navigation
+from PyMax.src.pymax.payloads import NavigationEventPayload, NavigationPayload, NavigationEventParams
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.enum import Opcode
 
 
 class TelemetryMixin(ClientProtocol):

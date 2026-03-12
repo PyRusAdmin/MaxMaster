@@ -2,14 +2,15 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from loguru import logger
-from pymax.filters import BaseFilter
-from pymax.protocols import ClientProtocol
-from pymax.types import Chat, Message, ReactionInfo
+
+from PyMax.src.pymax import Message, ReactionInfo, Chat
+from PyMax.src.pymax.filters import BaseFilter
+from PyMax.src.pymax.protocols import ClientProtocol
 
 
 class HandlerMixin(ClientProtocol):
     def on_message(
-        self, filter: BaseFilter[Message] | None = None
+            self, filter: BaseFilter[Message] | None = None
     ) -> Callable[
         [Callable[[Any], Any | Awaitable[Any]]],
         Callable[[Any], Any | Awaitable[Any]],
@@ -36,7 +37,7 @@ class HandlerMixin(ClientProtocol):
         """
 
         def decorator(
-            handler: Callable[[Any], Any | Awaitable[Any]],
+                handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_handlers.append((handler, filter))
             logger.debug(f"on_message handler set: {handler}, filter: {filter}")
@@ -45,7 +46,7 @@ class HandlerMixin(ClientProtocol):
         return decorator
 
     def on_message_edit(
-        self, filter: BaseFilter[Message] | None = None
+            self, filter: BaseFilter[Message] | None = None
     ) -> Callable[
         [Callable[[Any], Any | Awaitable[Any]]],
         Callable[[Any], Any | Awaitable[Any]],
@@ -60,7 +61,7 @@ class HandlerMixin(ClientProtocol):
         """
 
         def decorator(
-            handler: Callable[[Any], Any | Awaitable[Any]],
+                handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_edit_handlers.append((handler, filter))
             logger.debug(f"on_message_edit handler set: {handler}, filter: {filter}")
@@ -69,7 +70,7 @@ class HandlerMixin(ClientProtocol):
         return decorator
 
     def on_message_delete(
-        self, filter: BaseFilter[Message] | None = None
+            self, filter: BaseFilter[Message] | None = None
     ) -> Callable[
         [Callable[[Any], Any | Awaitable[Any]]],
         Callable[[Any], Any | Awaitable[Any]],
@@ -84,7 +85,7 @@ class HandlerMixin(ClientProtocol):
         """
 
         def decorator(
-            handler: Callable[[Any], Any | Awaitable[Any]],
+                handler: Callable[[Any], Any | Awaitable[Any]],
         ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_delete_handlers.append((handler, filter))
             logger.debug(f"on_message_delete handler set: {handler}, filter: {filter}")
@@ -93,8 +94,8 @@ class HandlerMixin(ClientProtocol):
         return decorator
 
     def on_reaction_change(
-        self,
-        handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],
+            self,
+            handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],
     ) -> Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик изменения реакций на сообщения.
@@ -109,7 +110,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def on_chat_update(
-        self, handler: Callable[[Chat], Any | Awaitable[Any]]
+            self, handler: Callable[[Chat], Any | Awaitable[Any]]
     ) -> Callable[[Chat], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик обновления информации о чате.
@@ -124,7 +125,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def on_raw_receive(
-        self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]
+            self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]
     ) -> Callable[[dict[str, Any]], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик для получения необработанных данных от сервера.
@@ -139,7 +140,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def on_start(
-        self, handler: Callable[[], Any | Awaitable[Any]]
+            self, handler: Callable[[], Any | Awaitable[Any]]
     ) -> Callable[[], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик, вызываемый при старте клиента.
@@ -174,7 +175,7 @@ class HandlerMixin(ClientProtocol):
         """
 
         def decorator(
-            handler: Callable[[], Any | Awaitable[Any]],
+                handler: Callable[[], Any | Awaitable[Any]],
         ) -> Callable[[], Any | Awaitable[Any]]:
             self._scheduled_tasks.append((handler, seconds + minutes * 60 + hours * 3600))
             logger.debug(
@@ -185,9 +186,9 @@ class HandlerMixin(ClientProtocol):
         return decorator
 
     def add_message_handler(
-        self,
-        handler: Callable[[Message], Any | Awaitable[Any]],
-        filter: BaseFilter[Message] | None = None,
+            self,
+            handler: Callable[[Message], Any | Awaitable[Any]],
+            filter: BaseFilter[Message] | None = None,
     ) -> Callable[[Message], Any | Awaitable[Any]]:
         """
         Добавляет обработчик входящих сообщений.
@@ -204,7 +205,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def add_on_start_handler(
-        self, handler: Callable[[], Any | Awaitable[Any]]
+            self, handler: Callable[[], Any | Awaitable[Any]]
     ) -> Callable[[], Any | Awaitable[Any]]:
         """
         Добавляет обработчик, вызываемый при старте клиента.
@@ -219,8 +220,8 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def add_reaction_change_handler(
-        self,
-        handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],
+            self,
+            handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],
     ) -> Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]:
         """
         Добавляет обработчик изменения реакций на сообщения.
@@ -237,7 +238,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def add_chat_update_handler(
-        self, handler: Callable[[Chat], Any | Awaitable[Any]]
+            self, handler: Callable[[Chat], Any | Awaitable[Any]]
     ) -> Callable[[Chat], Any | Awaitable[Any]]:
         """
         Добавляет обработчик обновления информации о чате.
@@ -252,7 +253,7 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def add_raw_receive_handler(
-        self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]
+            self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]
     ) -> Callable[[dict[str, Any]], Any | Awaitable[Any]]:
         """
         Добавляет обработчик для получения необработанных данных от сервера.
@@ -267,9 +268,9 @@ class HandlerMixin(ClientProtocol):
         return handler
 
     def add_scheduled_task(
-        self,
-        handler: Callable[[], Any | Awaitable[Any]],
-        interval: float,
+            self,
+            handler: Callable[[], Any | Awaitable[Any]],
+            interval: float,
     ) -> Callable[[], Any | Awaitable[Any]]:
         """
         Добавляет периодическую задачу.

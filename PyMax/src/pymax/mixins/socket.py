@@ -6,18 +6,16 @@ from typing import Any
 
 import lz4.block
 import msgpack
-from pymax.exceptions import SocketNotConnectedError, SocketSendError
-from pymax.interfaces import BaseTransport
-from pymax.payloads import UserAgentPayload
-from pymax.static.constant import (
-    DEFAULT_TIMEOUT,
-    RECV_LOOP_BACKOFF_DELAY,
-)
-from pymax.static.enum import Opcode
-from pymax.types import (
-    Chat,
-)
+
 from typing_extensions import override
+
+from PyMax.src.pymax import SocketNotConnectedError, SocketSendError, Chat
+from PyMax.src.pymax.interfaces import BaseTransport
+from loguru import logger
+
+from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.static.constant import RECV_LOOP_BACKOFF_DELAY, DEFAULT_TIMEOUT
+from PyMax.src.pymax.static.enum import Opcode
 
 
 class SocketMixin(BaseTransport):
@@ -36,7 +34,7 @@ class SocketMixin(BaseTransport):
         packed_len = int.from_bytes(data[6:10], "big", signed=False)
         comp_flag = packed_len >> 24
         payload_length = packed_len & 0xFFFFFF
-        payload_bytes = data[10 : 10 + payload_length]
+        payload_bytes = data[10: 10 + payload_length]
 
         payload = None
         if payload_bytes:
@@ -62,12 +60,12 @@ class SocketMixin(BaseTransport):
         }
 
     def _pack_packet(
-        self,
-        ver: int,
-        cmd: int,
-        seq: int,
-        opcode: int,
-        payload: dict[str, Any],
+            self,
+            ver: int,
+            cmd: int,
+            seq: int,
+            opcode: int,
+            payload: dict[str, Any],
     ) -> bytes:
         ver_b = ver.to_bytes(1, "big")
         cmd_b = cmd.to_bytes(2, "big")
@@ -127,7 +125,7 @@ Socket connections may be unstable, SSL issues are possible.
         return bytes(buf)
 
     async def _parse_header(
-        self, loop: asyncio.AbstractEventLoop, sock: socket.socket
+            self, loop: asyncio.AbstractEventLoop, sock: socket.socket
     ) -> bytes | None:
         header = await loop.run_in_executor(None, lambda: self._recv_exactly(sock=sock, n=10))
         if not header or len(header) < 10:
@@ -141,7 +139,7 @@ Socket connections may be unstable, SSL issues are possible.
         return header
 
     async def _recv_data(
-        self, loop: asyncio.AbstractEventLoop, header: bytes, sock: socket.socket
+            self, loop: asyncio.AbstractEventLoop, header: bytes, sock: socket.socket
     ) -> list[dict[str, Any]] | None:
         packed_len = int.from_bytes(header[6:10], "big", signed=False)
         payload_length = packed_len & 0xFFFFFF
@@ -222,13 +220,8 @@ Socket connections may be unstable, SSL issues are possible.
                 await asyncio.sleep(RECV_LOOP_BACKOFF_DELAY)
 
     @override
-    async def _send_and_wait(
-        self,
-        opcode: Opcode,
-        payload: dict[str, Any],
-        cmd: int = 0,
-        timeout: float = DEFAULT_TIMEOUT,
-    ) -> dict[str, Any]:
+    async def _send_and_wait(self, opcode: Opcode, payload: dict[str, Any], cmd: int = 0,
+                             timeout: float = DEFAULT_TIMEOUT, ) -> dict[str, Any]:
         if not self.is_connected or self._socket is None:
             raise SocketNotConnectedError
 

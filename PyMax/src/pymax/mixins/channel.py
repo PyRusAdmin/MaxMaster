@@ -1,18 +1,10 @@
-from pymax.exceptions import ResponseStructureError
-from pymax.payloads import (
-    GetGroupMembersPayload,
-    JoinChatPayload,
-    ResolveLinkPayload,
-    SearchGroupMembersPayload,
-)
-from pymax.protocols import ClientProtocol
-from pymax.static.constant import (
-    DEFAULT_CHAT_MEMBERS_LIMIT,
-    DEFAULT_MARKER_VALUE,
-)
-from pymax.static.enum import Opcode
-from pymax.types import Channel, Member
-from pymax.utils import MixinsUtils
+from PyMax.src.pymax import Channel, Member, ResponseStructureError
+from PyMax.src.pymax.payloads import ResolveLinkPayload, JoinChatPayload, GetGroupMembersPayload, \
+    SearchGroupMembersPayload
+from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.constant import DEFAULT_MARKER_VALUE, DEFAULT_CHAT_MEMBERS_LIMIT
+from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class ChannelMixin(ClientProtocol):
@@ -61,7 +53,7 @@ class ChannelMixin(ClientProtocol):
         return channel
 
     async def _query_members(
-        self, payload: GetGroupMembersPayload | SearchGroupMembersPayload
+            self, payload: GetGroupMembersPayload | SearchGroupMembersPayload
     ) -> tuple[list[Member], int | None]:
         data = await self._send_and_wait(
             opcode=Opcode.CHAT_MEMBERS,
@@ -92,10 +84,10 @@ class ChannelMixin(ClientProtocol):
         return member_list, marker
 
     async def load_members(
-        self,
-        chat_id: int,
-        marker: int | None = DEFAULT_MARKER_VALUE,
-        count: int = DEFAULT_CHAT_MEMBERS_LIMIT,
+            self,
+            chat_id: int,
+            marker: int | None = DEFAULT_MARKER_VALUE,
+            count: int = DEFAULT_CHAT_MEMBERS_LIMIT,
     ) -> tuple[list[Member], int | None]:
         """
         Загружает членов канала
