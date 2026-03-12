@@ -14,19 +14,27 @@ from loguru import logger
 from typing_extensions import override
 
 from PyMax.src.pymax.crud import Database
+from PyMax.src.pymax.exceptions import InvalidPhoneError, WebSocketNotConnectedError, SocketNotConnectedError
+from PyMax.src.pymax.filters import BaseFilter
+from PyMax.src.pymax.interfaces import BaseClient
+from PyMax.src.pymax.mixins.api import ApiMixin
+from PyMax.src.pymax.mixins.handler import HandlerMixin
 from PyMax.src.pymax.mixins.socket import SocketMixin
 from PyMax.src.pymax.mixins.websocket import WebSocketMixin
-# from crud import Database
-from exceptions import (
-    InvalidPhoneError,
-    SocketNotConnectedError,
-    WebSocketNotConnectedError,
-)
-from filters import BaseFilter
-from interfaces import BaseClient
+from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.static.constant import HOST, PORT, WEBSOCKET_URI, SESSION_STORAGE_DB
 
-from payloads import UserAgentPayload
-from static.constant import HOST, PORT, SESSION_STORAGE_DB, WEBSOCKET_URI
+# from crud import Database
+# from exceptions import (
+#     InvalidPhoneError,
+#     SocketNotConnectedError,
+#     WebSocketNotConnectedError,
+# )
+# from filters import BaseFilter
+# from interfaces import BaseClient
+
+# from payloads import UserAgentPayload
+# from static.constant import HOST, PORT, SESSION_STORAGE_DB, WEBSOCKET_URI
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -36,7 +44,7 @@ if TYPE_CHECKING:
     from types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 
 
-class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
+class MaxClient(ApiMixin, HandlerMixin, WebSocketMixin, BaseClient):
     allowed_device_types: set[str] = {"WEB"}
     """
     Основной клиент для работы с WebSocket API сервиса Max.
@@ -73,32 +81,20 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
     :raises InvalidPhoneError: Если формат номера телефона неверный.
     """
 
-    def __init__(
-            self,
-            phone: str,
-            uri: str = WEBSOCKET_URI,
-            session_name: str = SESSION_STORAGE_DB,
-            headers: UserAgentPayload | None = None,
-            token: str | None = None,
-            send_fake_telemetry: bool = True,
-            host: str = HOST,
-            port: int = PORT,
-            proxy: str | Literal[True] | None = None,
-            work_dir: str = ".",
-            registration: bool = False,
-            first_name: str = "",
-            last_name: str | None = None,
-            device_id: UUID | None = None,
-            reconnect: bool = True,
-            reconnect_delay: float = 1.0,
-    ) -> None:
+    def __init__(self, phone: str, uri: str = WEBSOCKET_URI, session_name: str = SESSION_STORAGE_DB,
+                 headers: UserAgentPayload | None = None, token: str | None = None, send_fake_telemetry: bool = True,
+                 host: str = HOST, port: int = PORT,
+                 proxy: str | Literal[True] | None = None,
+                 work_dir: str = ".", registration: bool = False, first_name: str = "",
+                 last_name: str | None = None,
+                 device_id: UUID | None = None, reconnect: bool = True, reconnect_delay: float = 1.0, ) -> None:
         # Инициализация логгера loguru
         self.logger = logger
 
         self.uri: str = uri
         self.phone: str = phone
-        if not self._check_phone():
-            raise InvalidPhoneError(self.phone)
+        # if not self._check_phone():
+        #     raise InvalidPhoneError(self.phone)
         self.host: str = host
         self.port: int = port
         self.registration: bool = registration

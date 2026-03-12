@@ -1,11 +1,11 @@
 from typing import Any, Literal
 from loguru import logger
 
-from PyMax.src.pymax import User, Session, Contact
 from PyMax.src.pymax.exceptions import Error, ResponseStructureError, ResponseError
 from PyMax.src.pymax.payloads import FetchContactsPayload, SearchByPhonePayload, ContactActionPayload
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.enum import Opcode, ContactAction
+from PyMax.src.pymax.types import User, Session, Contact
 from PyMax.src.pymax.utils import MixinsUtils
 
 
