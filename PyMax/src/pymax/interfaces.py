@@ -12,38 +12,20 @@ from typing_extensions import Self
 
 from pymax.exceptions import SocketNotConnectedError, WebSocketNotConnectedError
 from pymax.filters import BaseFilter
-from pymax.formatter import ColoredFormatter
 from pymax.payloads import BaseWebSocketMessage, SyncPayload, UserAgentPayload
 from pymax.protocols import ClientProtocol
 from pymax.static.constant import DEFAULT_PING_INTERVAL, DEFAULT_TIMEOUT
 from pymax.static.enum import Opcode
 from pymax.types import (
-    Channel,
-    Chat,
-    ChatType,
-    Dialog,
-    Me,
-    Message,
-    MessageStatus,
-    ReactionCounter,
-    ReactionInfo,
-    User,
+    Channel, Chat, ChatType, Dialog, Me, Message, MessageStatus, ReactionCounter, ReactionInfo, User,
 )
 from pymax.utils import MixinsUtils
 
 
 class BaseClient(ClientProtocol):
     def _setup_logger(self) -> None:
-        if not self.logger.handlers:
-            if not self.logger.level:
-                self.logger.setLevel(logging.INFO)
-            handler = logging.StreamHandler()
-            formatter = ColoredFormatter(
-                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        """Настраивает логгер для клиента."""
+        pass  # Логгер настраивается пользователем (например, loguru)
 
     async def _safe_execute(self, coro, *, context: str = "unknown") -> Any:
         try:

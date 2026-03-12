@@ -95,7 +95,6 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
             reconnect: bool = True,
             reconnect_delay: float = 1.0,
     ) -> None:
-        # self.logger = logger or logging.getLogger(f"{__name__}")
         self.uri: str = uri
         self.phone: str = phone
         if not self._check_phone():
