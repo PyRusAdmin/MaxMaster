@@ -148,7 +148,7 @@ class UserMixin(ClientProtocol):
         :rtype: list[Session]
         :raises Error: Если произошла ошибка при получении данных.
         """
-        self.logger.info("Fetching sessions")
+        logger.info("Fetching sessions")
 
         data = await self._send_and_wait(opcode=Opcode.SESSIONS_INFO, payload={})
 

@@ -118,7 +118,7 @@ class AuthMixin(ClientProtocol):
         :rtype: dict[str, Any]
         :raises Error: Если сервер вернул ошибку.
         """
-        self.logger.info("Sending verification code")
+        logger.info("Sending verification code")
 
         payload = SendCodePayload(
             token=token,
@@ -131,7 +131,7 @@ class AuthMixin(ClientProtocol):
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
-        self.logger.debug(
+        logger.debug(
             "Send code response opcode=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
@@ -140,7 +140,7 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            self.logger.error("Invalid payload data received")
+            logger.error("Invalid payload data received")
             raise ValueError("Invalid payload data received")
 
     def _print_qr(self, qr_link: str) -> None:
@@ -156,14 +156,14 @@ class AuthMixin(ClientProtocol):
         qr.print_ascii()
 
     async def _request_qr_login(self) -> dict[str, Any]:
-        self.logger.info("Requesting QR login data")
+        logger.info("Requesting QR login data")
 
         data = await self._send_and_wait(opcode=Opcode.GET_QR, payload={})
 
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
-        self.logger.debug(
+        logger.debug(
             "QR login data response opcode=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
@@ -172,7 +172,7 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            self.logger.error("Invalid payload data received")
+            logger.error("Invalid payload data received")
             raise ValueError("Invalid payload data received")
 
     def _validate_version(self, version: str, min_version: str) -> bool:
@@ -182,24 +182,24 @@ class AuthMixin(ClientProtocol):
         return version_tuple(version) >= version_tuple(min_version)
 
     async def _login(self) -> None:
-        self.logger.info("Starting login flow")
+        logger.info("Starting login flow")
 
         if self.user_agent.device_type == DeviceType.WEB.value and self._ws:
             if not self._validate_version(self.user_agent.app_version, "25.12.13"):
-                self.logger.error("Your app version is too old")
+                logger.error("Your app version is too old")
                 raise ValueError("Your app version is too old")
 
             login_resp = await self._login_by_qr()
         else:
             temp_token = await self.request_code(self.phone)
             if not temp_token or not isinstance(temp_token, str):
-                self.logger.critical("Failed to request code: token missing")
+                logger.critical("Failed to request code: token missing")
                 raise ValueError("Failed to request code")
 
             print("Введите код: ", end="", flush=True)
             code = await asyncio.to_thread(lambda: sys.stdin.readline().strip())
             if len(code) != 6 or not code.isdigit():
-                self.logger.error("Invalid code format entered")
+                logger.error("Invalid code format entered")
                 raise ValueError("Invalid code format")
 
             login_resp = await self._send_code(code, temp_token)
@@ -213,15 +213,15 @@ class AuthMixin(ClientProtocol):
             token = login_attrs.get("token")
 
         if not token:
-            self.logger.critical("Failed to login, token not received")
+            logger.critical("Failed to login, token not received")
             raise ValueError("Failed to login, token not received")
 
         self._token = token
         self._database.update_auth_token((self._device_id), self._token)
-        self.logger.info("Login successful, token saved to database")
+        logger.info("Login successful, token saved to database")
 
     async def _poll_qr_login(self, track_id: str, poll_interval: int) -> bool:
-        self.logger.info("Polling for QR login confirmation")
+        logger.info("Polling for QR login confirmation")
 
         while True:
             data = await self._send_and_wait(
@@ -236,11 +236,11 @@ class AuthMixin(ClientProtocol):
             status = payload.get("status")
 
             if not status:
-                self.logger.warning("No status in QR login response")
+                logger.warning("No status in QR login response")
                 continue
 
             if status.get("loginAvailable"):
-                self.logger.info("QR login confirmed")
+                logger.info("QR login confirmed")
                 return True
             else:
                 exp_at = status.get("expiresAt")
@@ -249,20 +249,20 @@ class AuthMixin(ClientProtocol):
                     and isinstance(exp_at, (int, float))
                     and exp_at < datetime.datetime.now().timestamp() * 1000
                 ):
-                    self.logger.warning("QR code expired")
+                    logger.warning("QR code expired")
                     return False
 
             await asyncio.sleep(poll_interval / 1000)
 
     async def _get_qr_login_data(self, track_id: str) -> dict[str, Any]:
-        self.logger.info("Getting QR login data")
+        logger.info("Getting QR login data")
 
         data = await self._send_and_wait(
             opcode=Opcode.LOGIN_BY_QR,
             payload={"trackId": track_id},
         )
 
-        self.logger.debug(
+        logger.debug(
             "QR login data response opcode=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
@@ -271,7 +271,7 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            self.logger.error("Invalid payload data received")
+            logger.error("Invalid payload data received")
             raise ValueError("Invalid payload data received")
 
     async def _login_by_qr(self) -> dict[str, Any]:
@@ -283,10 +283,10 @@ class AuthMixin(ClientProtocol):
         expires_at = data.get("expiresAt")
 
         if not poll_interval or not link or not track_id or not expires_at:
-            self.logger.critical("Invalid QR login data received")
+            logger.critical("Invalid QR login data received")
             raise ValueError("Invalid QR login data received")
 
-        self.logger.info("Starting QR login flow")
+        logger.info("Starting QR login flow")
         self._print_qr(link)
 
         poll_qr_task = asyncio.create_task(self._poll_qr_login(track_id, poll_interval))
@@ -302,7 +302,7 @@ class AuthMixin(ClientProtocol):
 
             if now_ms >= expires_at:
                 poll_qr_task.cancel()
-                self.logger.error("QR code expired before confirmation")
+                logger.error("QR code expired before confirmation")
                 raise RuntimeError("QR code expired before confirmation")
 
             if poll_qr_task in done:
@@ -310,21 +310,21 @@ class AuthMixin(ClientProtocol):
                 if exc is not None:
                     raise exc
                 elif poll_qr_task.result():
-                    self.logger.info("QR login successful")
+                    logger.info("QR login successful")
 
                     data = await self._get_qr_login_data(track_id)
 
                     return data
 
                 else:
-                    self.logger.error("QR login failed or expired")
+                    logger.error("QR login failed or expired")
                     raise RuntimeError("QR login failed or expired")
 
     async def _submit_reg_info(
         self, first_name: str, last_name: str | None, token: str
     ) -> dict[str, Any]:
         try:
-            self.logger.info("Submitting registration info")
+            logger.info("Submitting registration info")
 
             payload = RegisterPayload(
                 first_name=first_name,
@@ -336,7 +336,7 @@ class AuthMixin(ClientProtocol):
             if data.get("payload", {}).get("error"):
                 MixinsUtils.handle_error(data)
 
-            self.logger.debug(
+            logger.debug(
                 "Registration info response opcode=%s seq=%s",
                 data.get("opcode"),
                 data.get("seq"),
@@ -346,43 +346,43 @@ class AuthMixin(ClientProtocol):
                 return payload_data
             raise ValueError("Invalid payload data received")
         except Exception:
-            self.logger.error("Submit registration info failed", exc_info=True)
+            logger.error("Submit registration info failed", exc_info=True)
             raise RuntimeError("Submit registration info failed")
 
     async def _register(self, first_name: str, last_name: str | None = None) -> None:
-        self.logger.info("Starting registration flow")
+        logger.info("Starting registration flow")
 
         request_code_payload = await self.request_code(self.phone)
         temp_token = request_code_payload
 
         if not temp_token or not isinstance(temp_token, str):
-            self.logger.critical("Failed to request code: token missing")
+            logger.critical("Failed to request code: token missing")
             raise ValueError("Failed to request code")
 
         print("Введите код: ", end="", flush=True)
         code = await asyncio.to_thread(lambda: sys.stdin.readline().strip())
         if len(code) != 6 or not code.isdigit():
-            self.logger.error("Invalid code format entered")
+            logger.error("Invalid code format entered")
             raise ValueError("Invalid code format")
 
         registration_response = await self._send_code(code, temp_token)
         token = registration_response.get("tokenAttrs", {}).get("REGISTER", {}).get("token", "")
         if not token:
-            self.logger.critical("Failed to register, token not received")
+            logger.critical("Failed to register, token not received")
             raise ValueError("Failed to register, token not received")
 
         data = await self._submit_reg_info(first_name, last_name, token)
         self._token = data.get("token")
         if not self._token:
-            self.logger.critical("Failed to register, token not received")
+            logger.critical("Failed to register, token not received")
             raise ValueError("Failed to register, token not received")
 
-        self.logger.info("Registration successful")
-        self.logger.info("Token: %s", self._token)
-        self.logger.warning(
+        logger.info("Registration successful")
+        logger.info("Token: %s", self._token)
+        logger.warning(
             "IMPORTANT: Use this token ONLY with device_type='DESKTOP' and the special init user agent"
         )
-        self.logger.warning("This token MUST NOT be used in web clients")
+        logger.warning("This token MUST NOT be used in web clients")
 
     async def _check_password(self, password: str, track_id: str) -> dict[str, Any] | None:
         payload = CheckPasswordChallengePayload(
@@ -398,11 +398,11 @@ class AuthMixin(ClientProtocol):
         return token_attrs
 
     async def _two_factor_auth(self, password_challenge: dict[str, Any]) -> None:
-        self.logger.info("Starting two-factor authentication flow")
+        logger.info("Starting two-factor authentication flow")
 
         track_id = password_challenge.get("trackId")
         if not track_id:
-            self.logger.critical("Password challenge missing track ID")
+            logger.critical("Password challenge missing track ID")
             raise ValueError("Password challenge missing track ID")
 
         hint = password_challenge.get("hint", "No hint provided")
@@ -412,19 +412,19 @@ class AuthMixin(ClientProtocol):
                 lambda: input(f"Введите пароль (Подсказка: {hint}): ").strip()
             )
             if not password:
-                self.logger.warning("Password is empty, please try again")
+                logger.warning("Password is empty, please try again")
                 continue
 
             token_attrs = await self._check_password(password, track_id)
             if not token_attrs:
-                self.logger.error("Incorrect password, please try again")
+                logger.error("Incorrect password, please try again")
                 continue
 
             login_attrs = token_attrs.get("LOGIN", {})
             if login_attrs:
                 token = login_attrs.get("token")
                 if not token:
-                    self.logger.critical("Login response did not contain tokenAttrs.LOGIN.token")
+                    logger.critical("Login response did not contain tokenAttrs.LOGIN.token")
                     raise ValueError("Login response did not contain tokenAttrs.LOGIN.token")
                 return token
 
@@ -467,7 +467,7 @@ class AuthMixin(ClientProtocol):
                 lambda: input(f"Введите код подтверждения, отправленный на {email}: ").strip()
             )
             if not verify_code:
-                self.logger.warning("Verification code is empty, please try again")
+                logger.warning("Verification code is empty, please try again")
                 continue
 
             payload = SendEmailCodePayload(
@@ -481,7 +481,7 @@ class AuthMixin(ClientProtocol):
             )
 
             if data.get("payload", {}).get("error"):
-                self.logger.error("Incorrect verification code, please try again")
+                logger.error("Incorrect verification code, please try again")
                 continue
 
             return True
@@ -507,7 +507,7 @@ class AuthMixin(ClientProtocol):
         :return: None
         :rtype: None
         """
-        self.logger.info("Setting account password")
+        logger.info("Setting account password")
 
         payload = CreateTrackPayload().model_dump(by_alias=True)
 
@@ -521,22 +521,22 @@ class AuthMixin(ClientProtocol):
 
         track_id = data.get("payload", {}).get("trackId")
         if not track_id:
-            self.logger.critical("Failed to create password track: track ID missing")
+            logger.critical("Failed to create password track: track ID missing")
             raise ValueError("Failed to create password track")
 
         while True:
             if not password:
                 password = await asyncio.to_thread(lambda: input("Введите пароль: ").strip())
                 if not password:
-                    self.logger.warning("Password is empty, please try again")
+                    logger.warning("Password is empty, please try again")
                     continue
 
             success = await self._set_password(password, track_id)
             if success:
-                self.logger.info("Password set successfully")
+                logger.info("Password set successfully")
                 break
             else:
-                self.logger.error("Failed to set password, please try again")
+                logger.error("Failed to set password, please try again")
 
         while True:
             if hint is UNSET:
@@ -551,10 +551,10 @@ class AuthMixin(ClientProtocol):
 
             success = await self._set_hint(hint, track_id)
             if success:
-                self.logger.info("Password hint set successfully")
+                logger.info("Password hint set successfully")
                 break
             else:
-                self.logger.error("Failed to set password hint, please try again")
+                logger.error("Failed to set password hint, please try again")
 
         while True:
             if not email:
@@ -562,12 +562,12 @@ class AuthMixin(ClientProtocol):
                     lambda: input("Введите email для восстановления пароля: ").strip()
                 )
                 if not email:
-                    self.logger.warning("Email is empty, please try again")
+                    logger.warning("Email is empty, please try again")
                     continue
 
             success = await self._set_email(email, track_id)
             if success:
-                self.logger.info("Recovery email set successfully")
+                logger.info("Recovery email set successfully")
                 break
 
         payload = SetTwoFactorPayload(

@@ -215,10 +215,10 @@ Socket connections may be unstable, SSL issues are possible.
                     await self._dispatch_incoming(data_item)
 
             except asyncio.CancelledError:
-                self.logger.debug("Recv loop cancelled")
+                logger.debug("Recv loop cancelled")
                 raise
             except Exception:
-                self.logger.exception("Error in recv_loop; backing off briefly")
+                logger.exception("Error in recv_loop; backing off briefly")
                 await asyncio.sleep(RECV_LOOP_BACKOFF_DELAY)
 
     @override
@@ -244,7 +244,7 @@ Socket connections may be unstable, SSL issues are possible.
 
         self._pending[seq_key] = fut
         try:
-            self.logger.debug(
+            logger.debug(
                 "Sending frame opcode=%s cmd=%s seq=%s",
                 opcode,
                 cmd,
@@ -259,7 +259,7 @@ Socket connections may be unstable, SSL issues are possible.
             )
             await loop.run_in_executor(None, lambda: sock.sendall(packet))
             data = await asyncio.wait_for(fut, timeout=timeout)
-            self.logger.debug(
+            logger.debug(
                 "Received frame for seq=%s opcode=%s",
                 data.get("seq"),
                 data.get("opcode"),
@@ -267,19 +267,19 @@ Socket connections may be unstable, SSL issues are possible.
             return data
 
         except (ssl.SSLEOFError, ssl.SSLError, ConnectionError) as conn_err:
-            self.logger.warning("Connection lost, reconnecting...")
+            logger.warning("Connection lost, reconnecting...")
             self.is_connected = False
             try:
                 await self.connect(self.user_agent)
             except Exception as exc:
-                self.logger.exception("Reconnect failed")
+                logger.exception("Reconnect failed")
                 raise exc from conn_err
             raise SocketNotConnectedError from conn_err
         except asyncio.TimeoutError:
-            self.logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
+            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
             raise SocketSendError from None
         except Exception as exc:
-            self.logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
+            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
             raise SocketSendError from exc
 
         finally:

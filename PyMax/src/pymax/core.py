@@ -325,10 +325,10 @@ class MaxClient(ApiMixin, WebSocketMixin, BaseClient):
                 logger.info("Reconnect disabled or stop requested — exiting start()")
                 break
 
-            self.logger.info("Reconnect enabled — restarting client")
+            logger.info("Reconnect enabled — restarting client")
             await asyncio.sleep(self.reconnect_delay)
 
-        self.logger.info("Client exited cleanly")
+        logger.info("Client exited cleanly")
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
@@ -344,9 +344,9 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 await self._recv_task
             except asyncio.CancelledError:
-                self.logger.debug("Socket recv_task cancelled")
+                logger.debug("Socket recv_task cancelled")
             except Exception as e:
-                self.logger.exception("Socket recv_task failed: %s", e)
+                logger.exception("Socket recv_task failed: %s", e)
 
     @override
     async def _cleanup_client(self):
@@ -357,7 +357,7 @@ class SocketMaxClient(SocketMixin, MaxClient):
             except asyncio.CancelledError:
                 pass
             except Exception:
-                self.logger.debug(
+                logger.debug(
                     "Background task raised during cancellation (socket)",
                     exc_info=True,
                 )
@@ -384,8 +384,8 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 self._socket.close()
             except Exception:
-                self.logger.debug("Error closing socket during cleanup", exc_info=True)
+                logger.debug("Error closing socket during cleanup", exc_info=True)
             self._socket = None
 
         self.is_connected = False
-        self.logger.info("Client start() cleaned up (socket)")
+        logger.info("Client start() cleaned up (socket)")

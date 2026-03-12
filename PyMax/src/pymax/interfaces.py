@@ -101,19 +101,19 @@ class BaseClient(ClientProtocol):
         Выводит в лог текущий статус клиента для отладки.
         """
         logger.info("Pymax")
-        self.logger.info("---------")
-        self.logger.info(f"Connected: {self.is_connected}")
+        logger.info("---------")
+        logger.info(f"Connected: {self.is_connected}")
         if self.me is not None:
-            self.logger.info(f"Me: {self.me.names[0].first_name} ({self.me.id})")
+            logger.info(f"Me: {self.me.names[0].first_name} ({self.me.id})")
         else:
-            self.logger.info("Me: N/A")
-        self.logger.info(f"Dialogs: {len(self.dialogs)}")
-        self.logger.info(f"Chats: {len(self.chats)}")
-        self.logger.info(f"Channels: {len(self.channels)}")
-        self.logger.info(f"Users cached: {len(self._users)}")
-        self.logger.info(f"Background tasks: {len(self._background_tasks)}")
-        self.logger.info(f"Scheduled tasks: {len(self._scheduled_tasks)}")
-        self.logger.info("---------")
+            logger.info("Me: N/A")
+        logger.info(f"Dialogs: {len(self.dialogs)}")
+        logger.info(f"Chats: {len(self.chats)}")
+        logger.info(f"Channels: {len(self.channels)}")
+        logger.info(f"Users cached: {len(self._users)}")
+        logger.info(f"Background tasks: {len(self._background_tasks)}")
+        logger.info(f"Scheduled tasks: {len(self._scheduled_tasks)}")
+        logger.info("---------")
 
     async def __aenter__(self) -> Self:
         self._create_safe_task(self.start(), name="start")
@@ -179,7 +179,7 @@ class BaseTransport(ClientProtocol):
             payload=payload,
         ).model_dump(by_alias=True)
 
-        self.logger.debug("make_message opcode=%s cmd=%s seq=%s", opcode, cmd, self._seq)
+        logger.debug("make_message opcode=%s cmd=%s seq=%s", opcode, cmd, self._seq)
         return msg
 
     async def _send_interactive_ping(self) -> None:
@@ -190,16 +190,16 @@ class BaseTransport(ClientProtocol):
                     payload={"interactive": True},
                     cmd=0,
                 )
-                self.logger.debug("Interactive ping sent successfully")
+                logger.debug("Interactive ping sent successfully")
             except SocketNotConnectedError:
-                self.logger.debug("Socket disconnected, exiting ping loop")
+                logger.debug("Socket disconnected, exiting ping loop")
                 break
             except Exception:
-                self.logger.warning("Interactive ping failed")
+                logger.warning("Interactive ping failed")
             await asyncio.sleep(DEFAULT_PING_INTERVAL)
 
     async def _handshake(self, user_agent: UserAgentPayload) -> dict[str, Any]:
-        self.logger.debug(
+        logger.debug(
             "Sending handshake with user_agent keys=%s",
             user_agent.model_dump(by_alias=True).keys(),
         )
@@ -213,7 +213,7 @@ class BaseTransport(ClientProtocol):
         if resp.get("payload", {}).get("error"):
             MixinsUtils.handle_error(resp)
 
-        self.logger.info("Handshake completed")
+        logger.info("Handshake completed")
         return resp
 
     async def _process_message_handler(
@@ -237,7 +237,7 @@ class BaseTransport(ClientProtocol):
         try:
             return json.loads(raw)
         except Exception:
-            self.logger.warning("JSON parse error", exc_info=True)
+            logger.warning("JSON parse error", exc_info=True)
             return None
 
     def _handle_pending(self, seq: int | None, data: dict) -> bool:
@@ -245,7 +245,7 @@ class BaseTransport(ClientProtocol):
             fut = self._pending.get(seq)
             if fut and not fut.done():
                 fut.set_result(data)
-                self.logger.debug("Matched response for pending seq=%s", seq)
+                logger.debug("Matched response for pending seq=%s", seq)
                 return True
         return False
 
@@ -254,7 +254,7 @@ class BaseTransport(ClientProtocol):
             try:
                 self._incoming.put_nowait(data)
             except asyncio.QueueFull:
-                self.logger.warning(
+                logger.warning(
                     "Incoming queue full; dropping message seq=%s", data.get("seq")
                 )
 
@@ -268,7 +268,7 @@ class BaseTransport(ClientProtocol):
                 fut = self._file_upload_waiters.pop(id_, None)
                 if fut and not fut.done():
                     fut.set_result(data)
-                    self.logger.debug("Fulfilled file upload waiter for %s=%s", key, id_)
+                    logger.debug("Fulfilled file upload waiter for %s=%s", key, id_)
 
     async def _send_notification_response(self, chat_id: int, message_id: str) -> None:
         if self._socket is not None and self.is_connected:
@@ -278,7 +278,7 @@ class BaseTransport(ClientProtocol):
             payload={"chatId": chat_id, "messageId": message_id},
             cmd=0,
         )
-        self.logger.debug(
+        logger.debug(
             "Sent NOTIF_MESSAGE_RECEIVED for chat_id=%s message_id=%s", chat_id, message_id
         )
 
@@ -331,7 +331,7 @@ class BaseTransport(ClientProtocol):
                 if asyncio.iscoroutine(result):
                     await result
             except Exception as e:
-                self.logger.exception("Error in on_reaction_change_handler: %s", e)
+                logger.exception("Error in on_reaction_change_handler: %s", e)
 
     async def _handle_chat_updates(self, data: dict) -> None:
         if data.get("opcode") != Opcode.NOTIF_CHAT:
@@ -349,7 +349,7 @@ class BaseTransport(ClientProtocol):
                 if asyncio.iscoroutine(result):
                     await result
             except Exception as e:
-                self.logger.exception("Error in on_chat_update_handler: %s", e)
+                logger.exception("Error in on_chat_update_handler: %s", e)
 
     async def _handle_raw_receive(self, data: dict[str, Any]) -> None:
         for handler in self._on_raw_receive_handlers:
@@ -358,7 +358,7 @@ class BaseTransport(ClientProtocol):
                 if asyncio.iscoroutine(result):
                     await result
             except Exception as e:
-                self.logger.exception("Error in on_raw_receive_handler: %s", e)
+                logger.exception("Error in on_raw_receive_handler: %s", e)
 
     async def _dispatch_incoming(self, data: dict[str, Any]) -> None:
         await self._handle_raw_receive(data)
@@ -373,7 +373,7 @@ class BaseTransport(ClientProtocol):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            self.logger.exception("Error retrieving task exception: %s", e)
+            logger.exception("Error retrieving task exception: %s", e)
 
     async def _queue_message(
             self,
@@ -384,7 +384,7 @@ class BaseTransport(ClientProtocol):
             max_retries: int = 3,
     ) -> None:
         if self._outgoing is None:
-            self.logger.warning("Outgoing queue not initialized")
+            logger.warning("Outgoing queue not initialized")
             return
 
         message = {
@@ -397,7 +397,7 @@ class BaseTransport(ClientProtocol):
         }
 
         await self._outgoing.put(message)
-        self.logger.debug("Message queued for sending")
+        logger.debug("Message queued for sending")
 
     async def _outgoing_loop(self) -> None:
         while self.is_connected:
@@ -410,7 +410,7 @@ class BaseTransport(ClientProtocol):
                     if time.time() - self._last_error_time > 60:
                         self._circuit_breaker = False
                         self._error_count = 0
-                        self.logger.info("Circuit breaker reset")
+                        logger.info("Circuit breaker reset")
                     else:
                         await asyncio.sleep(5)
                         continue
@@ -429,7 +429,7 @@ class BaseTransport(ClientProtocol):
                         cmd=message.get("cmd", 0),
                         timeout=message.get("timeout", DEFAULT_TIMEOUT),
                     )
-                    self.logger.debug("Message sent successfully from queue")
+                    logger.debug("Message sent successfully from queue")
                     self._error_count = max(0, self._error_count - 1)
                 except Exception as e:
                     self._error_count += 1
@@ -437,7 +437,7 @@ class BaseTransport(ClientProtocol):
 
                     if self._error_count > 10:
                         self._circuit_breaker = True
-                        self.logger.warning(
+                        logger.warning(
                             "Circuit breaker activated due to %d consecutive errors",
                             self._error_count,
                         )
@@ -445,7 +445,7 @@ class BaseTransport(ClientProtocol):
                         continue
 
                     retry_delay = self._get_retry_delay(e, retry_count)
-                    self.logger.warning(
+                    logger.warning(
                         "Failed to send message from queue: %s (delay: %ds)",
                         e,
                         retry_delay,
@@ -456,13 +456,13 @@ class BaseTransport(ClientProtocol):
                         await asyncio.sleep(retry_delay)
                         await self._outgoing.put(message)
                     else:
-                        self.logger.error(
+                        logger.error(
                             "Message failed after %d retries, dropping",
                             max_retries,
                         )
 
             except Exception:
-                self.logger.exception("Error in outgoing loop")
+                logger.exception("Error in outgoing loop")
                 await asyncio.sleep(1)
 
     def _get_retry_delay(self, error: Exception, retry_count: int) -> float:
@@ -476,7 +476,7 @@ class BaseTransport(ClientProtocol):
             return float(2 ** retry_count)
 
     async def _sync(self, user_agent: UserAgentPayload | None = None) -> None:
-        self.logger.info("Starting initial sync")
+        logger.info("Starting initial sync")
 
         if user_agent is None:
             user_agent = self.headers or UserAgentPayload()
@@ -507,7 +507,7 @@ class BaseTransport(ClientProtocol):
                     elif raw_chat.get("type") == ChatType.CHANNEL.value:
                         self.channels.append(Channel.from_dict(raw_chat))
                 except Exception:
-                    self.logger.exception("Error parsing chat entry")
+                    logger.exception("Error parsing chat entry")
 
             for raw_user in raw_payload.get("contacts", []):
                 try:
@@ -515,12 +515,12 @@ class BaseTransport(ClientProtocol):
                     if user:
                         self.contacts.append(user)
                 except Exception:
-                    self.logger.exception("Error parsing contact entry")
+                    logger.exception("Error parsing contact entry")
 
             if raw_payload.get("profile", {}).get("contact"):
                 self.me = Me.from_dict(raw_payload.get("profile", {}).get("contact", {}))
 
-            self.logger.info(
+            logger.info(
                 "Sync completed: dialogs=%d chats=%d channels=%d",
                 len(self.dialogs),
                 len(self.chats),
@@ -528,7 +528,7 @@ class BaseTransport(ClientProtocol):
             )
 
         except Exception as e:
-            self.logger.exception("Sync failed")
+            logger.exception("Sync failed")
             self.is_connected = False
             if self._ws:
                 await self._ws.close()

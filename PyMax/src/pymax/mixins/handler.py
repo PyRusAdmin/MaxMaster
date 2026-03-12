@@ -230,7 +230,7 @@ class HandlerMixin(ClientProtocol):
         :return: Установленный обработчик.
         :rtype: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_reaction_change_handler (alias) used")
+        logger.debug("add_reaction_change_handler (alias) used")
         self._on_reaction_change_handlers.append(
             handler,
         )
@@ -247,7 +247,7 @@ class HandlerMixin(ClientProtocol):
         :return: Установленный обработчик.
         :rtype: Callable[[Chat], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_chat_update_handler (alias) used")
+        logger.debug("add_chat_update_handler (alias) used")
         self._on_chat_update_handlers.append(handler)
         return handler
 
@@ -262,7 +262,7 @@ class HandlerMixin(ClientProtocol):
         :return: Установленный обработчик.
         :rtype: Callable[[dict[str, Any]], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_raw_receive_handler (alias) used")
+        logger.debug("add_raw_receive_handler (alias) used")
         self._on_raw_receive_handlers.append(handler)
         return handler
 
@@ -281,6 +281,6 @@ class HandlerMixin(ClientProtocol):
         :return: Установленный обработчик.
         :rtype: Callable[[], Any | Awaitable[Any]]
         """
-        self.logger.debug("add_scheduled_task (alias) used")
+        logger.debug("add_scheduled_task (alias) used")
         self._scheduled_tasks.append((handler, interval))
         return handler
