@@ -4,18 +4,12 @@ from collections.abc import Awaitable, Callable
 from logging import Logger
 from typing import TYPE_CHECKING, Any, Literal
 
-from pymax.payloads import UserAgentPayload
-from pymax.static.constant import DEFAULT_TIMEOUT
-from pymax.static.enum import Opcode
-from pymax.types import (
-    Channel,
-    Chat,
-    Dialog,
-    Me,
-    Message,
-    ReactionInfo,
-    User,
-)
+from PyMax.src.pymax.crud import Database
+from PyMax.src.pymax.filters import BaseFilter
+from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.static.constant import DEFAULT_TIMEOUT
+from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.types import User, Chat, Dialog, Channel, Me, Message, ReactionInfo
 
 if TYPE_CHECKING:
     import socket
@@ -24,9 +18,6 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     import websockets
-
-    from pymax.crud import Database
-    from pymax.filters import BaseFilter
 
 
 class ClientProtocol(ABC):

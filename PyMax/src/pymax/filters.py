@@ -4,8 +4,8 @@ import re
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from PyMax.src.pymax import Message
 from PyMax.src.pymax.static.enum import MessageStatus, AttachType
+from PyMax.src.pymax.types import Message
 
 T_co = TypeVar("T_co")
 

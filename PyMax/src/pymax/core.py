@@ -13,24 +13,27 @@ from uuid import UUID
 from loguru import logger
 from typing_extensions import override
 
-from .crud import Database
-from .exceptions import (
+from PyMax.src.pymax.crud import Database
+from PyMax.src.pymax.mixins.socket import SocketMixin
+from PyMax.src.pymax.mixins.websocket import WebSocketMixin
+# from crud import Database
+from exceptions import (
     InvalidPhoneError,
     SocketNotConnectedError,
     WebSocketNotConnectedError,
 )
-from .filters import BaseFilter
-from .interfaces import BaseClient
-from .mixins import ApiMixin, SocketMixin, WebSocketMixin
-from .payloads import UserAgentPayload
-from .static.constant import HOST, PORT, SESSION_STORAGE_DB, WEBSOCKET_URI
+from filters import BaseFilter
+from interfaces import BaseClient
+
+from payloads import UserAgentPayload
+from static.constant import HOST, PORT, SESSION_STORAGE_DB, WEBSOCKET_URI
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     import websockets
 
-    from .types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
+    from types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
 
 
 class MaxClient(ApiMixin, WebSocketMixin, BaseClient):

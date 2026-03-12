@@ -3,7 +3,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, NoReturn
 
 import requests
-from pymax.exceptions import Error, RateLimitError
+
+from PyMax.src.pymax.exceptions import RateLimitError, Error
 
 
 class MixinsUtils:
@@ -44,7 +45,7 @@ class MixinsUtils:
         if pos == -1:
             return None
 
-        snippet = js_code[pos : pos + 2000]
+        snippet = js_code[pos: pos + 2000]
 
         match = re.search(r'[:=]\s*"(\d{1,2}\.\d{1,2}\.\d{1,2})"', snippet)
         if match:
@@ -71,7 +72,7 @@ class MixinsUtils:
         urls = []
         for i in arr:
             if "/chunks/" in i:
-                url = "https://web.max.ru/_app/immutable" + i[3 : len(i) - 1]
+                url = "https://web.max.ru/_app/immutable" + i[3: len(i) - 1]
                 urls.append(url)
 
         session = requests.Session()

@@ -4,8 +4,11 @@ import aiohttp  # Для асинхронных реквестов
 from io import BytesIO  # Для хранения ответов файлом в RAM
 from aiogram import Bot, Dispatcher, types  # Для ТГ
 
+from PyMax.src.pymax.core import MaxClient
+from PyMax.src.pymax.types import Message, VideoAttach, PhotoAttach, FileAttach
+
 # Импорты библиотеки PyMax
-from PyMax.src.pymax import MaxClient, Message, VideoAttach, PhotoAttach, FileAttach
+
 
 PHONE = "+79998887766"  # Номер телефона Max
 telegram_bot_TOKEN = "token"  # Токен TG-бота

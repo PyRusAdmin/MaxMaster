@@ -7,11 +7,12 @@ from loguru import logger
 
 from typing_extensions import override
 
-from PyMax.src.pymax import WebSocketNotConnectedError, Chat
+from PyMax.src.pymax.exceptions import WebSocketNotConnectedError
 from PyMax.src.pymax.interfaces import BaseTransport
 from PyMax.src.pymax.payloads import UserAgentPayload
 from PyMax.src.pymax.static.constant import WEBSOCKET_ORIGIN, RECV_LOOP_BACKOFF_DELAY, DEFAULT_TIMEOUT
 from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.types import Chat
 
 
 class WebSocketMixin(BaseTransport):

@@ -5,8 +5,6 @@ from typing import Final
 import ua_generator
 from websockets.typing import Origin
 
-from pymax.utils import MixinsUtils
-
 DEVICE_NAMES: Final[list[str]] = [
     "Chrome",
     "Firefox",
@@ -63,7 +61,6 @@ TIMEZONES: Final[list[str]] = [
     "Asia/Vladivostok",
     "Asia/Kamchatka",
 ]
-
 
 PHONE_REGEX: Final[Pattern[str]] = compile(r"^\+?\d{10,15}$")
 WEBSOCKET_URI: Final[str] = "wss://ws-api.oneme.ru/websocket"

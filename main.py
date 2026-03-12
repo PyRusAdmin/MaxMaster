@@ -17,7 +17,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
-from PyMax.src.pymax import MaxClient
+from PyMax.src.pymax.core import MaxClient
 from PyMax.src.pymax.payloads import UserAgentPayload
 from read_file import read_file
 

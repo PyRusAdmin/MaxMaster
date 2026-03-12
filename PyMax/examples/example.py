@@ -2,9 +2,10 @@ import asyncio
 import logging
 from typing import Any
 
-from PyMax.src.pymax import MaxClient, ReactionInfo, Chat, Message
+from PyMax.src.pymax.core import MaxClient
 from PyMax.src.pymax.filters import Filters
 from PyMax.src.pymax.payloads import UserAgentPayload
+from PyMax.src.pymax.types import ReactionInfo, Chat, Message
 
 phone = "+7"
 headers = UserAgentPayload(device_type="WEB")

@@ -9,13 +9,14 @@ import msgpack
 
 from typing_extensions import override
 
-from PyMax.src.pymax import SocketNotConnectedError, SocketSendError, Chat
+from PyMax.src.pymax.exceptions import SocketNotConnectedError, SocketSendError
 from PyMax.src.pymax.interfaces import BaseTransport
 from loguru import logger
 
 from PyMax.src.pymax.payloads import UserAgentPayload
 from PyMax.src.pymax.static.constant import RECV_LOOP_BACKOFF_DELAY, DEFAULT_TIMEOUT
 from PyMax.src.pymax.static.enum import Opcode
+from PyMax.src.pymax.types import Chat
 
 
 class SocketMixin(BaseTransport):
