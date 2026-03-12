@@ -1,4 +1,5 @@
-from PyMax.src.pymax import Channel, Member, ResponseStructureError
+from PyMax.src.pymax.types import Channel, Member
+from PyMax.src.pymax.exceptions import ResponseStructureError
 from PyMax.src.pymax.payloads import ResolveLinkPayload, JoinChatPayload, GetGroupMembersPayload, \
     SearchGroupMembersPayload
 from PyMax.src.pymax.protocols import ClientProtocol

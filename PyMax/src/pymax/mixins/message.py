@@ -8,9 +8,8 @@ from aiofiles import open as aio_open
 from aiohttp import ClientSession, TCPConnector
 from loguru import logger
 
-from PyMax.src.pymax import File
+from PyMax.src.pymax.files import File, Video, Photo
 from PyMax.src.pymax.exceptions import Error
-from PyMax.src.pymax.files import Video, Photo
 from PyMax.src.pymax.formatting import Formatting
 from PyMax.src.pymax.payloads import UploadPayload, AttachPhotoPayload, AttachFilePayload, VideoAttachPayload, \
     ReadMessagesPayload, RemoveReactionPayload, GetReactionsPayload, AddReactionPayload, ReactionInfoPayload, \

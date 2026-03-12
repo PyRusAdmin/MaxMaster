@@ -6,7 +6,7 @@ from uuid import uuid4
 import aiohttp
 from loguru import logger
 
-from PyMax.src.pymax import Photo
+from PyMax.src.pymax.files import Photo
 from PyMax.src.pymax.exceptions import Error
 from PyMax.src.pymax.payloads import UploadPayload, ChangeProfilePayload, CreateFolderPayload, GetFolderPayload, \
     UpdateFolderPayload, DeleteFolderPayload
