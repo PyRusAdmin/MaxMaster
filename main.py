@@ -159,30 +159,44 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts", t
         headers=headers,
     )
 
-    # Подключаем с таймаутом
+    # Запускаем клиента
+    console.print(f"[dim]⏳ Подключение к {phone} (таймаут {timeout}с)...[/]")
+    
+    # Запускаем start() в фоне и ждём подключения
+    start_task = asyncio.create_task(client.start())
+    
+    # Ждём подключения с таймаутом
     try:
-        console.print(f"[dim]⏳ Подключение к {phone} (таймаут {timeout}с)...[/]")
-        await asyncio.wait_for(client.start(), timeout=timeout)
-    except asyncio.TimeoutError:
-        logger.error(f"Таймаут подключения для {phone}")
-        console.print(f"[red]❌ Таймаут подключения для {phone}[/]")
-        # Пробуем закрыть клиента
+        for i in range(int(timeout * 10)):  # Проверяем каждые 100мс
+            await asyncio.sleep(0.1)
+            
+            if client.is_connected:
+                logger.info(f"✅ Клиент {phone} подключён")
+                break
+            
+            if start_task.done() and start_task.exception():
+                exc = start_task.exception()
+                logger.error(f"Ошибка при старте клиента {phone}: {exc}")
+                raise exc
+        
+        # Проверяем, подключился ли клиент
+        if not client.is_connected:
+            raise TimeoutError(f"Не удалось подключиться к {phone} за {timeout}с")
+            
+    except asyncio.CancelledError:
+        logger.error(f"Подключение {phone} отменено")
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка подключения для {phone}: {e}")
+        console.print(f"[red]❌ Ошибка подключения: {e}[/]")
+        # Отменяем задачу старта
+        start_task.cancel()
         try:
             await client.close()
         except Exception:
             pass
-        raise TimeoutError(f"Не удалось подключиться к {phone} за {timeout}с")
-    except Exception as e:
-        logger.error(f"Ошибка подключения для {phone}: {e}")
-        console.print(f"[red]❌ Ошибка подключения: {e}[/]")
         raise
     
-    # Проверяем, подключился ли клиент
-    if not client.is_connected:
-        logger.error(f"Клиент {phone} не подключился после start()")
-        console.print(f"[red]❌ Не удалось подключиться к {phone}[/]")
-        raise ConnectionError(f"Клиент {phone} не подключился")
-
     # Сохраняем в глобальное хранилище
     if phone:
         active_clients[phone] = client
@@ -653,11 +667,20 @@ async def parse_phones_with_rotation():
         mark_account_working(current_account.phone)
         log_account_action(current_account.phone, "start", "Начал работу")
         
-        # Отображаем текущий аккаунт
+        # Ждём пока загрузится профиль пользователя
+        for _ in range(20):  # Ждём до 2 секунд
+            await asyncio.sleep(0.1)
+            if current_client.me and current_client.me.id:
+                break
+        
+        # Отображаем текущий аккаунт с ID
         account_info = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
         account_info.add_column(style="dim")
         account_info.add_column(style="bold cyan")
+        me = current_client.me
         account_info.add_row("Текущий аккаунт:", current_account.phone)
+        account_info.add_row("ID пользователя:", str(me.id) if me and me.id else "загрузка...")
+        account_info.add_row("Имя:", f"{me.first_name} {me.last_name}" if me and hasattr(me, 'first_name') and me.first_name else "загрузка...")
         account_info.add_row("Ошибок аккаунта:", current_account.errors_count)
         console.print(account_info)
         console.print()
