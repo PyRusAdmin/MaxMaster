@@ -5,7 +5,6 @@
 Используется pytest-mock фикстура `mocker`.
 """
 import pytest
-from pathlib import Path
 
 
 class TestAuthErrorDetection:
@@ -14,21 +13,21 @@ class TestAuthErrorDetection:
     def test_fail_login_token_detection(self):
         """Тест распознавания ошибки FAIL_LOGIN_TOKEN"""
         error_msg = "PyMax Error: Ошибка входа. Пожалуйста, авторизируйтесь снова FAIL_LOGIN_TOKEN"
-        
+
         is_auth_error = "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower()
         assert is_auth_error is True
 
     def test_russian_auth_error_detection(self):
         """Тест распознавания русской ошибки авторизации"""
         error_msg = "Пожалуйста, авторизируйтесь снова"
-        
+
         is_auth_error = "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower()
         assert is_auth_error is True
 
     def test_combined_error_message(self):
         """Тест комбинированного сообщения об ошибке"""
         error_msg = "Ошибка входа. Пожалуйста, авторизируйтесь снова FAIL_LOGIN_TOKEN (Ошибка входа)"
-        
+
         is_auth_error = "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower()
         assert is_auth_error is True
 
@@ -55,10 +54,10 @@ class TestAuthErrorHandlingLogic:
         mock_logger_info = mocker.MagicMock()
         mock_path_instance = mocker.MagicMock()
         mock_sys_exit = mocker.MagicMock()
-        
+
         error_msg = "FAIL_LOGIN_TOKEN"
         is_auth_error = "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower()
-        
+
         if is_auth_error:
             mock_path_instance.exists.return_value = True
             if mock_path_instance.exists():
@@ -67,7 +66,7 @@ class TestAuthErrorHandlingLogic:
             mock_console_print(mocker.MagicMock())
             mock_logger_error("Авторизация не удалась: %s", error_msg)
             mock_sys_exit(1)
-        
+
         mock_path_instance.unlink.assert_called_once()
         mock_sys_exit.assert_called_once_with(1)
         mock_logger_error.assert_called_once_with("Авторизация не удалась: %s", error_msg)
@@ -76,16 +75,16 @@ class TestAuthErrorHandlingLogic:
         """Тест обработки ошибки когда файл сессии отсутствует"""
         mock_path_instance = mocker.MagicMock()
         mock_sys_exit = mocker.MagicMock()
-        
+
         error_msg = "FAIL_LOGIN_TOKEN"
         is_auth_error = "FAIL_LOGIN_TOKEN" in error_msg
-        
+
         if is_auth_error:
             mock_path_instance.exists.return_value = False
             if mock_path_instance.exists():
                 mock_path_instance.unlink()
             mock_sys_exit(1)
-        
+
         mock_path_instance.unlink.assert_not_called()
         mock_sys_exit.assert_called_once_with(1)
 
@@ -96,14 +95,14 @@ class TestClientConnectFunction:
     def test_client_connect_default_params(self):
         """Тест создания клиента с параметрами по умолчанию"""
         from main import client_connect
-        
+
         # Проверяем, что функция существует и вызывается
         assert callable(client_connect)
 
     def test_client_connect_with_phone(self):
         """Тест создания клиента с номером телефона"""
         from main import client_connect
-        
+
         # Проверяем, что функция принимает параметры
         assert callable(client_connect)
 
@@ -117,13 +116,12 @@ class TestConnectClientWithErrorHandling:
         mock_client = mocker.MagicMock()
         mock_client.start = mocker.AsyncMock()
         mock_client._work_dir = "accounts"
-        
+
         # Импортируем функцию
-        import main
         from main import connect_client_with_error_handling
-        
+
         await connect_client_with_error_handling(mock_client)
-        
+
         mock_client.start.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -139,7 +137,7 @@ class TestConnectClientWithErrorHandling:
         mock_sys_exit = mocker.MagicMock(side_effect=SystemExit(1))
         
         # Мокируем Path и зависимости
-        mocker.patch("pathlib.Path", return_value=mock_session_file)
+        mocker.patch("main.Path", return_value=mock_session_file)
         mocker.patch("main.console")
         mocker.patch("main.logger", mock_logger)
         mocker.patch("main.sys.exit", mock_sys_exit)
@@ -161,21 +159,21 @@ class TestConnectClientWithErrorHandling:
             side_effect=Exception("Пожалуйста, авторизируйтесь снова")
         )
         mock_client._work_dir = "accounts"
-        
+
         mock_session_file = mocker.MagicMock()
         mock_session_file.exists.return_value = True
         mock_sys_exit = mocker.MagicMock(side_effect=SystemExit(1))
-        
+
         mocker.patch("pathlib.Path", return_value=mock_session_file)
         mocker.patch("main.console")
         mocker.patch("main.logger")
         mocker.patch("main.sys.exit", mock_sys_exit)
-        
+
         from main import connect_client_with_error_handling
-        
+
         with pytest.raises(SystemExit):
             await connect_client_with_error_handling(mock_client)
-        
+
         mock_sys_exit.assert_called_with(1)
 
     @pytest.mark.asyncio
@@ -184,21 +182,21 @@ class TestConnectClientWithErrorHandling:
         mock_client = mocker.MagicMock()
         mock_client.start = mocker.AsyncMock(side_effect=Exception("Some other error"))
         mock_client._work_dir = "accounts"
-        
+
         mock_session_file = mocker.MagicMock()
         mock_logger = mocker.MagicMock()
         mock_sys_exit = mocker.MagicMock(side_effect=SystemExit(1))
-        
+
         mocker.patch("pathlib.Path", return_value=mock_session_file)
         mocker.patch("main.console")
         mocker.patch("main.logger", mock_logger)
         mocker.patch("main.sys.exit", mock_sys_exit)
-        
+
         from main import connect_client_with_error_handling
-        
+
         with pytest.raises(SystemExit):
             await connect_client_with_error_handling(mock_client)
-        
+
         mock_session_file.unlink.assert_not_called()
         mock_logger.exception.assert_called()
         mock_sys_exit.assert_called_with(1)
@@ -209,20 +207,20 @@ class TestConnectClientWithErrorHandling:
         mock_client = mocker.MagicMock()
         mock_client.start = mocker.AsyncMock(side_effect=Exception("FAIL_LOGIN_TOKEN"))
         mock_client._work_dir = "accounts"
-        
+
         mock_session_file = mocker.MagicMock()
         mock_session_file.exists.return_value = False
         mock_sys_exit = mocker.MagicMock(side_effect=SystemExit(1))
-        
+
         mocker.patch("pathlib.Path", return_value=mock_session_file)
         mocker.patch("main.console")
         mocker.patch("main.logger")
         mocker.patch("main.sys.exit", mock_sys_exit)
-        
+
         from main import connect_client_with_error_handling
-        
+
         with pytest.raises(SystemExit):
             await connect_client_with_error_handling(mock_client)
-        
+
         mock_session_file.unlink.assert_not_called()
         mock_sys_exit.assert_called_with(1)

@@ -80,54 +80,10 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts") -
         reconnect=False,
         headers=headers,
     )
+
     await client.start()
+
     return client
-
-
-async def connect_client_with_error_handling(client: MaxClient) -> None:
-    """
-    Запускает клиента с обработкой ошибок авторизации.
-    
-    :param client: Экземпляр MaxClient для запуска.
-    :raises SystemExit: При ошибке авторизации.
-    """
-    try:
-        await client.start()
-    except Exception as e:
-        error_msg = str(e)
-
-        # Обработка ошибки авторизации
-        if "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower():
-            # Автоматическая очистка старой сессии
-            session_file = Path(client._work_dir) / "session.db"
-            if session_file.exists():
-                session_file.unlink()
-                logger.info("Старая сессия удалена: %s", session_file)
-
-            console.print(Panel(
-                "[bold red]❌ Ошибка авторизации![/]\n\n"
-                "Ваша сессия истекла или была разорвана.\n\n"
-                "[green]✓ Старая сессия удалена автоматически[/]\n\n"
-                "[yellow]Что делать дальше:[/]\n"
-                "  1. Запустите приложение заново\n"
-                "  2. Пройдите повторную авторизацию (отсканируйте QR-код или введите код из SMS)\n\n"
-                "[dim]Ошибка: {error}[/]".format(error=error_msg),
-                title="[bold red]Требуется авторизация[/]",
-                border_style="red",
-                padding=(1, 3),
-            ))
-            logger.error(f"Авторизация не удалась: {error_msg}")
-            sys.exit(1)
-
-        # Другие ошибки
-        console.print(Panel(
-            f"[bold red]❌ Произошла ошибка:[/]\n\n{error_msg}",
-            title="[bold red]Ошибка[/]",
-            border_style="red",
-            padding=(1, 3),
-        ))
-        logger.exception("Необработанная ошибка в main()")
-        sys.exit(1)
 
 
 # ─── Заголовки Excel ──────────────────────────────────────────────────────────
