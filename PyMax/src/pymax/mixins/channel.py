@@ -21,9 +21,7 @@ class ChannelMixin(ClientProtocol):
         :return: Объект Channel или None, если канал не найден
         :rtype: Channel | None
         """
-        payload = ResolveLinkPayload(
-            link=f"https://max.ru/{name}",
-        ).model_dump(by_alias=True)
+        payload = ResolveLinkPayload(link=f"https://max.ru/{name}", ).model_dump(by_alias=True)
 
         data = await self._send_and_wait(opcode=Opcode.LINK_INFO, payload=payload)
         if data.get("payload", {}).get("error"):

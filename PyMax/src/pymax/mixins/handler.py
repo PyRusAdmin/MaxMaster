@@ -46,9 +46,7 @@ class HandlerMixin(ClientProtocol):
 
         return decorator
 
-    def on_message_edit(
-            self, filter: BaseFilter[Message] | None = None
-    ) -> Callable[
+    def on_message_edit(self, filter: BaseFilter[Message] | None = None) -> Callable[
         [Callable[[Any], Any | Awaitable[Any]]],
         Callable[[Any], Any | Awaitable[Any]],
     ]:
@@ -70,9 +68,7 @@ class HandlerMixin(ClientProtocol):
 
         return decorator
 
-    def on_message_delete(
-            self, filter: BaseFilter[Message] | None = None
-    ) -> Callable[
+    def on_message_delete(self, filter: BaseFilter[Message] | None = None) -> Callable[
         [Callable[[Any], Any | Awaitable[Any]]],
         Callable[[Any], Any | Awaitable[Any]],
     ]:

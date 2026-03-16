@@ -14,22 +14,15 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 
 class GroupMixin(ClientProtocol):
-    async def create_group(
-            self,
-            name: str,
-            participant_ids: list[int] | None = None,
-            notify: bool = True,
-    ) -> tuple[Chat, Message] | None:
+    async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True, ) -> tuple[
+                                                                                                                    Chat, Message] | None:
         """
         Создает группу
 
-        Args:
-            name (str): Название группы.
-            participant_ids (list[int] | None, optional): Список идентификаторов участников. Defaults to None.
-            notify (bool, optional): Флаг оповещения. Defaults to True.
-
-        Returns:
-            tuple[Chat, Message] | None: Объект Chat и Message или None при ошибке.
+        :param: name (str): Название группы.
+        :param: participant_ids (list[int] | None, optional): Список идентификаторов участников. Defaults to None.
+        :param: notify (bool, optional): Флаг оповещения. Defaults to True.
+        :return: tuple[Chat, Message] | None : Объект Chat и Message или None при ошибке.
         """
         payload = CreateGroupPayload(
             message=CreateGroupMessage(

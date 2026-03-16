@@ -7,7 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from loguru import logger
 from openpyxl import Workbook
-from peewee import SqliteDatabase, Model, CharField, DateTimeField
+from peewee import SqliteDatabase, Model, CharField, DateTimeField, TextField
 from rich import box
 from rich.align import Align
 from rich.console import Console
@@ -71,42 +71,208 @@ class MaxAccount(Model):
     account_path = CharField(help_text="Путь к папке аккаунта")
     connected_at = DateTimeField(default=datetime.now, help_text="Дата подключения")
     is_active = CharField(default="Y", help_text="Активен ли аккаунт (Y/N)")
+    is_blocked = CharField(default="N", help_text="Заблокирован ли аккаунт (Y/N)")
+    errors_count = CharField(default="0", help_text="Количество ошибок")
+    last_used_at = DateTimeField(null=True, help_text="Последнее использование")
+    work_status = CharField(default="idle", help_text="Статус работы: idle/working/blocked")
 
     class Meta:
         database = accounts_db
         table_name = "max_accounts"
 
 
+class AccountLog(Model):
+    """Лог использования аккаунтов."""
+    phone = CharField(help_text="Номер телефона аккаунта")
+    action = CharField(help_text="Действие: start/work/error/block/stop")
+    message = TextField(null=True, help_text="Сообщение")
+    created_at = DateTimeField(default=datetime.now)
+
+    class Meta:
+        database = accounts_db
+        table_name = "account_logs"
+
+
 db.connect()
 db.create_tables([PhoneQueue], safe=True)
 
 accounts_db.connect()
-accounts_db.create_tables([MaxAccount], safe=True)
+accounts_db.create_tables([MaxAccount, AccountLog], safe=True)
+
+# ─── Миграция: добавляем новые поля в таблицу аккаунтов ─────────────────────
+try:
+    # Проверяем, есть ли новые поля, и добавляем если нет
+    accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN is_blocked TEXT DEFAULT 'N'")
+except Exception:
+    pass  # Поле уже существует
+
+try:
+    accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN errors_count TEXT DEFAULT '0'")
+except Exception:
+    pass
+
+try:
+    accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN last_used_at TEXT")
+except Exception:
+    pass
+
+try:
+    accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN work_status TEXT DEFAULT 'idle'")
+except Exception:
+    pass
 
 
 # ─── Max клиент ───────────────────────────────────────────────────────────────
 
+# Глобальное хранилище клиентов: {phone: MaxClient}
+active_clients: dict[str, MaxClient] = {}
 
-async def client_connect(phone: str | None = None, work_dir: str = "accounts") -> MaxClient:
+
+async def client_connect(phone: str | None = None, work_dir: str = "accounts", timeout: float = 30.0) -> MaxClient:
     """
     Создаёт и возвращает клиента MaxClient.
+    
+    Если клиент для этого телефона уже существует — возвращает его.
 
-    :param phone: Номер телефона аккаунта Max (опционально).
+    :param phone: Номер телефона аккаунта Max.
     :param work_dir: Рабочая директория для хранения базы данных с аккаунтами.
+    :param timeout: Таймаут подключения в секундах.
     :return: Экземпляр MaxClient.
+    :raises TimeoutError: Если подключение не удалось в течение timeout.
     """
+    # Проверяем, есть ли уже клиент для этого телефона
+    if phone and phone in active_clients:
+        client = active_clients[phone]
+        if client.is_connected:
+            logger.info(f"Используем существующего клиента для {phone}")
+            return client
+        else:
+            # Клиент отключён, удаляем из кэша
+            del active_clients[phone]
+    
     headers = UserAgentPayload(device_type="WEB")
 
     client = MaxClient(
         phone=phone,  # Номер телефона аккаунта Max
         work_dir=work_dir,  # Рабочая директория для хранения базы данных с аккаунтами Max
-        reconnect=False,
+        reconnect=True,  # Включаем авто-переподключение
         headers=headers,
     )
 
-    await client.start()
+    # Подключаем с таймаутом
+    try:
+        console.print(f"[dim]⏳ Подключение к {phone} (таймаут {timeout}с)...[/]")
+        await asyncio.wait_for(client.start(), timeout=timeout)
+    except asyncio.TimeoutError:
+        logger.error(f"Таймаут подключения для {phone}")
+        console.print(f"[red]❌ Таймаут подключения для {phone}[/]")
+        # Пробуем закрыть клиента
+        try:
+            await client.close()
+        except Exception:
+            pass
+        raise TimeoutError(f"Не удалось подключиться к {phone} за {timeout}с")
+    except Exception as e:
+        logger.error(f"Ошибка подключения для {phone}: {e}")
+        console.print(f"[red]❌ Ошибка подключения: {e}[/]")
+        raise
+    
+    # Проверяем, подключился ли клиент
+    if not client.is_connected:
+        logger.error(f"Клиент {phone} не подключился после start()")
+        console.print(f"[red]❌ Не удалось подключиться к {phone}[/]")
+        raise ConnectionError(f"Клиент {phone} не подключился")
+
+    # Сохраняем в глобальное хранилище
+    if phone:
+        active_clients[phone] = client
+        logger.info(f"✅ Клиент для {phone} подключён и сохранён в кэш")
 
     return client
+
+
+async def client_disconnect(phone: str) -> bool:
+    """
+    Отключает клиента и удаляет из кэша.
+    
+    :param phone: Номер телефона аккаунта.
+    :return: True если успешно отключён.
+    """
+    if phone in active_clients:
+        client = active_clients[phone]
+        try:
+            await client.close()
+            del active_clients[phone]
+            logger.info(f"Клиент {phone} отключён")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка отключения клиента {phone}: {e}")
+    return False
+
+
+async def disconnect_all_clients():
+    """Отключает всех клиентов."""
+    for phone in list(active_clients.keys()):
+        await client_disconnect(phone)
+
+
+# ─── Управление аккаунтами ────────────────────────────────────────────────────
+
+def log_account_action(phone: str, action: str, message: str = None):
+    """Логирует действие с аккаунтом."""
+    AccountLog.create(phone=phone, action=action, message=message)
+
+
+def get_active_accounts() -> list:
+    """Получает список активных незаблокированных аккаунтов."""
+    return list(MaxAccount.select().where(
+        (MaxAccount.is_active == "Y") &
+        (MaxAccount.is_blocked == "N") &
+        (MaxAccount.work_status != "blocked")
+    ).order_by(MaxAccount.errors_count.asc(), MaxAccount.last_used_at.asc()))
+
+
+def mark_account_working(phone: str):
+    """Отмечает аккаунт как работающий."""
+    MaxAccount.update(
+        work_status="working",
+        last_used_at=datetime.now()
+    ).where(MaxAccount.phone == phone).execute()
+    log_account_action(phone, "start", "Начал работу")
+
+
+def mark_account_idle(phone: str):
+    """Отмечает аккаунт как свободный."""
+    MaxAccount.update(work_status="idle").where(MaxAccount.phone == phone).execute()
+    log_account_action(phone, "stop", "Завершил работу")
+
+
+def mark_account_error(phone: str):
+    """Регистрирует ошибку аккаунта."""
+    account = MaxAccount.get_or_none(MaxAccount.phone == phone)
+    if account:
+        errors = int(account.errors_count) + 1
+        MaxAccount.update(errors_count=str(errors)).where(MaxAccount.phone == phone).execute()
+        log_account_action(phone, "error", f"Ошибка №{errors}")
+        
+        # Если больше 3 ошибок — блокируем
+        if errors >= 3:
+            MaxAccount.update(
+                work_status="blocked",
+                is_blocked="Y"
+            ).where(MaxAccount.phone == phone).execute()
+            log_account_action(phone, "block", f"Заблокирован после {errors} ошибок")
+            return True  # Аккаунт заблокирован
+    return False
+
+
+def mark_account_blocked(phone: str, reason: str = "Блокировка сервера"):
+    """Блокирует аккаунт."""
+    MaxAccount.update(
+        work_status="blocked",
+        is_blocked="Y"
+    ).where(MaxAccount.phone == phone).execute()
+    log_account_action(phone, "block", reason)
 
 
 # ─── Подключение аккаунта по QR ───────────────────────────────────────────────
@@ -431,7 +597,25 @@ def print_menu() -> str:
 
 # ─── Парсинг ──────────────────────────────────────────────────────────────────
 
-async def parse_phones(client):
+async def parse_phones_with_rotation():
+    """
+    Перебор номеров с ротацией аккаунтов.
+    Если аккаунт получает блокировку — переключается на следующий.
+    Использует client_connect() для подключения.
+    """
+    # Получаем активные аккаунты
+    accounts = get_active_accounts()
+    
+    if not accounts:
+        console.print(Panel(
+            "[bold red]❌ Нет доступных аккаунтов![/]\n\n"
+            "Подключите аккаунты через пункт [cyan][4][/cyan] меню.",
+            title="[bold yellow]Внимание[/]",
+            border_style="red",
+            padding=(1, 3),
+        ))
+        return
+    
     total_start = get_queue_count()
     if total_start == 0:
         console.print(Panel(
@@ -439,85 +623,215 @@ async def parse_phones(client):
             border_style="yellow",
         ))
         return
-
+    
     console.print(Panel(
         f"[green]Начинаем обработку [bold]{total_start}[/bold] номеров...[/]\n"
+        f"[dim]Аккаунтов доступно: {len(accounts)}[/]\n"
         f"[dim]Нажмите Ctrl+C для паузы[/]",
         border_style="green",
+        padding=(1, 3),
     ))
-
+    
     processed = 0
     found = 0
     errors = 0
-
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                  BarColumn(), TaskProgressColumn(), TextColumn("[dim]{task.fields[status]}[/]"), console=console,
-                  transient=False, ) as progress:
-        task = progress.add_task(
-            "[cyan]Обработка...",
-            total=total_start,
-            status="",
+    account_switches = 0
+    consecutive_errors = 0
+    current_account_index = 0
+    current_account = None
+    
+    try:
+        # Подключаем первый аккаунт через client_connect
+        current_account = accounts[current_account_index]
+        console.print(f"\n[bold cyan]🔌 Подключение к аккаунту: {current_account.phone}[/]")
+        
+        current_client = await client_connect(
+            phone=current_account.phone,
+            work_dir=current_account.account_path
         )
-
-        while True:
-            phones = get_next_phones(1)
-            if not phones:
-                break
-
-            phone = phones[0]
-            progress.update(task, description=f"[cyan]📞 {phone}", status="запрос...")
-
-            await asyncio.sleep(SLEEP_TIME)
-
-            try:
-                result = await safe_search(phone=phone, client=client)
-                if result is None:
-                    logger.error(f"Не удалось получить данные для {phone} после нескольких попыток")
-                    status_text = "❌ нет соединения"
-                    # не удаляем из очереди
-                    continue
-
-                if result and not isinstance(result, (str, int, bool)):
-                    user_data = extract_user_data(result)
-                    user_data['searched_phone'] = phone
-                    save_to_excel([user_data], EXCEL_FILE)
-                    found += 1
-                    status_text = f"✅ найден: {user_data.get('names', ['?'])[0] if user_data.get('names') else '?'}"
-                    logger.info(f"Найден пользователь {phone}: {user_data}")
-                else:
-                    status_text = "⚪ не найден"
-                    logger.info(f"Пользователь не найден: {phone}")
-
-            except Exception as e:
-                err_str = str(e)
-                if 'too-many' in err_str.lower():
-                    progress.update(task, status=f"⏳ rate limit, ждём {SLEEP_ON_RATELIMIT}с...")
-                    logger.warning(f"Rate limit на {phone}, ждём {SLEEP_ON_RATELIMIT}с")
-                    await asyncio.sleep(SLEEP_ON_RATELIMIT)
-                    # Не удаляем из очереди — попробуем снова
-                    continue
-                else:
+        
+        mark_account_working(current_account.phone)
+        log_account_action(current_account.phone, "start", "Начал работу")
+        
+        # Отображаем текущий аккаунт
+        account_info = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
+        account_info.add_column(style="dim")
+        account_info.add_column(style="bold cyan")
+        account_info.add_row("Текущий аккаунт:", current_account.phone)
+        account_info.add_row("Ошибок аккаунта:", current_account.errors_count)
+        console.print(account_info)
+        console.print()
+        
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+                      BarColumn(), TaskProgressColumn(), TextColumn("[dim]{task.fields[status]}[/]"),
+                      console=console, transient=False) as progress:
+            
+            task = progress.add_task(
+                "[cyan]Обработка...",
+                total=total_start,
+                status="",
+            )
+            
+            while True:
+                phones = get_next_phones(1)
+                if not phones:
+                    break
+                
+                phone = phones[0]
+                progress.update(task, description=f"[cyan]📞 {phone}", status="запрос...")
+                
+                await asyncio.sleep(SLEEP_TIME)
+                
+                try:
+                    result = await safe_search(phone=phone, client=current_client)
+                    
+                    if result is None:
+                        logger.error(f"Не удалось получить данные для {phone} после нескольких попыток")
+                        status_text = "❌ нет соединения"
+                        consecutive_errors += 1
+                        
+                        # Если много ошибок подряд — переключаем аккаунт
+                        if consecutive_errors >= 3:
+                            console.print(f"\n[yellow]⚠️ Много ошибок подряд, переключаем аккаунт...[/]")
+                            is_blocked = mark_account_error(current_account.phone)
+                            
+                            # Переключаем на следующий аккаунт
+                            if current_account_index < len(accounts) - 1:
+                                # Отключаем текущего клиента
+                                await client_disconnect(current_account.phone)
+                                
+                                current_account_index += 1
+                                current_account = accounts[current_account_index]
+                                
+                                console.print(f"\n[bold cyan]🔄 Переключение на аккаунт: {current_account.phone}[/]")
+                                
+                                # Подключаем новый аккаунт через client_connect
+                                current_client = await client_connect(
+                                    phone=current_account.phone,
+                                    work_dir=current_account.account_path
+                                )
+                                
+                                mark_account_working(current_account.phone)
+                                account_switches += 1
+                                consecutive_errors = 0
+                                status_text = f"🔄 аккаунт переключён"
+                            else:
+                                console.print("[yellow]⚠️ Больше нет доступных аккаунтов[/]")
+                                consecutive_errors = 0
+                        continue
+                    
+                    consecutive_errors = 0  # Сбрасываем счётчик ошибок
+                    
+                    if result and not isinstance(result, (str, int, bool)):
+                        user_data = extract_user_data(result)
+                        user_data['searched_phone'] = phone
+                        save_to_excel([user_data], EXCEL_FILE)
+                        found += 1
+                        status_text = f"✅ найден: {user_data.get('names', ['?'])[0] if user_data.get('names') else '?'}"
+                        logger.info(f"Найден пользователь {phone}: {user_data}")
+                    else:
+                        status_text = "⚪ не найден"
+                        logger.info(f"Пользователь не найден: {phone}")
+                    
+                except Exception as e:
+                    err_str = str(e)
+                    
+                    # Проверяем на блокировку
+                    if 'too-many' in err_str.lower() or 'ratelimit' in err_str.lower():
+                        progress.update(task, status=f"⏳ rate limit, ждём {SLEEP_ON_RATELIMIT}с...")
+                        logger.warning(f"Rate limit на {phone}, ждём {SLEEP_ON_RATELIMIT}с")
+                        await asyncio.sleep(SLEEP_ON_RATELIMIT)
+                        continue
+                    
+                    # Проверяем на ошибку авторизации/блока
+                    if 'FAIL_LOGIN_TOKEN' in err_str or 'авторизируйтесь' in err_str.lower():
+                        console.print(f"\n[red]❌ Аккаунт {current_account.phone} заблокирован![/]")
+                        mark_account_blocked(current_account.phone, "FAIL_LOGIN_TOKEN")
+                        
+                        # Отключаем заблокированного клиента
+                        await client_disconnect(current_account.phone)
+                        
+                        # Переключаем на следующий аккаунт
+                        if current_account_index < len(accounts) - 1:
+                            current_account_index += 1
+                            current_account = accounts[current_account_index]
+                            
+                            console.print(f"\n[bold cyan]🔄 Переключение на аккаунт: {current_account.phone}[/]")
+                            
+                            # Подключаем новый аккаунт через client_connect
+                            current_client = await client_connect(
+                                phone=current_account.phone,
+                                work_dir=current_account.account_path
+                            )
+                            
+                            mark_account_working(current_account.phone)
+                            account_switches += 1
+                            status_text = f"🔄 аккаунт переключён (блокировка)"
+                            continue
+                        else:
+                            console.print("[red]❌ Нет доступных аккаунтов для продолжения[/]")
+                            break
+                    
+                    # Другая ошибка
                     error_data = {'searched_phone': phone, 'error': f"{type(e).__name__}: {e}"}
                     save_to_excel([error_data], EXCEL_FILE)
                     errors += 1
                     status_text = f"❌ ошибка"
                     logger.error(f"Ошибка для {phone}: {e}")
-
-            # Удаляем из очереди только после успешной обработки
-            remove_from_queue(phone)
-            processed += 1
-            progress.update(task, advance=1, status=status_text)
-
+                    
+                    # Регистрируем ошибку аккаунта
+                    is_blocked = mark_account_error(current_account.phone)
+                    if is_blocked and current_account_index < len(accounts) - 1:
+                        console.print(f"\n[yellow]⚠️ Аккаунт заблокирован после ошибок[/]")
+                        
+                        # Отключаем текущего клиента
+                        await client_disconnect(current_account.phone)
+                        
+                        current_account_index += 1
+                        current_account = accounts[current_account_index]
+                        
+                        # Подключаем новый аккаунт через client_connect
+                        current_client = await client_connect(
+                            phone=current_account.phone,
+                            work_dir=current_account.account_path
+                        )
+                        
+                        mark_account_working(current_account.phone)
+                        account_switches += 1
+                
+                # Удаляем из очереди только после успешной обработки
+                remove_from_queue(phone)
+                processed += 1
+                progress.update(task, advance=1, status=status_text)
+    
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⏸ Остановлено пользователем[/]")
+    except Exception as e:
+        console.print(f"\n[red]❌ Критическая ошибка: {e}[/]")
+        logger.exception("Критическая ошибка в parse_phones_with_rotation")
+    finally:
+        # Отключаем всех клиентов
+        await disconnect_all_clients()
+        if current_account:
+            mark_account_idle(current_account.phone)
+    
     console.print()
-    console.print(Panel(
-        f"[bold green]✅ Обработка завершена![/]\n\n"
-        f"  Обработано: [bold]{processed}[/]\n"
-        f"  Найдено:    [bold green]{found}[/]\n"
-        f"  Ошибок:     [bold red]{errors}[/]\n\n"
-        f"  Результаты: [cyan]{EXCEL_FILE}[/]",
-        border_style="green",
-        padding=(1, 3),
-    ))
+    summary_table = Table(box=box.ROUNDED, border_style="green", title="📊 Результаты")
+    summary_table.add_column("Параметр", style="dim")
+    summary_table.add_column("Значение", style="bold")
+    summary_table.add_row("Обработано", str(processed))
+    summary_table.add_row("Найдено", str(found))
+    summary_table.add_row("Ошибок", str(errors))
+    summary_table.add_row("Переключений аккаунтов", str(account_switches))
+    summary_table.add_row("Результаты", EXCEL_FILE)
+    
+    console.print(summary_table)
+
+
+# Для обратной совместимости
+async def parse_phones(client=None):
+    """Обёртка для старой версии (если вызывается с одним клиентом)."""
+    await parse_phones_with_rotation()
 
 
 async def safe_search(phone: str, client, retries: int = 3):
@@ -562,8 +876,7 @@ async def main():
 
         elif choice == "1":
             try:
-                client = await client_connect(phone=phone)
-                await parse_phones(client)
+                await parse_phones_with_rotation()
             except KeyboardInterrupt:
                 console.print("\n[yellow]⏸  Пауза. Прогресс сохранён в БД.[/]")
 
