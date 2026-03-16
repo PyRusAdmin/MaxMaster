@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Утилиты для работы с API Max.
+
+Содержит класс MixinsUtils для обработки ошибок и извлечения версий.
+"""
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, NoReturn
@@ -9,8 +14,19 @@ from PyMax.src.pymax.exceptions import RateLimitError, Error
 
 
 class MixinsUtils:
+    """
+    Класс утилит для обработки ошибок и работы с версиями.
+    """
     @staticmethod
     def handle_error(data: dict[str, Any]) -> NoReturn:
+        """
+        Обрабатывает ошибку от сервера и выбрасывает соответствующее исключение.
+
+        :param data: Данные ответа от сервера.
+        :type data: dict[str, Any]
+        :raises RateLimitError: Если ошибка too.many.requests.
+        :raises Error: Для остальных ошибок.
+        """
         error = data.get("payload", {}).get("error")
         localized_message = data.get("payload", {}).get("localizedMessage")
         title = data.get("payload", {}).get("title")
@@ -33,6 +49,16 @@ class MixinsUtils:
 
     @staticmethod
     def _fetch_and_extract(url: str, session: requests.Session) -> str | None:
+        """
+        Загружает JavaScript файл и извлекает версию приложения.
+
+        :param url: URL JavaScript файла.
+        :type url: str
+        :param session: Сессия requests.
+        :type session: requests.Session
+        :return: Версия приложения или None.
+        :rtype: str | None
+        """
         try:
             js_code = session.get(url, timeout=10).text
         except requests.RequestException:
@@ -41,6 +67,14 @@ class MixinsUtils:
 
     @staticmethod
     def _extract_version(js_code: str) -> str | None:
+        """
+        Извлекает версию приложения из JavaScript кода.
+
+        :param js_code: JavaScript код.
+        :type js_code: str
+        :return: Версия приложения или None.
+        :rtype: str | None
+        """
         ws_anchor = "wss://ws-api.oneme.ru/websocket"
         pos = js_code.find(ws_anchor)
         if pos == -1:
@@ -57,6 +91,12 @@ class MixinsUtils:
 
     @staticmethod
     def get_current_web_version() -> str | None:
+        """
+        Получает текущую версию веб-приложения Max.
+
+        :return: Версия приложения или None.
+        :rtype: str | None
+        """
         try:
             html = requests.get("https://web.max.ru/", timeout=10).text
         except requests.RequestException:

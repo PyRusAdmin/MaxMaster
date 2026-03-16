@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Модуль для работы с файлами (фото, видео, документы).
+
+Содержит классы для загрузки и чтения файлов.
+"""
 import mimetypes
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -10,9 +15,25 @@ from typing_extensions import override
 
 
 class BaseFile(ABC):
+    """
+    Базовый класс для работы с файлами.
+
+    Поддерживает загрузку из URL, пути или raw данных.
+    """
     def __init__(
             self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
     ) -> None:
+        """
+        Инициализирует файл.
+
+        :param raw: Raw данные файла.
+        :type raw: bytes | None
+        :param url: URL для загрузки файла.
+        :type url: str | None
+        :param path: Путь к файлу.
+        :type path: str | None
+        :raises ValueError: Если не указан ни URL, ни путь.
+        """
         self.raw = raw
         self.url = url
         self.path = path
@@ -25,6 +46,12 @@ class BaseFile(ABC):
 
     @abstractmethod
     async def read(self) -> bytes:
+        """
+        Читает содержимое файла.
+
+        :return: Raw данные файла.
+        :rtype: bytes
+        """
         if self.raw is not None:
             return self.raw
 
@@ -43,6 +70,11 @@ class BaseFile(ABC):
 
 
 class Photo(BaseFile):
+    """
+    Класс для работы с фотографиями.
+
+    Поддерживает форматы: JPG, JPEG, PNG, GIF, WEBP, BMP.
+    """
     ALLOWED_EXTENSIONS: ClassVar[set[str]] = {
         ".jpg",
         ".jpeg",
@@ -50,7 +82,7 @@ class Photo(BaseFile):
         ".gif",
         ".webp",
         ".bmp",
-    }  # FIXME: костыль ✅
+    }
 
     def __init__(
             self,
@@ -60,6 +92,18 @@ class Photo(BaseFile):
             path: str | None = None,
             name: str | None = None,
     ) -> None:
+        """
+        Инициализирует фотографию.
+
+        :param raw: Raw данные изображения.
+        :type raw: bytes | None
+        :param url: URL для загрузки изображения.
+        :type url: str | None
+        :param path: Путь к файлу изображения.
+        :type path: str | None
+        :param name: Имя файла.
+        :type name: str | None
+        """
         if path:
             self.file_name = Path(path).name
         elif url:
@@ -72,6 +116,13 @@ class Photo(BaseFile):
         super().__init__(raw=raw, url=url, path=path)
 
     def validate_photo(self) -> tuple[str, str] | None:
+        """
+        Проверяет корректность фотографии (расширение и MIME-тип).
+
+        :return: Кортеж (расширение, MIME-тип) или None.
+        :rtype: tuple[str, str] | None
+        :raises ValueError: Если формат файла недопустим.
+        """
         if self.path:
             extension = Path(self.path).suffix.lower()
             if extension not in self.ALLOWED_EXTENSIONS:
@@ -97,13 +148,32 @@ class Photo(BaseFile):
 
     @override
     async def read(self) -> bytes:
+        """
+        Читает содержимое фотографии.
+
+        :return: Raw данные изображения.
+        :rtype: bytes
+        """
         return await super().read()
 
 
 class Video(BaseFile):
+    """
+    Класс для работы с видеофайлами.
+    """
     def __init__(
             self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
     ) -> None:
+        """
+        Инициализирует видео.
+
+        :param raw: Raw данные видео.
+        :type raw: bytes | None
+        :param url: URL для загрузки видео.
+        :type url: str | None
+        :param path: Путь к файлу видео.
+        :type path: str | None
+        """
         self.file_name: str = ""
         if path:
             self.file_name = Path(path).name
@@ -116,13 +186,32 @@ class Video(BaseFile):
 
     @override
     async def read(self) -> bytes:
+        """
+        Читает содержимое видео.
+
+        :return: Raw данные видео.
+        :rtype: bytes
+        """
         return await super().read()
 
 
 class File(BaseFile):
+    """
+    Класс для работы с файлами (документы).
+    """
     def __init__(
             self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
     ) -> None:
+        """
+        Инициализирует файл.
+
+        :param raw: Raw данные файла.
+        :type raw: bytes | None
+        :param url: URL для загрузки файла.
+        :type url: str | None
+        :param path: Путь к файлу.
+        :type path: str | None
+        """
         self.file_name: str = ""
         if path:
             self.file_name = Path(path).name
@@ -136,4 +225,10 @@ class File(BaseFile):
 
     @override
     async def read(self) -> bytes:
+        """
+        Читает содержимое файла.
+
+        :return: Raw данные файла.
+        :rtype: bytes
+        """
         return await super().read()

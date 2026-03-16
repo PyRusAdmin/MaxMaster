@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для работы с Socket подключением.
+
+Содержит SocketMixin для установки и поддержания TCP socket соединения с использованием LZ4 и MessagePack.
+"""
 import asyncio
 import socket
 import ssl
@@ -21,6 +26,9 @@ from PyMax.src.pymax.types import Chat
 
 
 class SocketMixin(BaseTransport):
+    """
+    Mixin для работы с Socket подключением.
+    """
     @property
     def sock(self) -> socket.socket:
         if self._socket is None or not self.is_connected:

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для работы с группами.
+
+Содержит GroupMixin для создания, управления группами и участниками.
+"""
 import time
 
 from PyMax.src.pymax.exceptions import Error
@@ -14,6 +19,9 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 
 class GroupMixin(ClientProtocol):
+    """
+    Mixin для работы с группами.
+    """
     async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True, ) -> tuple[
                                                                                                                     Chat, Message] | None:
         """

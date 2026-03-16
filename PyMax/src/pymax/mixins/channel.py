@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для работы с каналами.
+
+Содержит ChannelMixin для управления каналами и участниками.
+"""
 from PyMax.src.pymax.types import Channel, Member
 from PyMax.src.pymax.exceptions import ResponseStructureError
 from PyMax.src.pymax.payloads import (
@@ -12,6 +17,9 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 
 class ChannelMixin(ClientProtocol):
+    """
+    Mixin для работы с каналами.
+    """
     async def resolve_channel_by_name(self, name: str) -> Channel | None:
         """
         Получает информацию о канале по его имени

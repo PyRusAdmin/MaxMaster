@@ -33,7 +33,6 @@ from PyMax.src.pymax.types import Chat, Dialog, Channel, Me, User, Message, Reac
 
 class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixin, UserMixin, WebSocketMixin,
                 BaseClient):
-    allowed_device_types: set[str] = {"WEB"}
     """
     Основной клиент для работы с WebSocket API сервиса Max.
 
@@ -68,6 +67,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
     :raises InvalidPhoneError: Если формат номера телефона неверный.
     """
+    allowed_device_types: set[str] = {"WEB"}
 
     def __init__(self, phone: str, uri: str = WEBSOCKET_URI, session_name: str = SESSION_STORAGE_DB,
                  headers: UserAgentPayload | None = None, token: str | None = None, send_fake_telemetry: bool = True,
@@ -75,6 +75,42 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                  work_dir: str = ".", registration: bool = False, first_name: str = "",
                  last_name: str | None = None, device_id: UUID | None = None, reconnect: bool = True,
                  reconnect_delay: float = 1.0, ) -> None:
+        """
+        Инициализирует клиент MaxClient.
+
+        :param phone: Номер телефона для авторизации.
+        :type phone: str
+        :param uri: URI WebSocket сервера.
+        :type uri: str
+        :param session_name: Название сессии для хранения базы данных.
+        :type session_name: str
+        :param headers: Заголовки для подключения к WebSocket.
+        :type headers: UserAgentPayload | None
+        :param token: Токен авторизации.
+        :type token: str | None
+        :param send_fake_telemetry: Флаг отправки фейковой телеметрии.
+        :type send_fake_telemetry: bool
+        :param host: Хост API сервера.
+        :type host: str
+        :param port: Порт API сервера.
+        :type port: int
+        :param proxy: Прокси для подключения к WebSocket.
+        :type proxy: str | Literal[True] | None
+        :param work_dir: Рабочая директория для хранения базы данных.
+        :type work_dir: str
+        :param registration: Флаг регистрации нового пользователя.
+        :type registration: bool
+        :param first_name: Имя пользователя для регистрации.
+        :type first_name: str
+        :param last_name: Фамилия пользователя для регистрации.
+        :type last_name: str | None
+        :param device_id: ID устройства.
+        :type device_id: UUID | None
+        :param reconnect: Флаг автоматического переподключения.
+        :type reconnect: bool
+        :param reconnect_delay: Задержка между переподключениями в секундах.
+        :type reconnect_delay: float
+        """
         self.uri: str = uri
         self.phone: str = phone  # Номер телефона аккаунта Max
 
@@ -163,9 +199,20 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
     @staticmethod
     def _default_headers() -> UserAgentPayload:
+        """
+        Возвращает заголовки по умолчанию для подключения.
+
+        :return: Заголовки пользователя для устройства WEB.
+        :rtype: UserAgentPayload
+        """
         return UserAgentPayload(device_type="WEB")
 
     def _validate_device_type(self) -> None:
+        """
+        Проверяет, поддерживается ли тип устройства.
+
+        :raises ValueError: Если тип устройства не поддерживается.
+        """
         if self.user_agent.device_type not in self.allowed_device_types:
             raise ValueError(
                 f"{self.__class__.__name__} does not support "
@@ -173,6 +220,11 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
             )
 
     async def _wait_forever(self) -> None:
+        """
+        Ожидает закрытия WebSocket соединения.
+
+        :return: None
+        """
         try:
             await self.ws.wait_closed()
         except asyncio.CancelledError:
@@ -193,6 +245,13 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
             logger.exception(e)
 
     async def _post_login_tasks(self, sync: bool = True) -> None:
+        """
+        Выполняет пост-логин задачи: синхронизация, ping, телеметрия.
+
+        :param sync: Флаг выполнения синхронизации.
+        :type sync: bool
+        :return: None
+        """
         if sync:
             await self._sync()
 
@@ -316,14 +375,31 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
+    """
+    Клиент для работы с Max API через сокеты (Android, iOS, Desktop).
+
+    Наследуется от MaxClient, переопределяет методы для работы с TCP сокетами.
+    Поддерживаемые типы устройств: ANDROID, IOS, DESKTOP.
+    """
     allowed_device_types = {"ANDROID", "IOS", "DESKTOP"}
 
     @staticmethod
     def _default_headers() -> UserAgentPayload:
+        """
+        Возвращает заголовки по умолчанию для DESKTOP устройства.
+
+        :return: Заголовки пользователя для устройства DESKTOP.
+        :rtype: UserAgentPayload
+        """
         return UserAgentPayload(device_type="DESKTOP")
 
     @override
     async def _wait_forever(self):
+        """
+        Ожидает закрытия socket соединения.
+
+        :return: None
+        """
         if self._recv_task:
             try:
                 await self._recv_task
@@ -334,6 +410,11 @@ class SocketMaxClient(SocketMixin, MaxClient):
 
     @override
     async def _cleanup_client(self):
+        """
+        Очищает ресурсы клиента: отменяет задачи, закрывает сокет.
+
+        :return: None
+        """
         for task in list(self._background_tasks):
             task.cancel()
             try:

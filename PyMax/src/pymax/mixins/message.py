@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для работы с сообщениями.
+
+Содержит MessageMixin для отправки, редактирования, удаления сообщений,
+а также для загрузки вложений (фото, видео, файлы).
+"""
 import asyncio
 import time
 from http import HTTPStatus
@@ -26,6 +32,9 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 
 class MessageMixin(ClientProtocol):
+    """
+    Mixin для работы с сообщениями.
+    """
     CHUNK_SIZE = 6 * 1024 * 1024
 
     async def _upload_file(self, file: File) -> None | Attach:

@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
+"""
+Модуль навигации по экранам приложения Max.
+
+Содержит класс Navigation для работы с графом экранов и их ID.
+"""
 import random
 
 
 class Navigation:
-    SCREENS_GRAPH = {  # noqa: RUF012
+    """
+    Класс для управления навигацией между экранами приложения Max.
+
+    Содержит граф переходов между экранами и их идентификаторы.
+    """
+    SCREENS_GRAPH: dict[str, list[str]] = {  # noqa: RUF012
         "chats_list_tab": [
             "chat",
             "contacts_tab",
@@ -161,6 +171,15 @@ class Navigation:
 
     @classmethod
     def get_screen_id(cls, screen_name: str) -> int:
+        """
+        Получает ID экрана по его имени.
+
+        :param screen_name: Имя экрана.
+        :type screen_name: str
+        :return: ID экрана.
+        :rtype: int
+        :raises ValueError: Если имя экрана неизвестно.
+        """
         screen_id = cls.SCREENS.get(screen_name)
 
         if screen_id is None:
@@ -170,18 +189,44 @@ class Navigation:
 
     @classmethod
     def can_navigate(cls, from_screen: str, to_screen: str) -> bool:
+        """
+        Проверяет, возможен ли переход между экранами.
+
+        :param from_screen: Исходный экран.
+        :type from_screen: str
+        :param to_screen: Целевой экран.
+        :type to_screen: str
+        :return: True если переход возможен.
+        :rtype: bool
+        """
         if from_screen == to_screen:
             return True
         return to_screen in cls.SCREENS_GRAPH.get(from_screen, [])
 
     @classmethod
     def get_random_navigation(cls, screen_name: str) -> str:
+        """
+        Выбирает случайный экран для перехода из текущего.
+
+        :param screen_name: Текущий экран.
+        :type screen_name: str
+        :return: Имя целевого экрана.
+        :rtype: str
+        """
         return random.choice(  # nosec B311
             cls.SCREENS_GRAPH.get(screen_name, [])
         )
 
     @classmethod
     def get_screen_name(cls, screen_id: int) -> str | None:
+        """
+        Получает имя экрана по его ID.
+
+        :param screen_id: ID экрана.
+        :type screen_id: int
+        :return: Имя экрана или None.
+        :rtype: str | None
+        """
         for name, id_ in cls.SCREENS.items():
             if id_ == screen_id:
                 return name

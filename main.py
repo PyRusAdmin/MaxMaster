@@ -29,26 +29,6 @@ logger.add(sys.stderr, level="WARNING")
 # ─── Rich консоль ─────────────────────────────────────────────────────────────
 console = Console()
 
-# ─── Миграция: добавляем новые поля в таблицу аккаунтов ─────────────────────
-# try:
-#     # Проверяем, есть ли новые поля, и добавляем если нет
-#     accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN is_blocked TEXT DEFAULT 'N'")
-# except Exception:
-#     pass  # Поле уже существует
-#
-# try:
-#     accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN errors_count TEXT DEFAULT '0'")
-# except Exception:
-#     pass
-# try:
-#     accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN last_used_at TEXT")
-# except Exception:
-#     pass
-# try:
-#     accounts_db.execute_sql("ALTER TABLE max_accounts ADD COLUMN work_status TEXT DEFAULT 'idle'")
-# except Exception:
-#     pass
-
 # ─── Max клиент ───────────────────────────────────────────────────────────────
 
 # Глобальное хранилище клиентов: {phone: MaxClient}
@@ -846,17 +826,17 @@ async def main():
         print_stats()
         choice = print_menu()
 
-        if choice == "0":
+        if choice == "0":  # Выход из программы
             console.print("\n[dim]До свидания![/]")
             sys.exit(0)
 
-        elif choice == "1":
+        elif choice == "1":  # Запуск парсинга номеров с переключением аккаунтов
             try:
                 await parse_phones_with_rotation()
             except KeyboardInterrupt:
                 console.print("\n[yellow]⏸  Пауза. Прогресс сохранён в БД.[/]")
 
-        elif choice == "2":
+        elif choice == "2":  # Загрузка номеров из файла
             with console.status("[cyan]Загружаем номера из файла...[/]"):
                 count = load_numbers_to_db()
             console.print(Panel(
@@ -864,7 +844,7 @@ async def main():
                 border_style="green",
             ))
 
-        elif choice == "3":
+        elif choice == "3":  # Показать статистику очереди
             print_header()
             # Детальная статистика
             total = get_queue_count()
@@ -879,7 +859,7 @@ async def main():
             table.add_row("Задержка при rate limit", f"{SLEEP_ON_RATELIMIT} сек")
             console.print(table)
 
-        elif choice == "4":
+        elif choice == "4":  # Подключить новый аккаунт
             print_header()
             # Показываем список подключённых аккаунтов
             show_accounts_list()

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для работы с WebSocket подключением.
+
+Содержит WebSocketMixin для установки и поддержания WebSocket соединения.
+"""
 import asyncio
 import json
 from typing import Any
@@ -17,6 +22,9 @@ from PyMax.src.pymax.types import Chat
 
 
 class WebSocketMixin(BaseTransport):
+    """
+    Mixin для работы с WebSocket подключением.
+    """
     @property
     def ws(self) -> websockets.ClientConnection:
         if self._ws is None or not self.is_connected:

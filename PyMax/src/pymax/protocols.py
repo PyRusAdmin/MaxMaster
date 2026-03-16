@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Протоколы и абстрактные базовые классы для клиентов.
+
+Содержит ClientProtocol — абстрактный базовый класс для всех клиентов.
+"""
 import asyncio
 import socket
 import ssl
@@ -19,8 +24,15 @@ from PyMax.src.pymax.types import User, Chat, Dialog, Channel, Me, Message, Reac
 
 
 class ClientProtocol(ABC):
+    """
+    Абстрактный базовый класс для всех клиентов.
+
+    Определяет общий интерфейс и атрибуты для MaxClient и SocketMaxClient.
+    """
     def __init__(self) -> None:
-        super().__init__()
+        """
+        Инициализирует базовые атрибуты клиента.
+        """
         self._users: dict[int, User] = {}
         self.chats: list[Chat] = []
         self._database: Database
@@ -87,10 +99,32 @@ class ClientProtocol(ABC):
             cmd: int = 0,
             timeout: float = DEFAULT_TIMEOUT,
     ) -> dict[str, Any]:
+        """
+        Отправляет сообщение и ожидает ответ.
+
+        :param opcode: Код операции.
+        :type opcode: Opcode
+        :param payload: Полезная нагрузка сообщения.
+        :type payload: dict[str, Any]
+        :param cmd: Команда сообщения.
+        :type cmd: int
+        :param timeout: Таймаут ожидания ответа.
+        :type timeout: float
+        :return: Ответ от сервера.
+        :rtype: dict[str, Any]
+        """
         pass
 
     @abstractmethod
     async def _get_chat(self, chat_id: int) -> Chat | None:
+        """
+        Получает чат по ID.
+
+        :param chat_id: ID чата.
+        :type chat_id: int
+        :return: Чат или None.
+        :rtype: Chat | None
+        """
         pass
 
     @abstractmethod
@@ -102,10 +136,36 @@ class ClientProtocol(ABC):
             timeout: float = DEFAULT_TIMEOUT,
             max_retries: int = 3,
     ) -> Message | None:
+        """
+        Ставит сообщение в очередь на отправку.
+
+        :param opcode: Код операции.
+        :type opcode: int
+        :param payload: Полезная нагрузка сообщения.
+        :type payload: dict[str, Any]
+        :param cmd: Команда сообщения.
+        :type cmd: int
+        :param timeout: Таймаут ожидания ответа.
+        :type timeout: float
+        :param max_retries: Максимальное количество попыток.
+        :type max_retries: int
+        :return: Отправленное сообщение или None.
+        :rtype: Message | None
+        """
         pass
 
     @abstractmethod
     def _create_safe_task(
             self, coro: Awaitable[Any], name: str | None = None
     ) -> asyncio.Task[Any]:
+        """
+        Создаёт безопасную задачу с обработкой исключений.
+
+        :param coro: Корутина для выполнения.
+        :type coro: Awaitable[Any]
+        :param name: Имя задачи.
+        :type name: str | None
+        :return: Задача asyncio.
+        :rtype: asyncio.Task[Any]
+        """
         pass

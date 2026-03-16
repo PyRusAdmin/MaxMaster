@@ -1,7 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+Перечисления (enum) для работы с API Max.
+
+Содержит все типы перечислений, используемые в проекте.
+"""
 from enum import Enum
 
 
 class Opcode(int, Enum):
+    """
+    Коды операций WebSocket протокола Max.
+
+    Используются для идентификации типов сообщений в протоколе.
+    """
     PING = 1  # ✅
     DEBUG = 2
     RECONNECT = 3
@@ -147,23 +158,27 @@ class Opcode(int, Enum):
 
 
 class ChatType(str, Enum):
+    """Типы чатов."""
     DIALOG = "DIALOG"
     CHAT = "CHAT"
     CHANNEL = "CHANNEL"
 
 
 class MessageType(str, Enum):
+    """Типы сообщений."""
     TEXT = "TEXT"
     SYSTEM = "SYSTEM"
     SERVICE = "SERVICE"
 
 
 class MessageStatus(str, Enum):
+    """Статусы сообщений."""
     EDITED = "EDITED"
     REMOVED = "REMOVED"
 
 
 class ElementType(str, Enum):
+    """Типы элементов форматирования."""
     TEXT = "text"
     MENTION = "mention"
     LINK = "link"
@@ -171,6 +186,7 @@ class ElementType(str, Enum):
 
 
 class AuthType(str, Enum):
+    """Типы аутентификации."""
     START_AUTH = "START_AUTH"
     CHECK_CODE = "CHECK_CODE"
     REGISTER = "REGISTER"
@@ -178,18 +194,21 @@ class AuthType(str, Enum):
 
 
 class AccessType(str, Enum):
+    """Типы доступа к чату."""
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
-    SECRET = "SECRET"  # nosec B105
+    SECRET = "SECRET"
 
 
 class DeviceType(str, Enum):
+    """Типы устройств."""
     WEB = "WEB"
     ANDROID = "ANDROID"
     IOS = "IOS"
 
 
 class AttachType(str, Enum):
+    """Типы вложений."""
     PHOTO = "PHOTO"
     VIDEO = "VIDEO"
     FILE = "FILE"
@@ -200,6 +219,7 @@ class AttachType(str, Enum):
 
 
 class FormattingType(str, Enum):
+    """Типы форматирования текста."""
     STRONG = "STRONG"
     EMPHASIZED = "EMPHASIZED"
     UNDERLINE = "UNDERLINE"
@@ -207,6 +227,7 @@ class FormattingType(str, Enum):
 
 
 class MarkupType(str, Enum):
+    """Типы Markdown разметки."""
     BOLD = "**"
     ITALIC = "*"
     UNDERLINE = "__"
@@ -214,17 +235,20 @@ class MarkupType(str, Enum):
 
 
 class ContactAction(str, Enum):
+    """Действия с контактами."""
     ADD = "ADD"
     REMOVE = "REMOVE"
 
 
 class ReadAction(str, Enum):
+    """Действия чтения."""
     READ_MESSAGE = "READ_MESSAGE"
     READ_REACTION = "READ_REACTION"
 
 
 class Capability(int, Enum):
-    DEFAULT = 0  # В душе не чаю что это такое но при первой установке 2фа там 0 3 4 так что пусть будет дефолт
+    """Возможности аккаунта (для 2FA)."""
+    DEFAULT = 0
     ESIA_VERIFIED_FLAG = 1
     SECOND_FACTOR_PASSWORD_ENABLED = 2
     SECOND_FACTOR_HAS_EMAIL = 3

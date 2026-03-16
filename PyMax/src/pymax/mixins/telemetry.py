@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Mixin для отправки телеметрии в Max API.
+
+Содержит TelemetryMixin для отправки навигационных событий и фейковой телеметрии.
+"""
 import asyncio
 import random
 import time
@@ -12,7 +17,17 @@ from PyMax.src.pymax.static.enum import Opcode
 
 
 class TelemetryMixin(ClientProtocol):
+    """
+    Mixin для отправки телеметрии и навигационных событий.
+    """
     async def _send_navigation_event(self, events: list[NavigationEventPayload]) -> None:
+        """
+        Отправляет навигационное событие на сервер.
+
+        :param events: Список событий навигации.
+        :type events: list[NavigationEventPayload]
+        :return: None
+        """
         try:
             payload = NavigationPayload(events=events).model_dump(by_alias=True)
             data = await self._send_and_wait(
@@ -28,6 +43,11 @@ class TelemetryMixin(ClientProtocol):
             return
 
     async def _send_cold_start(self) -> None:
+        """
+        Отправляет событие COLD_START при запуске клиента.
+
+        :return: None
+        """
         if not self.me:
             logger.error("Cannot send cold start, user not set")
             return
@@ -50,6 +70,11 @@ class TelemetryMixin(ClientProtocol):
         await self._send_navigation_event([payload])
 
     async def _send_random_navigation(self) -> None:
+        """
+        Отправляет случайное навигационное событие.
+
+        :return: None
+        """
         if not self.me:
             logger.error("Cannot send navigation event, user not set")
             return
@@ -76,7 +101,12 @@ class TelemetryMixin(ClientProtocol):
         await self._send_navigation_event([payload])
 
     def _get_random_sleep_time(self) -> int:
-        # TODO: вынести в статик
+        """
+        Генерирует случайное время задержки для телеметрии.
+
+        :return: Время задержки в миллисекундах.
+        :rtype: int
+        """
         sleep_options = [
             (1000, 3000),
             (300, 1000),
@@ -93,6 +123,11 @@ class TelemetryMixin(ClientProtocol):
         return random.randint(low, high)  # nosec B311
 
     async def _start(self) -> None:
+        """
+        Запускает задачу отправки фейковой телеметрии.
+
+        :return: None
+        """
         if not self.is_connected:
             logger.error("Cannot start telemetry, client not connected")
             return
