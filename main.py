@@ -18,7 +18,7 @@ from rich.text import Text
 from PyMax.src.pymax.core import MaxClient
 from PyMax.src.pymax.payloads import UserAgentPayload
 from config import DB_PATH, EXCEL_FILE, APP_VERSION, APP_DATE, SLEEP_TIME, SLEEP_ON_RATELIMIT, NUMBERS_FILE
-from database import accounts_db, AccountLog, MaxAccount, PhoneQueue
+from database import AccountLog, MaxAccount, PhoneQueue
 from read_file import read_file
 
 # ─── Логгер ───────────────────────────────────────────────────────────────────

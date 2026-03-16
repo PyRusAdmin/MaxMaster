@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 APP_VERSION = "0.0.1"
 APP_DATE = "12.03.2026"
 
-
 # ─── Конфиг ───────────────────────────────────────────────────────────────────
 load_dotenv()
 SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
