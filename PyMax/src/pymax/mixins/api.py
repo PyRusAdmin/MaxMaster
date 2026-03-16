@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from loguru import logger
 
 from PyMax.src.pymax.payloads import SyncPayload, UserAgentPayload
 from PyMax.src.pymax.protocols import ClientProtocol
+from PyMax.src.pymax.static.enum import ChatType
 from PyMax.src.pymax.static.enum import Opcode
-
-if TYPE_CHECKING:
-    from PyMax.src.pymax.types import Chat
+from PyMax.src.pymax.types import Chat
+from PyMax.src.pymax.types import Dialog, Channel, Me, User
+from PyMax.src.pymax.utils import MixinsUtils
 
 
 class ApiMixin(ClientProtocol):
@@ -25,11 +24,8 @@ class ApiMixin(ClientProtocol):
         :param user_agent: Пользовательский агент.
         :type user_agent: UserAgentPayload | None
         """
-        from PyMax.src.pymax.types import Chat, Dialog, Channel, Me, User
-        from PyMax.src.pymax.static.enum import ChatType
-        from PyMax.src.pymax.utils import MixinsUtils
 
-        logger.info("Starting initial sync")
+        logger.info("Начало начальной синхронизации")
 
         if user_agent is None:
             user_agent = self.headers or UserAgentPayload()
@@ -59,29 +55,29 @@ class ApiMixin(ClientProtocol):
                         self.chats.append(Chat.from_dict(raw_chat))
                     elif raw_chat.get("type") == ChatType.CHANNEL.value:
                         self.channels.append(Channel.from_dict(raw_chat))
-                except Exception:
-                    logger.exception("Error parsing chat entry")
+                except Exception as e:
+                    logger.exception(e)
 
             for raw_user in raw_payload.get("contacts", []):
                 try:
                     user = User.from_dict(raw_user)
                     if user:
                         self.contacts.append(user)
-                except Exception:
-                    logger.exception("Error parsing contact entry")
+                except Exception as e:
+                    logger.exception(e)
 
             if raw_payload.get("profile", {}).get("contact"):
                 self.me = Me.from_dict(raw_payload.get("profile", {}).get("contact", {}))
 
             logger.info(
-                "Sync completed: dialogs=%d chats=%d channels=%d",
+                "Синхронизация завершена: dialogs=%d chats=%d channels=%d",
                 len(self.dialogs),
                 len(self.chats),
                 len(self.channels),
             )
 
         except Exception as e:
-            logger.exception("Sync failed")
+            logger.exception("Синхронизация не получилась")
             self.is_connected = False
             if self._ws:
                 await self._ws.close()

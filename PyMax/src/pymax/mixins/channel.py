@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from PyMax.src.pymax.types import Channel, Member
 from PyMax.src.pymax.exceptions import ResponseStructureError
-from PyMax.src.pymax.payloads import ResolveLinkPayload, JoinChatPayload, GetGroupMembersPayload, \
-    SearchGroupMembersPayload
+from PyMax.src.pymax.payloads import (
+    ResolveLinkPayload, JoinChatPayload, GetGroupMembersPayload, SearchGroupMembersPayload
+)
+
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.constant import DEFAULT_MARKER_VALUE, DEFAULT_CHAT_MEMBERS_LIMIT
 from PyMax.src.pymax.static.enum import Opcode

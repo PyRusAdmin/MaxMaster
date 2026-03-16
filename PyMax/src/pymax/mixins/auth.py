@@ -7,9 +7,10 @@ from typing import Any
 from loguru import logger
 import qrcode
 
-from PyMax.src.pymax.payloads import RequestCodePayload, SendCodePayload, RegisterPayload, \
-    CheckPasswordChallengePayload, SetPasswordPayload, SetHintPayload, RequestEmailCodePayload, SendEmailCodePayload, \
-    CreateTrackPayload, SetTwoFactorPayload
+from PyMax.src.pymax.payloads import (
+    RequestCodePayload, SendCodePayload, RegisterPayload, CheckPasswordChallengePayload, SetPasswordPayload,
+    SetHintPayload, RequestEmailCodePayload, SendEmailCodePayload, CreateTrackPayload, SetTwoFactorPayload
+)
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.constant import PHONE_REGEX, _Unset, UNSET
 from PyMax.src.pymax.static.enum import AuthType, Opcode, DeviceType, Capability
@@ -27,6 +28,8 @@ class AuthMixin(ClientProtocol):
         Метод отправляет запрос на получение кода верификации на переданный номер телефона.
         Используется в процессе аутентификации или регистрации.
 
+        Используется только в пользовательском flow аутентификации.
+
         :param phone: Номер телефона в международном формате.
         :type phone: str
         :param language: Язык для сообщения с кодом. По умолчанию "ru".
@@ -35,9 +38,6 @@ class AuthMixin(ClientProtocol):
         :rtype: str
         :raises ValueError: Если полученные данные имеют неверный формат.
         :raises Error: Если сервер вернул ошибку.
-
-        .. note::
-            Используется только в пользовательском flow аутентификации.
         """
         logger.info("Requesting auth code")
 
