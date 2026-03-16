@@ -3,13 +3,11 @@ import asyncio
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 
 from dotenv import load_dotenv
 from loguru import logger
 from openpyxl import Workbook
 from peewee import SqliteDatabase, Model, CharField, DateTimeField
-
 from rich import box
 from rich.align import Align
 from rich.console import Console
@@ -85,52 +83,51 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts") -
     await client.start()
     return client
 
-    # async def connect_client_with_error_handling(client: MaxClient) -> None:
-    #     """
-    #     Запускает клиента с обработкой ошибок авторизации.
-    #
-    #     :param client: Экземпляр MaxClient для запуска.
-    #     :raises SystemExit: При ошибке авторизации.
-    # """
-    # try:
-    # await client.start()
-    # except Exception as e:
-    #     error_msg = str(e)
-    #
-    #     # Обработка ошибки авторизации
-    #     if "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower():
-    #         # Автоматическая очистка старой сессии
-    #         session_file = Path(client._work_dir) / "session.db"
-    #         if session_file.exists():
-    #             session_file.unlink()
-    #             logger.info("Старая сессия удалена: %s", session_file)
-    #
-    #         console.print(Panel(
-    #             "[bold red]❌ Ошибка авторизации![/]\n\n"
-    #             "Ваша сессия истекла или была разорвана.\n\n"
-    #             "[green]✓ Старая сессия удалена автоматически[/]\n\n"
-    #             "[yellow]Что делать дальше:[/]\n"
-    #             "  1. Запустите приложение заново\n"
-    #             "  2. Пройдите повторную авторизацию (отсканируйте QR-код или введите код из SMS)\n\n"
-    #             "[dim]Ошибка: {error}[/]".format(error=error_msg),
-    #             title="[bold red]Требуется авторизация[/]",
-    #             border_style="red",
-    #             padding=(1, 3),
-    #         ))
-    #         logger.error(f"Авторизация не удалась: {error_msg}")
-    #         sys.exit(1)
-    #
-    #     # Другие ошибки
-    #     console.print(Panel(
-    #         f"[bold red]❌ Произошла ошибка:[/]\n\n{error_msg}",
-    #         title="[bold red]Ошибка[/]",
-    #         border_style="red",
-    #         padding=(1, 3),
-    #     ))
-    #     logger.exception("Необработанная ошибка в main()")
-    #     sys.exit(1)
 
+async def connect_client_with_error_handling(client: MaxClient) -> None:
+    """
+    Запускает клиента с обработкой ошибок авторизации.
+    
+    :param client: Экземпляр MaxClient для запуска.
+    :raises SystemExit: При ошибке авторизации.
+    """
+    try:
+        await client.start()
+    except Exception as e:
+        error_msg = str(e)
 
+        # Обработка ошибки авторизации
+        if "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower():
+            # Автоматическая очистка старой сессии
+            session_file = Path(client._work_dir) / "session.db"
+            if session_file.exists():
+                session_file.unlink()
+                logger.info("Старая сессия удалена: %s", session_file)
+
+            console.print(Panel(
+                "[bold red]❌ Ошибка авторизации![/]\n\n"
+                "Ваша сессия истекла или была разорвана.\n\n"
+                "[green]✓ Старая сессия удалена автоматически[/]\n\n"
+                "[yellow]Что делать дальше:[/]\n"
+                "  1. Запустите приложение заново\n"
+                "  2. Пройдите повторную авторизацию (отсканируйте QR-код или введите код из SMS)\n\n"
+                "[dim]Ошибка: {error}[/]".format(error=error_msg),
+                title="[bold red]Требуется авторизация[/]",
+                border_style="red",
+                padding=(1, 3),
+            ))
+            logger.error(f"Авторизация не удалась: {error_msg}")
+            sys.exit(1)
+
+        # Другие ошибки
+        console.print(Panel(
+            f"[bold red]❌ Произошла ошибка:[/]\n\n{error_msg}",
+            title="[bold red]Ошибка[/]",
+            border_style="red",
+            padding=(1, 3),
+        ))
+        logger.exception("Необработанная ошибка в main()")
+        sys.exit(1)
 
 
 # ─── Заголовки Excel ──────────────────────────────────────────────────────────
@@ -301,7 +298,7 @@ def print_menu() -> str:
 
 # ─── Парсинг ──────────────────────────────────────────────────────────────────
 
-async def parse_phones():
+async def parse_phones(client):
     total_start = get_queue_count()
     if total_start == 0:
         console.print(Panel(
@@ -346,7 +343,7 @@ async def parse_phones():
             await asyncio.sleep(SLEEP_TIME)
 
             try:
-                result = await safe_search(phone)
+                result = await safe_search(phone=phone, client=client)
                 if result is None:
                     logger.error(f"Не удалось получить данные для {phone} после нескольких попыток")
                     status_text = "❌ нет соединения"
@@ -396,9 +393,13 @@ async def parse_phones():
     ))
 
 
-async def safe_search(phone: str, retries: int = 3):
+async def safe_search(phone: str, client, retries: int = 3):
     """
     Поиск с автоматическим переподключением.
+    
+    :param phone: Номер телефона для поиска.
+    :param client: Экземпляр MaxClient.
+    :param retries: Количество попыток при ошибке подключения.
     """
     for attempt in range(retries):
         try:
@@ -416,12 +417,13 @@ async def safe_search(phone: str, retries: int = 3):
 
 # ─── Точка входа ──────────────────────────────────────────────────────────────
 
-# @client.on_start
-async def on_start() -> None:
-    logger.info(f"Клиент запущен. ID: {client.me.id}")
+
+async def main():
+    """
+    Основное меню программы
+    """
 
     print_header()
-    console.print(f"[dim]Подключено. Ваш ID: [cyan]{client.me.id}[/][/]\n")
 
     while True:
         print_stats()
@@ -433,7 +435,8 @@ async def on_start() -> None:
 
         elif choice == "1":
             try:
-                await parse_phones()
+                client = await client_connect(phone=phone)
+                await parse_phones(client)
             except KeyboardInterrupt:
                 console.print("\n[yellow]⏸  Пауза. Прогресс сохранён в БД.[/]")
 
@@ -463,12 +466,6 @@ async def on_start() -> None:
         console.print()
         input("  [Enter] для возврата в меню...")
         print_header()
-
-
-async def main():
-    client = client_connect(phone=phone)
-
-    await on_start()
 
 
 if __name__ == "__main__":
