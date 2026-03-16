@@ -2,9 +2,11 @@
 import time
 
 from PyMax.src.pymax.exceptions import Error
-from PyMax.src.pymax.payloads import CreateGroupPayload, CreateGroupMessage, CreateGroupAttach, RemoveUsersPayload, \
-    ChangeGroupSettingsPayload, ChangeGroupSettingsOptions, ChangeGroupProfilePayload, \
-    InviteUsersPayload, ReworkInviteLinkPayload, GetChatInfoPayload, LeaveChatPayload, FetchChatsPayload
+from PyMax.src.pymax.payloads import (
+    CreateGroupPayload, CreateGroupMessage, CreateGroupAttach, RemoveUsersPayload, ChangeGroupSettingsPayload,
+    ChangeGroupSettingsOptions, ChangeGroupProfilePayload, InviteUsersPayload, ReworkInviteLinkPayload,
+    GetChatInfoPayload, LeaveChatPayload, FetchChatsPayload, JoinChatPayload
+)
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.enum import Opcode
 from PyMax.src.pymax.types import Message, Chat
@@ -60,22 +62,14 @@ class GroupMixin(ClientProtocol):
 
         return chat, message
 
-    async def invite_users_to_group(
-            self,
-            chat_id: int,
-            user_ids: list[int],
-            show_history: bool = True,
-    ) -> Chat | None:
+    async def invite_users_to_group(self, chat_id: int, user_ids: list[int], show_history: bool = True) -> Chat | None:
         """
         Приглашает пользователей в группу
 
-        Args:
-            chat_id (int): ID группы.
-            user_ids (list[int]): Список идентификаторов пользователей.
-            show_history (bool, optional): Флаг оповещения. Defaults to True.
-
-        Returns:
-            Chat | None: Объект Chat или None при ошибке.
+        :param: chat_id (int): ID группы.
+        :param: user_ids (list[int]): Список идентификаторов пользователей.
+        :param: show_history (bool, optional): Флаг оповещения. Defaults to True.
+        :return: Chat | None
         """
         payload = InviteUsersPayload(
             chat_id=chat_id,
@@ -100,12 +94,8 @@ class GroupMixin(ClientProtocol):
 
         return chat
 
-    async def invite_users_to_channel(
-            self,
-            chat_id: int,
-            user_ids: list[int],
-            show_history: bool = True,
-    ) -> Chat | None:
+    async def invite_users_to_channel(self, chat_id: int, user_ids: list[int],
+                                      show_history: bool = True) -> Chat | None:
         """
         Приглашает пользователей в канал
 
@@ -119,12 +109,7 @@ class GroupMixin(ClientProtocol):
         """
         return await self.invite_users_to_group(chat_id, user_ids, show_history)
 
-    async def remove_users_from_group(
-            self,
-            chat_id: int,
-            user_ids: list[int],
-            clean_msg_period: int,
-    ) -> bool:
+    async def remove_users_from_group(self, chat_id: int, user_ids: list[int], clean_msg_period: int) -> bool:
         """
         Удаляет пользователей из группы
 

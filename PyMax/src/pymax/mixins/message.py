@@ -12,10 +12,12 @@ from loguru import logger
 from PyMax.src.pymax.files import File, Video, Photo
 from PyMax.src.pymax.exceptions import Error
 from PyMax.src.pymax.formatting import Formatting
-from PyMax.src.pymax.payloads import UploadPayload, AttachPhotoPayload, AttachFilePayload, VideoAttachPayload, \
-    ReadMessagesPayload, RemoveReactionPayload, GetReactionsPayload, AddReactionPayload, ReactionInfoPayload, \
-    GetFilePayload, GetVideoPayload, FetchHistoryPayload, PinMessagePayload, DeleteMessagePayload, EditMessagePayload, \
-    MessageElement, SendMessagePayloadMessage, SendMessagePayload, ReplyLink
+from PyMax.src.pymax.payloads import (
+    UploadPayload, AttachPhotoPayload, AttachFilePayload, VideoAttachPayload, ReadMessagesPayload,
+    RemoveReactionPayload, GetReactionsPayload, AddReactionPayload, ReactionInfoPayload, GetFilePayload,
+    GetVideoPayload, FetchHistoryPayload, PinMessagePayload, DeleteMessagePayload, EditMessagePayload, MessageElement,
+    SendMessagePayloadMessage, SendMessagePayload, ReplyLink
+)
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.constant import DEFAULT_TIMEOUT
 from PyMax.src.pymax.static.enum import Opcode, AttachType, ReadAction
@@ -130,8 +132,7 @@ class MessageMixin(ClientProtocol):
                     return None
 
                 logger.debug(
-                    "File sent successfully. Waiting for server confirmation "
-                    "(timeout=%d seconds, fileId=%s)",
+                    "File sent successfully. Waiting for server confirmation (timeout=%d seconds, fileId=%s)",
                     DEFAULT_TIMEOUT,
                     file_id,
                 )
