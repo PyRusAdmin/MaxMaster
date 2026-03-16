@@ -3,14 +3,7 @@ from typing import Any
 
 from typing_extensions import Self, override
 
-from .static.enum import (
-    AccessType,
-    AttachType,
-    ChatType,
-    FormattingType,
-    MessageStatus,
-    MessageType,
-)
+from PyMax.src.pymax.static.enum import AttachType, FormattingType, MessageStatus, MessageType, ChatType, AccessType
 
 
 # TODO: все это нужно переделать на pydantic модели.
@@ -663,32 +656,22 @@ class ContactAttach:
 
 
 class Message:
-    def __init__(
-            self,
-            chat_id: int | None,
-            sender: int | None,
-            elements: list[Element] | None,
-            reaction_info: ReactionInfo | None,
-            options: int | None,
-            id: int,
-            time: int,
-            link: MessageLink | None,
-            text: str,
-            status: MessageStatus | None,
-            type: MessageType | str,
-            attaches: (
-                    list[
-                        PhotoAttach
-                        | VideoAttach
-                        | FileAttach
-                        | ControlAttach
-                        | StickerAttach
-                        | AudioAttach
-                        | ContactAttach
-                        ]
-                    | None
-            ),
-    ) -> None:
+    def __init__(self, chat_id: int | None, sender: int | None, elements: list[Element] | None,
+                 reaction_info: ReactionInfo | None, options: int | None, id: int, time: int, link: MessageLink | None,
+                 text: str, status: MessageStatus | None, type: MessageType | str,
+                 attaches: (
+                         list[
+                             PhotoAttach
+                             | VideoAttach
+                             | FileAttach
+                             | ControlAttach
+                             | StickerAttach
+                             | AudioAttach
+                             | ContactAttach
+                             ]
+                         | None
+                 ),
+                 ) -> None:
         self.chat_id = chat_id
         self.sender = sender
         self.elements = elements

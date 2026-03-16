@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy.engine.base import Engine
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from .models import Auth
-from .static.enum import DeviceType
+from PyMax.src.pymax.models import Auth
+from PyMax.src.pymax.static.enum import DeviceType
 
 
 class Database:

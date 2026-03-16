@@ -7,9 +7,10 @@ import ssl
 import time
 from collections.abc import Awaitable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal, Callable
 from uuid import UUID
 
+import websockets
 from loguru import logger
 from typing_extensions import override
 
@@ -27,13 +28,7 @@ from PyMax.src.pymax.mixins.user import UserMixin
 from PyMax.src.pymax.mixins.websocket import WebSocketMixin
 from PyMax.src.pymax.payloads import UserAgentPayload
 from PyMax.src.pymax.static.constant import HOST, PORT, WEBSOCKET_URI, SESSION_STORAGE_DB
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    import websockets
-
-    from types import Channel, Chat, Dialog, Me, Message, ReactionInfo, User
+from PyMax.src.pymax.types import Chat, Dialog, Channel, Me, User, Message, ReactionInfo
 
 
 class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixin, UserMixin, WebSocketMixin,
@@ -76,14 +71,10 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
     def __init__(self, phone: str, uri: str = WEBSOCKET_URI, session_name: str = SESSION_STORAGE_DB,
                  headers: UserAgentPayload | None = None, token: str | None = None, send_fake_telemetry: bool = True,
-                 host: str = HOST, port: int = PORT,
-                 proxy: str | Literal[True] | None = None,
+                 host: str = HOST, port: int = PORT, proxy: str | Literal[True] | None = None,
                  work_dir: str = ".", registration: bool = False, first_name: str = "",
-                 last_name: str | None = None,
-                 device_id: UUID | None = None, reconnect: bool = True, reconnect_delay: float = 1.0, ) -> None:
-        # Инициализация логгера loguru
-        self.logger = logger
-
+                 last_name: str | None = None, device_id: UUID | None = None, reconnect: bool = True,
+                 reconnect_delay: float = 1.0, ) -> None:
         self.uri: str = uri
         self.phone: str = phone
         # if not self._check_phone():
@@ -165,7 +156,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self._ws: websockets.ClientConnection | None = None
 
         self._setup_logger()
-        self.logger.debug(
+        logger.debug(
             "Initialized MaxClient uri=%s work_dir=%s",
             self.uri,
             self._work_dir,
@@ -186,9 +177,9 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         try:
             await self.ws.wait_closed()
         except asyncio.CancelledError:
-            self.logger.debug("wait_closed cancelled")
+            logger.debug("wait_closed отменили")
         except WebSocketNotConnectedError:
-            self.logger.info("WebSocket not connected, exiting wait_forever")
+            logger.info("WebSocket не подключён, выход из wait_forever")
 
     async def close(self) -> None:
         """
@@ -197,16 +188,16 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         :return: None
         """
         try:
-            self.logger.info("Closing client")
+            logger.info("Closing client")
             self._stop_event.set()
-        except Exception:
-            self.logger.exception("Error closing client")
+        except Exception as e:
+            logger.exception(e)
 
     async def _post_login_tasks(self, sync: bool = True) -> None:
         if sync:
             await self._sync()
 
-        self.logger.debug("is_connected=%s before starting ping", self.is_connected)
+        logger.debug("is_connected=%s before starting ping", self.is_connected)
         ping_task = asyncio.create_task(self._send_interactive_ping())
         ping_task.add_done_callback(self._log_task_exception)
         self._background_tasks.add(ping_task)
@@ -220,7 +211,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
             self._background_tasks.add(telemetry_task)
 
         if self._on_start_handler:
-            self.logger.debug("Calling on_start handler")
+            logger.debug("Calling on_start handler")
             result = self._on_start_handler()
             if asyncio.iscoroutine(result):
                 await self._safe_execute(result, context="on_start handler")
@@ -257,15 +248,15 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 try:
                     await self._post_login_tasks()
                     await self._wait_forever()
-                except Exception:
-                    self.logger.exception("Error during post-login tasks")
+                except Exception as e:
+                    logger.exception(e)
                 finally:
                     await self._cleanup_client()
 
-                self.logger.info("Reconnecting after post-login tasks failure")
+                logger.info("Reconnecting after post-login tasks failure")
                 await asyncio.sleep(self.reconnect_delay)
         else:
-            self.logger.info("Login successful, token saved to database, exiting...")
+            logger.info("Login successful, token saved to database, exiting...")
 
     async def start(self) -> None:
         """
@@ -276,7 +267,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         :return: None
         :rtype: None
         """
-        self.logger.info("Запуск клиента")
+        logger.info("Запуск клиента")
         while not self._stop_event.is_set():
             try:
                 await self.connect(self.user_agent)
@@ -308,21 +299,21 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                         await task
 
             except asyncio.CancelledError:
-                self.logger.info("Client task cancelled, stopping")
+                logger.info("Client task cancelled, stopping")
                 break
             except Exception as e:
-                self.logger.exception("Client start iteration failed")
+                logger.exception(e)
             finally:
                 await self._cleanup_client()
 
             if not self.reconnect or self._stop_event.is_set():
-                self.logger.info("Reconnect disabled or stop requested — exiting start()")
+                logger.info("Reconnect disabled or stop requested — exiting start()")
                 break
 
-            self.logger.info("Reconnect enabled — restarting client")
+            logger.info("Reconnect enabled — restarting client")
             await asyncio.sleep(self.reconnect_delay)
 
-        self.logger.info("Client exited cleanly")
+        logger.info("Client exited cleanly")
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
@@ -338,9 +329,9 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 await self._recv_task
             except asyncio.CancelledError:
-                self.logger.debug("Socket recv_task cancelled")
+                logger.debug("Socket recv_task cancelled")
             except Exception as e:
-                self.logger.exception("Socket recv_task failed: %s", e)
+                logger.exception("Socket recv_task failed: %s", e)
 
     @override
     async def _cleanup_client(self):
@@ -350,11 +341,8 @@ class SocketMaxClient(SocketMixin, MaxClient):
                 await task
             except asyncio.CancelledError:
                 pass
-            except Exception:
-                self.logger.debug(
-                    "Background task raised during cancellation (socket)",
-                    exc_info=True,
-                )
+            except Exception as e:
+                logger.exception(e)
             self._background_tasks.discard(task)
 
         if self._recv_task:
@@ -377,9 +365,9 @@ class SocketMaxClient(SocketMixin, MaxClient):
         if self._socket:
             try:
                 self._socket.close()
-            except Exception:
-                self.logger.debug("Error closing socket during cleanup", exc_info=True)
+            except Exception as e:
+                logger.exception(e)
             self._socket = None
 
         self.is_connected = False
-        self.logger.info("Client start() cleaned up (socket)")
+        logger.info("Client start() cleaned up (socket)")

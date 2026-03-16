@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import asyncio
+import socket
+import ssl
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
-from logging import Logger
-from typing import TYPE_CHECKING, Any, Literal
+from pathlib import Path
+from typing import Any, Literal
+from uuid import UUID
+
+import websockets
 
 from PyMax.src.pymax.crud import Database
 from PyMax.src.pymax.filters import BaseFilter
@@ -12,19 +17,10 @@ from PyMax.src.pymax.static.constant import DEFAULT_TIMEOUT
 from PyMax.src.pymax.static.enum import Opcode
 from PyMax.src.pymax.types import User, Chat, Dialog, Channel, Me, Message, ReactionInfo
 
-if TYPE_CHECKING:
-    import socket
-    import ssl
-    from pathlib import Path
-    from uuid import UUID
-
-    import websockets
-
 
 class ClientProtocol(ABC):
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        logger = logger
         self._users: dict[int, User] = {}
         self.chats: list[Chat] = []
         self._database: Database
