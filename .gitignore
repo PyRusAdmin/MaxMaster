@@ -164,7 +164,7 @@ cython_debug/
 
 /.env
 /token.txt
-/cache/
+/accounts/
 /input/
 /output/
 /.venv/

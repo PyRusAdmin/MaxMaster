@@ -496,12 +496,12 @@ class VideoRequest:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         # listdata = list(data.values()) # Костыль ✅
-        url = [v for k, v in data.items() if k not in ("EXTERNAL", "cache")][
+        url = [v for k, v in data.items() if k not in ("EXTERNAL", "accounts")][
             0
         ]  # Еще больший костыль ✅
         return cls(
             external=data["EXTERNAL"],
-            cache=data["cache"],
+            cache=data["accounts"],
             url=url,
         )
 

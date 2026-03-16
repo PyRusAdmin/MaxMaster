@@ -76,9 +76,8 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                  last_name: str | None = None, device_id: UUID | None = None, reconnect: bool = True,
                  reconnect_delay: float = 1.0, ) -> None:
         self.uri: str = uri
-        self.phone: str = phone
-        # if not self._check_phone():
-        #     raise InvalidPhoneError(self.phone)
+        self.phone: str = phone  # Номер телефона аккаунта Max
+
         self.host: str = host
         self.port: int = port
         self.registration: bool = registration
@@ -97,7 +96,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self.contacts: list[User] = []
         self._users: dict[int, User] = {}
 
-        self._work_dir: str = work_dir
+        self._work_dir: str = work_dir  # Рабочая директория для хранения базы данных с аккаунтами Max
         self._database_path: Path = Path(work_dir) / session_name
         self._database_path.parent.mkdir(parents=True, exist_ok=True)
         self._database_path.touch(exist_ok=True)
@@ -274,7 +273,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
                 if self.registration:
                     if not self.first_name:
-                        raise ValueError("First name is required for registration")
+                        raise ValueError("Для регистрации требуется имя")
                     await self._register(self.first_name, self.last_name)
 
                 if self._token and self._database.get_auth_token() is None:
@@ -299,7 +298,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                         await task
 
             except asyncio.CancelledError:
-                logger.info("Client task cancelled, stopping")
+                logger.info("Задача клиента отменена, останавливается")
                 break
             except Exception as e:
                 logger.exception(e)
@@ -307,13 +306,13 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 await self._cleanup_client()
 
             if not self.reconnect or self._stop_event.is_set():
-                logger.info("Reconnect disabled or stop requested — exiting start()")
+                logger.info("Восстановление подключения отключено или запрошено остановка — выход из start()")
                 break
 
-            logger.info("Reconnect enabled — restarting client")
+            logger.info("Включено повторное подключение — перезагрузка клиента")
             await asyncio.sleep(self.reconnect_delay)
 
-        logger.info("Client exited cleanly")
+        logger.info("Клиент ушёл чисто")
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
@@ -329,9 +328,9 @@ class SocketMaxClient(SocketMixin, MaxClient):
             try:
                 await self._recv_task
             except asyncio.CancelledError:
-                logger.debug("Socket recv_task cancelled")
+                logger.debug("Разъём recv_task отключён")
             except Exception as e:
-                logger.exception("Socket recv_task failed: %s", e)
+                logger.exception("Разъём recv_task вышел из строя: %s", e)
 
     @override
     async def _cleanup_client(self):
@@ -370,4 +369,4 @@ class SocketMaxClient(SocketMixin, MaxClient):
             self._socket = None
 
         self.is_connected = False
-        logger.info("Client start() cleaned up (socket)")
+        logger.info("Запуск клиента() очищен (розетка)")

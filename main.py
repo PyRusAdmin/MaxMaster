@@ -62,17 +62,76 @@ class PhoneQueue(Model):
 db.connect()
 db.create_tables([PhoneQueue], safe=True)
 
+
 # ─── Max клиент ───────────────────────────────────────────────────────────────
 
 
-headers = UserAgentPayload(device_type="WEB")
+async def client_connect(phone: str | None = None, work_dir: str = "accounts") -> MaxClient:
+    """
+    Создаёт и возвращает клиента MaxClient.
+    
+    :param phone: Номер телефона аккаунта Max (опционально).
+    :param work_dir: Рабочая директория для хранения базы данных с аккаунтами.
+    :return: Экземпляр MaxClient.
+    """
+    headers = UserAgentPayload(device_type="WEB")
 
-client = MaxClient(
-    phone=phone,
-    work_dir="cache",
-    reconnect=False,
-    headers=headers,
-)
+    client = MaxClient(
+        phone=phone,  # Номер телефона аккаунта Max
+        work_dir=work_dir,  # Рабочая директория для хранения базы данных с аккаунтами Max
+        reconnect=False,
+        headers=headers,
+    )
+    await client.start()
+    return client
+
+    # async def connect_client_with_error_handling(client: MaxClient) -> None:
+    #     """
+    #     Запускает клиента с обработкой ошибок авторизации.
+    #
+    #     :param client: Экземпляр MaxClient для запуска.
+    #     :raises SystemExit: При ошибке авторизации.
+    # """
+    # try:
+    # await client.start()
+    # except Exception as e:
+    #     error_msg = str(e)
+    #
+    #     # Обработка ошибки авторизации
+    #     if "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower():
+    #         # Автоматическая очистка старой сессии
+    #         session_file = Path(client._work_dir) / "session.db"
+    #         if session_file.exists():
+    #             session_file.unlink()
+    #             logger.info("Старая сессия удалена: %s", session_file)
+    #
+    #         console.print(Panel(
+    #             "[bold red]❌ Ошибка авторизации![/]\n\n"
+    #             "Ваша сессия истекла или была разорвана.\n\n"
+    #             "[green]✓ Старая сессия удалена автоматически[/]\n\n"
+    #             "[yellow]Что делать дальше:[/]\n"
+    #             "  1. Запустите приложение заново\n"
+    #             "  2. Пройдите повторную авторизацию (отсканируйте QR-код или введите код из SMS)\n\n"
+    #             "[dim]Ошибка: {error}[/]".format(error=error_msg),
+    #             title="[bold red]Требуется авторизация[/]",
+    #             border_style="red",
+    #             padding=(1, 3),
+    #         ))
+    #         logger.error(f"Авторизация не удалась: {error_msg}")
+    #         sys.exit(1)
+    #
+    #     # Другие ошибки
+    #     console.print(Panel(
+    #         f"[bold red]❌ Произошла ошибка:[/]\n\n{error_msg}",
+    #         title="[bold red]Ошибка[/]",
+    #         border_style="red",
+    #         padding=(1, 3),
+    #     ))
+    #     logger.exception("Необработанная ошибка в main()")
+    #     sys.exit(1)
+
+
+
 
 # ─── Заголовки Excel ──────────────────────────────────────────────────────────
 HEADERS_RU = {
@@ -162,7 +221,15 @@ def save_to_excel(users_data: list[dict], filename: str = EXCEL_FILE) -> str:
 
 
 def load_numbers_to_db() -> int:
-    """Загружает номера из файла в БД, пропуская дубликаты."""
+    """
+    Загружает
+    номера
+    из
+    файла
+    в
+    БД, пропуская
+    дубликаты.
+    """
     numbers = read_file()  # без аргумента
     added = 0
     for phone in numbers:
@@ -330,7 +397,9 @@ async def parse_phones():
 
 
 async def safe_search(phone: str, retries: int = 3):
-    """Поиск с автоматическим переподключением."""
+    """
+    Поиск с автоматическим переподключением.
+    """
     for attempt in range(retries):
         try:
             result = await client.search_by_phone(phone=phone)
@@ -347,7 +416,7 @@ async def safe_search(phone: str, retries: int = 3):
 
 # ─── Точка входа ──────────────────────────────────────────────────────────────
 
-@client.on_start
+# @client.on_start
 async def on_start() -> None:
     logger.info(f"Клиент запущен. ID: {client.me.id}")
 
@@ -397,43 +466,9 @@ async def on_start() -> None:
 
 
 async def main():
-    try:
-        await client.start()
-    except Exception as e:
-        error_msg = str(e)
+    client = client_connect(phone=phone)
 
-        # Обработка ошибки авторизации
-        if "FAIL_LOGIN_TOKEN" in error_msg or "авторизируйтесь снова" in error_msg.lower():
-            # Автоматическая очистка старой сессии
-            session_file = Path("cache") / "session.db"
-            if session_file.exists():
-                session_file.unlink()
-                logger.info("Старая сессия удалена: %s", session_file)
-
-            console.print(Panel(
-                "[bold red]❌ Ошибка авторизации![/]\n\n"
-                "Ваша сессия истекла или была разорвана.\n\n"
-                "[green]✓ Старая сессия удалена автоматически[/]\n\n"
-                "[yellow]Что делать дальше:[/]\n"
-                "  1. Запустите приложение заново\n"
-                "  2. Пройдите повторную авторизацию (отсканируйте QR-код или введите код из SMS)\n\n"
-                "[dim]Ошибка: {error}[/]".format(error=error_msg),
-                title="[bold red]Требуется авторизация[/]",
-                border_style="red",
-                padding=(1, 3),
-            ))
-            logger.error(f"Авторизация не удалась: {error_msg}")
-            sys.exit(1)
-
-        # Другие ошибки
-        console.print(Panel(
-            f"[bold red]❌ Произошла ошибка:[/]\n\n{error_msg}",
-            title="[bold red]Ошибка[/]",
-            border_style="red",
-            padding=(1, 3),
-        ))
-        logger.exception("Необработанная ошибка в main()")
-        sys.exit(1)
+    await on_start()
 
 
 if __name__ == "__main__":
