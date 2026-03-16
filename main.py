@@ -129,36 +129,36 @@ async def connect_account_by_qr() -> bool:
         border_style="green",
         padding=(1, 3),
     ))
-    
+
     phone = Prompt.ask(
         "[bold yellow]Введите номер телефона (например, 998950039094)[/]",
         default="",
     )
-    
+
     if not phone:
         console.print("[red]❌ Номер телефона не введён[/]")
         return False
-    
+
     # Очищаем номер от лишних символов
     phone = ''.join(filter(str.isdigit, phone))
-    
+
     # Создаём папку для аккаунта
     account_path = os.path.join("accounts", phone)
     os.makedirs(account_path, exist_ok=True)
-    
+
     try:
         headers = UserAgentPayload(device_type="WEB")
-        
+
         client = MaxClient(
             phone=phone,
             work_dir=account_path,
             reconnect=False,
             headers=headers,
         )
-        
+
         # Запускаем клиент (появится QR-код)
         console.print("\n[bold cyan]⏳ Запуск клиента...[/]")
-        
+
         # Создаём задачу для запуска клиента
         async def run_client():
             try:
@@ -166,12 +166,12 @@ async def connect_account_by_qr() -> bool:
             except Exception as e:
                 if "FAIL_LOGIN_TOKEN" not in str(e):
                     raise
-        
+
         client_task = asyncio.create_task(run_client())
-        
+
         # Ждём пока клиент подключится (QR-код отобразится в консоли)
         await asyncio.sleep(2)
-        
+
         # Проверяем, подключился ли клиент
         if client.me:
             # Сохраняем аккаунт в базу
@@ -199,12 +199,13 @@ async def connect_account_by_qr() -> bool:
                 await asyncio.sleep(2)
                 if client.me:
                     break
-            
+
             if client.me:
                 try:
                     MaxAccount.create(
                         phone=phone,
-                        name=f"{client.me.first_name} {client.me.last_name}" if hasattr(client.me, 'first_name') else phone,
+                        name=f"{client.me.first_name} {client.me.last_name}" if hasattr(client.me,
+                                                                                        'first_name') else phone,
                         user_id=str(client.me.id) if client.me.id else None,
                         account_path=account_path,
                         is_active="Y",
@@ -215,16 +216,16 @@ async def connect_account_by_qr() -> bool:
                         console.print(f"[red]❌ Ошибка сохранения: {e}[/]")
             else:
                 console.print("[red]❌ Время ожидания истекло[/]")
-        
+
         # Отменяем задачу клиента
         client_task.cancel()
         try:
             await client_task
         except asyncio.CancelledError:
             pass
-        
+
         return client.me is not None
-        
+
     except Exception as e:
         console.print(f"[red]❌ Ошибка подключения: {e}[/]")
         logger.exception("Ошибка при подключении аккаунта")
@@ -234,7 +235,7 @@ async def connect_account_by_qr() -> bool:
 def show_accounts_list():
     """Показывает список подключённых аккаунтов."""
     accounts = list(MaxAccount.select().order_by(MaxAccount.connected_at.desc()))
-    
+
     if not accounts:
         console.print(Panel(
             "[yellow]📭 Пока нет подключённых аккаунтов[/]\n\n"
@@ -244,14 +245,14 @@ def show_accounts_list():
             padding=(1, 3),
         ))
         return
-    
+
     table = Table(title="📱 Подключённые аккаунты", box=box.ROUNDED, border_style="cyan")
     table.add_column("Телефон", style="cyan", justify="center")
     table.add_column("Имя", style="green", justify="center")
     table.add_column("ID", style="dim", justify="center")
     table.add_column("Статус", style="yellow", justify="center")
     table.add_column("Подключён", style="dim", justify="center")
-    
+
     for acc in accounts:
         status = "[green]✓[/green]" if acc.is_active == "Y" else "[red]✗[/red]"
         table.add_row(
@@ -261,7 +262,7 @@ def show_accounts_list():
             status,
             acc.connected_at.strftime("%d.%m.%Y %H:%M"),
         )
-    
+
     console.print()
     console.print(table)
     console.print()
@@ -593,14 +594,14 @@ async def main():
             print_header()
             # Показываем список подключённых аккаунтов
             show_accounts_list()
-            
+
             # Предлагаем подключить новый аккаунт
             connect = Prompt.ask(
                 "[bold yellow]Подключить новый аккаунт?[/]",
                 choices=["y", "n"],
                 default="y",
             )
-            
+
             if connect.lower() == "y":
                 await connect_account_by_qr()
 
