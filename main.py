@@ -34,7 +34,7 @@ logger.add(sys.stderr, level="WARNING")
 load_dotenv()
 SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
 SLEEP_ON_RATELIMIT = float(os.getenv("SLEEP_ON_RATELIMIT", "30"))
-phone = os.getenv("PHONE_NUMBER")  # Номер телефона аккаунта
+# phone = os.getenv("PHONE_NUMBER")  # Номер телефона аккаунта
 DB_PATH = os.getenv("DB_PATH", "data/queue.db")  # База номеров для перебора
 EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")  # Полученные номера после перебора
 NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")  # Номера для перебора
@@ -680,7 +680,24 @@ async def parse_phones_with_rotation():
         me = current_client.me
         account_info.add_row("Текущий аккаунт:", current_account.phone)
         account_info.add_row("ID пользователя:", str(me.id) if me and me.id else "загрузка...")
-        account_info.add_row("Имя:", f"{me.first_name} {me.last_name}" if me and hasattr(me, 'first_name') and me.first_name else "загрузка...")
+        
+        # Получаем имя из разных полей
+        if me:
+            name_parts = []
+            if hasattr(me, 'first_name') and me.first_name:
+                name_parts.append(me.first_name)
+            if hasattr(me, 'last_name') and me.last_name:
+                name_parts.append(me.last_name)
+            if hasattr(me, 'names') and me.names:
+                # Если есть список имён
+                if isinstance(me.names, list) and len(me.names) > 0:
+                    name_parts.append(str(me.names[0]))
+            
+            name = " ".join(name_parts) if name_parts else "—"
+        else:
+            name = "—"
+        
+        account_info.add_row("Имя:", name)
         account_info.add_row("Ошибок аккаунта:", current_account.errors_count)
         console.print(account_info)
         console.print()
@@ -763,7 +780,9 @@ async def parse_phones_with_rotation():
                     if 'too-many' in err_str.lower() or 'ratelimit' in err_str.lower():
                         progress.update(task, status=f"⏳ rate limit, ждём {SLEEP_ON_RATELIMIT}с...")
                         logger.warning(f"Rate limit на {phone}, ждём {SLEEP_ON_RATELIMIT}с")
+                        console.print(f"[yellow]⏳ Rate limit, ожидание {SLEEP_ON_RATELIMIT}с...[/]")
                         await asyncio.sleep(SLEEP_ON_RATELIMIT)
+                        progress.update(task, status="продолжение...")
                         continue
                     
                     # Проверяем на ошибку авторизации/блока
@@ -795,32 +814,39 @@ async def parse_phones_with_rotation():
                             console.print("[red]❌ Нет доступных аккаунтов для продолжения[/]")
                             break
                     
-                    # Другая ошибка
-                    error_data = {'searched_phone': phone, 'error': f"{type(e).__name__}: {e}"}
-                    save_to_excel([error_data], EXCEL_FILE)
-                    errors += 1
-                    status_text = f"❌ ошибка"
-                    logger.error(f"Ошибка для {phone}: {e}")
+                    # Проверяем на "номер не найден" — это не ошибка аккаунта
+                    if 'not found' in err_str.lower() or 'не найдено' in err_str.lower():
+                        status_text = "⚪ не найден в Max"
+                        logger.info(f"Номер {phone} не найден в базе Max")
+                        # Не считаем это ошибкой, просто идём дальше
                     
-                    # Регистрируем ошибку аккаунта
-                    is_blocked = mark_account_error(current_account.phone)
-                    if is_blocked and current_account_index < len(accounts) - 1:
-                        console.print(f"\n[yellow]⚠️ Аккаунт заблокирован после ошибок[/]")
+                    # Другая ошибка
+                    else:
+                        error_data = {'searched_phone': phone, 'error': f"{type(e).__name__}: {e}"}
+                        save_to_excel([error_data], EXCEL_FILE)
+                        errors += 1
+                        status_text = f"❌ ошибка"
+                        logger.error(f"Ошибка для {phone}: {e}")
                         
-                        # Отключаем текущего клиента
-                        await client_disconnect(current_account.phone)
-                        
-                        current_account_index += 1
-                        current_account = accounts[current_account_index]
-                        
-                        # Подключаем новый аккаунт через client_connect
-                        current_client = await client_connect(
-                            phone=current_account.phone,
-                            work_dir=current_account.account_path
-                        )
-                        
-                        mark_account_working(current_account.phone)
-                        account_switches += 1
+                        # Регистрируем ошибку аккаунта
+                        is_blocked = mark_account_error(current_account.phone)
+                        if is_blocked and current_account_index < len(accounts) - 1:
+                            console.print(f"\n[yellow]⚠️ Аккаунт заблокирован после ошибок[/]")
+                            
+                            # Отключаем текущего клиента
+                            await client_disconnect(current_account.phone)
+                            
+                            current_account_index += 1
+                            current_account = accounts[current_account_index]
+                            
+                            # Подключаем новый аккаунт через client_connect
+                            current_client = await client_connect(
+                                phone=current_account.phone,
+                                work_dir=current_account.account_path
+                            )
+                            
+                            mark_account_working(current_account.phone)
+                            account_switches += 1
                 
                 # Удаляем из очереди только после успешной обработки
                 remove_from_queue(phone)
