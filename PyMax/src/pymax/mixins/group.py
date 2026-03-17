@@ -95,18 +95,14 @@ class GroupMixin(ClientProtocol):
 
         return chat
 
-    async def invite_users_to_channel(self, chat_id: int, user_ids: list[int],
-                                      show_history: bool = True) -> Chat | None:
+    async def invite_users_to_channel(self, chat_id: int, user_ids: list[int], show_history: bool = True) -> Chat | None:
         """
         Приглашает пользователей в канал
 
-        Args:
-            chat_id (int): ID канала.
-            user_ids (list[int]): Список идентификаторов пользователей.
-            show_history (bool, optional): Флаг оповещения. Defaults to True.
-
-        Returns:
-            Chat | None: Объект Chat или None при ошибке.
+        :param: chat_id (int): ID канала.
+        :param: user_ids (list[int]): Список идентификаторов пользователей.
+        :param: show_history (bool, optional): Флаг оповещения. Defaults to True.
+        :return: Chat | None: Объект Chat или None при ошибке.
         """
         return await self.invite_users_to_group(chat_id, user_ids, show_history)
 
@@ -114,13 +110,10 @@ class GroupMixin(ClientProtocol):
         """
         Удаляет пользователей из группы
 
-        Args:
-            chat_id (int): ID группы.
-            user_ids (list[int]): Список идентификаторов пользователей.
-            clean_msg_period (int): Период очистки сообщений.
-
-        Returns:
-            bool: True, если удаление прошло успешно, иначе False.
+        :param: chat_id (int): ID группы.
+        :param: user_ids (list[int]): Список идентификаторов пользователей.
+        :param: clean_msg_period (int): Период очистки сообщений.
+        :return: bool: True, если удаление прошло успешно, иначе False.
         """
         payload = RemoveUsersPayload(
             chat_id=chat_id,

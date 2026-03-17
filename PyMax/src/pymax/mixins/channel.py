@@ -62,9 +62,7 @@ class ChannelMixin(ClientProtocol):
             self.channels.append(channel)
         return channel
 
-    async def _query_members(
-            self, payload: GetGroupMembersPayload | SearchGroupMembersPayload
-    ) -> tuple[list[Member], int | None]:
+    async def _query_members(self, payload: GetGroupMembersPayload | SearchGroupMembersPayload) -> tuple[list[Member], int | None]:
         data = await self._send_and_wait(
             opcode=Opcode.CHAT_MEMBERS,
             payload=payload.model_dump(by_alias=True, exclude_none=True),
@@ -93,12 +91,7 @@ class ChannelMixin(ClientProtocol):
             raise ResponseStructureError("Invalid members type in response")
         return member_list, marker
 
-    async def load_members(
-            self,
-            chat_id: int,
-            marker: int | None = DEFAULT_MARKER_VALUE,
-            count: int = DEFAULT_CHAT_MEMBERS_LIMIT,
-    ) -> tuple[list[Member], int | None]:
+    async def load_members(self, chat_id: int, marker: int | None = DEFAULT_MARKER_VALUE, count: int = DEFAULT_CHAT_MEMBERS_LIMIT,) -> tuple[list[Member], int | None]:
         """
         Загружает членов канала
 
@@ -118,8 +111,7 @@ class ChannelMixin(ClientProtocol):
     async def find_members(self, chat_id: int, query: str) -> tuple[list[Member], int | None]:
         """
         Поиск участников канала по строке
-        Внимание! веб-клиент всегда возвращает только определённое количество пользователей,
-        тоесть пагинация здесь не реализована!
+        Внимание! веб-клиент всегда возвращает только определённое количество пользователей, тоесть пагинация здесь не реализована!
 
         :param chat_id: Идентификатор канала
         :type chat_id: int

@@ -19,6 +19,12 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 class AuthMixin(ClientProtocol):
     def _check_phone(self) -> bool:
+        """
+        Проверяет, соответствует ли номер телефона формату PHONE_REGEX.
+
+        :return: True, если номер соответствует формату, иначе False.
+        :rtype: bool
+        """
         return bool(re.match(PHONE_REGEX, self.phone))
 
     async def request_code(self, phone: str, language: str = "ru") -> str:
@@ -37,7 +43,7 @@ class AuthMixin(ClientProtocol):
         :return: Временный токен для дальнейшей аутентификации.
         :rtype: str
         :raises ValueError: Если полученные данные имеют неверный формат.
-        :raises Error: Если сервер вернул ошибку.
+        :raises Exception: Если сервер вернул ошибку.
         """
         logger.info("Requesting auth code")
 
@@ -73,7 +79,7 @@ class AuthMixin(ClientProtocol):
         :return: Временный токен для дальнейшей аутентификации.
         :rtype: str
         :raises ValueError: Если полученные данные имеют неверный формат.
-        :raises Error: Если сервер вернул ошибку.
+        :raises Exception: Если сервер вернул ошибку.
         """
         logger.info("Resending auth code")
 
@@ -108,7 +114,8 @@ class AuthMixin(ClientProtocol):
         :type token: str
         :return: Словарь с данными ответа сервера, содержащий токены аутентификации.
         :rtype: dict[str, Any]
-        :raises Error: Если сервер вернул ошибку.
+        :raises ValueError: Если полученные данные имеют неверный формат.
+        :raises Exception: Если сервер вернул ошибку.
         """
         logger.info("Sending verification code")
 
@@ -136,6 +143,16 @@ class AuthMixin(ClientProtocol):
             raise ValueError("Invalid payload data received")
 
     def _print_qr(self, qr_link: str) -> None:
+        """
+        Генерирует и выводит QR-код в консоль в ASCII-формате.
+
+        Используется для отображения QR-кода при входе через QR.
+
+        :param qr_link: Ссылка, которая будет закодирована в QR.
+        :type qr_link: str
+        :return: None
+        :rtype: None
+        """
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.ERROR_CORRECT_L,
