@@ -70,7 +70,8 @@ class SelfMixin(ClientProtocol):
                 "token"
             ]  # TODO: сделать нормальную типизацию и чекнинг ответа
 
-    async def change_profile(self,first_name: str,last_name: str | None = None,description: str | None = None,photo: Photo | None = None) -> bool:
+    async def change_profile(self, first_name: str, last_name: str | None = None, description: str | None = None,
+                             photo: Photo | None = None) -> bool:
         """
         Изменяет информацию профиля текущего пользователя.
 
@@ -116,7 +117,8 @@ class SelfMixin(ClientProtocol):
 
         return True
 
-    async def create_folder(self, title: str, chat_include: list[int], filters: list[Any] | None = None) -> FolderUpdate:
+    async def create_folder(self, title: str, chat_include: list[int],
+                            filters: list[Any] | None = None) -> FolderUpdate:
         """
         Создает новую папку для группировки чатов.
 

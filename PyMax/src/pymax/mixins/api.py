@@ -68,7 +68,7 @@ class ApiMixin(ClientProtocol):
             chats_count=40,  # Максимальное количество чатов для получения
             user_agent=user_agent,  # Информация о клиенте
         ).model_dump(by_alias=True)  # Преобразуем в словарь с правильными ключами
-        
+
         try:
             # Отправляем запрос LOGIN и ждём ответ от сервера
             data = await self._send_and_wait(opcode=Opcode.LOGIN, payload=payload)

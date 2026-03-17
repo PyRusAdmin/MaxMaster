@@ -44,6 +44,7 @@ class BaseClient(ClientProtocol):
         :return: Объект задачи asyncio.Task.
         :rtype: asyncio.Task[Any | None]
         """
+
         async def runner():
             try:
                 return await coro

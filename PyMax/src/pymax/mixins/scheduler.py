@@ -17,6 +17,7 @@ class SchedulerMixin(ClientProtocol):
     """
     Mixin для планирования и выполнения периодических задач.
     """
+
     async def _run_periodic(self, func: Callable[[], Any | Awaitable[Any]], interval: float) -> None:
         """
         Выполняет функцию периодически с заданным интервалом.

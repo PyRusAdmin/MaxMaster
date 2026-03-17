@@ -83,7 +83,8 @@ class Photo(BaseFile):
         ".bmp",
     }
 
-    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None, name: str | None = None) -> None:
+    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None,
+                 name: str | None = None) -> None:
         """
         Инициализирует фотографию.
 

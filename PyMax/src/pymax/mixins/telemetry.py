@@ -20,6 +20,7 @@ class TelemetryMixin(ClientProtocol):
     """
     Mixin для отправки телеметрии и навигационных событий.
     """
+
     async def _send_navigation_event(self, events: list[NavigationEventPayload]) -> None:
         """
         Отправляет навигационное событие на сервер.

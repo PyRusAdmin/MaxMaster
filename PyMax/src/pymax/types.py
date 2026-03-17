@@ -314,6 +314,7 @@ class AudioAttach:
     
     Содержит данные об аудиофайле: длительность, URL, волновую форму и т.д.
     """
+
     def __init__(self, duration: int, audio_id: int, url: str, wave: str, transcription_status: str, token: str,
                  type: AttachType, ) -> None:
         """
@@ -372,6 +373,7 @@ class PhotoAttach:
     
     Содержит данные о фотографии: URL, размеры, токен и т.д.
     """
+
     def __init__(self, base_url: str, height: int, width: int, photo_id: int, photo_token: str,
                  preview_data: str | None, type: AttachType, ) -> None:
         """
@@ -430,6 +432,7 @@ class VideoAttach:
     
     Содержит данные о видеофайле: размеры, длительность, превью и т.д.
     """
+
     def __init__(self, height: int, width: int, video_id: int, duration: int, preview_data: str, type: AttachType,
                  thumbnail: str, token: str, video_type: int, ) -> None:
         """
@@ -496,6 +499,7 @@ class FileAttach:
     
     Содержит данные о файле: имя, размер, токен для загрузки.
     """
+
     def __init__(self, file_id: int, name: str, size: int, token: str, type: AttachType) -> None:
         """
         Инициализирует вложение файла.
@@ -546,6 +550,7 @@ class FileRequest:
     
     Используется для получения URL загрузки файла.
     """
+
     def __init__(self, unsafe: bool, url: str, ) -> None:
         """
         Инициализирует запрос на загрузку.
@@ -576,6 +581,7 @@ class VideoRequest:
     
     Используется для получения URL загрузки видеофайла.
     """
+
     def __init__(self, external: str, cache: bool, url: str, ) -> None:
         """
         Инициализирует запрос на загрузку видео.
@@ -618,6 +624,7 @@ class Me:
     - Имена
     - Опции платформ
     """
+
     def __init__(self, id: int, account_status: int, phone: str, names: list[Names], update_time: int,
                  options: list[str] | None = None, ) -> None:
         """
@@ -675,6 +682,7 @@ class Element:
     - Ссылка (link)
     - Код (code)
     """
+
     def __init__(self, type: FormattingType | str, length: int, from_: int | None = None) -> None:
         """
         Инициализирует элемент форматирования.
@@ -712,6 +720,7 @@ class MessageLink:
     
     Содержит информацию о сообщении, на которое ссылается текущее.
     """
+
     def __init__(self, chat_id: int, message: "Message", type: str) -> None:
         """
         Инициализирует ссылку на сообщение.
@@ -755,6 +764,7 @@ class ReactionCounter:
     
     Содержит информацию о количестве конкретных реакций.
     """
+
     def __init__(self, count: int, reaction: str) -> None:
         """
         Инициализирует счётчик реакции.
@@ -790,6 +800,7 @@ class ReactionInfo:
     
     Содержит общую информацию о всех реакциях на сообщение.
     """
+
     def __init__(self, total_count: int, counters: list[ReactionCounter], your_reaction: str | None = None,
                  ) -> None:
         """
@@ -824,6 +835,7 @@ class ContactAttach:
     
     Используется для отправки контакта пользователя.
     """
+
     def __init__(self, contact_id: int, first_name: str, last_name: str, name: str, photo_url: str) -> None:
         """
         Инициализирует вложение контакта.
@@ -878,6 +890,7 @@ class Message:
     - Ссылки (ответы, пересылки)
     - Статус доставки
     """
+
     def __init__(self, chat_id: int | None, sender: int | None, elements: list[Element] | None,
                  reaction_info: ReactionInfo | None, options: int | None, id: int, time: int, link: MessageLink | None,
                  text: str, status: MessageStatus | None, type: MessageType | str,
@@ -941,7 +954,7 @@ class Message:
             | AudioAttach
             | ContactAttach
             ] = []
-        
+
         # Обрабатываем каждое вложение в зависимости от типа
         for a in message.get("attaches", []):
             if a["_type"] == AttachType.PHOTO:
@@ -958,21 +971,21 @@ class Message:
                 attaches.append(AudioAttach.from_dict(a))
             elif a["_type"] == AttachType.CONTACT:
                 attaches.append(ContactAttach.from_dict(a))
-        
+
         # Обрабатываем ссылку (ответ/пересылка)
         link_value = message.get("link")
         if isinstance(link_value, dict):
             link = MessageLink.from_dict(link_value)
         else:
             link = None
-        
+
         # Обрабатываем информацию о реакциях
         reaction_info_value = message.get("reactionInfo")
         if isinstance(reaction_info_value, dict):
             reaction_info = ReactionInfo.from_dict(reaction_info_value)
         else:
             reaction_info = None
-        
+
         return cls(
             chat_id=data.get("chatId"),
             sender=message.get("sender"),
@@ -1008,6 +1021,7 @@ class Dialog:
     Представляет диалог между двумя пользователями.
     Наследуется от базового типа чата.
     """
+
     def __init__(self, cid: int | None, owner: int, has_bots: bool | None, join_time: int, created: int,
                  last_message: Message | None, type: ChatType | str, last_fire_delayed_error_time: int,
                  last_delayed_update_time: int, prev_message_id: str | None, options: dict[str, bool], modified: int,
@@ -1094,6 +1108,7 @@ class Chat:
     Представляет групповой чат с несколькими участниками.
     Содержит полную информацию о чате: участники, админы, настройки и т.д.
     """
+
     def __init__(self, participants_count: int, access: AccessType | str, invited_by: int | None, link: str | None,
                  chat_type: ChatType | str, title: str | None, last_fire_delayed_error_time: int,
                  last_delayed_update_time: int, options: dict[str, bool], base_raw_icon_url: str | None,
@@ -1174,10 +1189,10 @@ class Chat:
         admin_participants: dict[int, dict[Any, Any]] = {int(k): v for k, v in raw_admins.items()}
         raw_participants = data.get("participants", {}) or {}
         participants: dict[int, int] = {int(k): v for k, v in raw_participants.items()}
-        
+
         # Обрабатываем последнее сообщение
         last_msg = Message.from_dict(data["lastMessage"]) if data.get("lastMessage") else None
-        
+
         return cls(
             participants_count=data.get("participantsCount", 0),
             access=AccessType(data.get("access", AccessType.PUBLIC.value)),
@@ -1224,6 +1239,7 @@ class Channel(Chat):
     Наследуется от Chat, представляет публичный или приватный канал.
     Отличается от чата тем, что сообщения могут отправлять только администраторы.
     """
+
     @override
     def __repr__(self) -> str:
         return f"Channel(id={self.id!r}, title={self.title!r})"
@@ -1245,6 +1261,7 @@ class User:
     - Ссылка на профиль
     - Веб-приложение и кнопка меню
     """
+
     def __init__(
             self,
             account_status: int,
@@ -1332,6 +1349,7 @@ class Attach:  # УБРАТЬ ГАДА!!! или нет...
     Примечание разработчика: класс-заглушка для совместимости.
     Возможно, будет удалён в будущих версиях.
     """
+
     def __init__(
             self,
             _type: AttachType,
@@ -1389,6 +1407,7 @@ class Session:
     
     Содержит информацию об активном устройстве пользователя.
     """
+
     def __init__(
             self,
             client: str,
@@ -1448,6 +1467,7 @@ class Folder:
     
     Используется для группировки чатов по категориям.
     """
+
     def __init__(self, source_id: int, include: list[int], options: list[Any], update_time: int, id: str,
                  filters: list[Any], title: str, ) -> None:
         """
@@ -1506,6 +1526,7 @@ class FolderUpdate:
     
     Содержит информацию об обновлении папки чатов.
     """
+
     def __init__(
             self, folder_order: list[str] | None, folder: Folder | None, folder_sync: int
     ) -> None:
@@ -1556,6 +1577,7 @@ class FolderList:
     
     Содержит все папки чатов пользователя.
     """
+
     def __init__(self, folders_order: list[str], folders: list[Folder], folder_sync: int,
                  all_filter_exclude_folders: list[Any] | None = None) -> None:
         """
@@ -1606,6 +1628,7 @@ class ReadState:
     
     Содержит информацию о непрочитанных сообщениях.
     """
+
     def __init__(
             self,
             unread: int,

@@ -47,7 +47,7 @@ class AuthMixin(ClientProtocol):
     
     :cvar PHONE_REGEX: Регулярное выражение для валидации номера телефона.
     """
-    
+
     def _check_phone(self) -> bool:
         """
         Проверяет, соответствует ли номер телефона формату PHONE_REGEX.
@@ -275,6 +275,7 @@ class AuthMixin(ClientProtocol):
             >>> client._validate_version("25.12.13", "25.0.0")
             True
         """
+
         def version_tuple(v: str) -> tuple[int, ...]:
             # Преобразует строку версии в кортеж чисел
             return tuple(map(int, (v.split("."))))
@@ -370,7 +371,7 @@ class AuthMixin(ClientProtocol):
             # Проверяем наличие ошибки
             if payload.get("error"):
                 MixinsUtils.handle_error(data)
-            
+
             status = payload.get("status")
 
             if not status:

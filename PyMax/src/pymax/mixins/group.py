@@ -29,7 +29,9 @@ class GroupMixin(ClientProtocol):
         chats (list[Chat]): Кэш чатов, доступных клиенту.
         _send_and_wait (callable): Асинхронный метод для отправки команд и ожидания ответа.
     """
-    async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True) -> tuple[Chat, Message] | None:
+
+    async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True) -> tuple[
+                                                                                                                  Chat, Message] | None:
         """
         Создает новую группу с указанными участниками.
 
@@ -131,7 +133,8 @@ class GroupMixin(ClientProtocol):
 
         return chat
 
-    async def invite_users_to_channel(self, chat_id: int, user_ids: list[int], show_history: bool = True) -> Chat | None:
+    async def invite_users_to_channel(self, chat_id: int, user_ids: list[int],
+                                      show_history: bool = True) -> Chat | None:
         """
         Приглашает пользователей в канал
 

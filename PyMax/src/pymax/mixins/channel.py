@@ -38,7 +38,7 @@ class ChannelMixin(ClientProtocol):
     :cvar DEFAULT_MARKER_VALUE: Значение маркера по умолчанию для пагинации.
     :cvar DEFAULT_CHAT_MEMBERS_LIMIT: Лимит участников для загрузки по умолчанию.
     """
-    
+
     async def resolve_channel_by_name(self, name: str) -> Channel | None:
         """
         Получает информацию о канале по его имени (через resolve ссылки).
@@ -64,18 +64,18 @@ class ChannelMixin(ClientProtocol):
 
         # Отправляем запрос на получение информации о ссылке
         data = await self._send_and_wait(opcode=Opcode.LINK_INFO, payload=payload)
-        
+
         # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
         # Создаём объект Channel из данных ответа
         channel = Channel.from_dict(data.get("payload", {}).get("chat", {}))
-        
+
         # Добавляем канал в список, если его там ещё нет
         if channel not in self.channels:
             self.channels.append(channel)
-        
+
         return channel
 
     async def join_channel(self, link: str) -> Channel | None:
@@ -103,21 +103,22 @@ class ChannelMixin(ClientProtocol):
 
         # Отправляем запрос на присоединение
         data = await self._send_and_wait(opcode=Opcode.CHAT_JOIN, payload=payload)
-        
+
         # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
         # Создаём объект Channel из данных ответа
         channel = Channel.from_dict(data.get("payload", {}).get("chat", {}))
-        
+
         # Добавляем канал в список, если его там ещё нет
         if channel not in self.channels:
             self.channels.append(channel)
-        
+
         return channel
 
-    async def _query_members(self, payload: GetGroupMembersPayload | SearchGroupMembersPayload) -> tuple[list[Member], int | None]:
+    async def _query_members(self, payload: GetGroupMembersPayload | SearchGroupMembersPayload) -> tuple[
+        list[Member], int | None]:
         """
         Внутренний метод для запроса участников канала/чата.
         
@@ -136,16 +137,16 @@ class ChannelMixin(ClientProtocol):
             opcode=Opcode.CHAT_MEMBERS,
             payload=payload.model_dump(by_alias=True, exclude_none=True),  # Исключаем None значения
         )
-        
+
         response_payload = data.get("payload", {})
-        
+
         # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
-        
+
         # Извлекаем маркер для пагинации
         marker = response_payload.get("marker")
-        
+
         # Преобразуем маркер в int, если он в строковом формате
         if isinstance(marker, str):
             marker = int(marker)
@@ -156,11 +157,11 @@ class ChannelMixin(ClientProtocol):
             pass
         else:
             raise ResponseStructureError("Invalid marker type in response")
-        
+
         # Извлекаем список участников
         members = response_payload.get("members")
         member_list = []
-        
+
         # Проверяем тип данных и создаём список объектов Member
         if isinstance(members, list):
             for item in members:
@@ -169,10 +170,11 @@ class ChannelMixin(ClientProtocol):
                 member_list.append(Member.from_dict(item))
         else:
             raise ResponseStructureError("Invalid members type in response")
-        
+
         return member_list, marker
 
-    async def load_members(self, chat_id: int, marker: int | None = DEFAULT_MARKER_VALUE, count: int = DEFAULT_CHAT_MEMBERS_LIMIT,) -> tuple[list[Member], int | None]:
+    async def load_members(self, chat_id: int, marker: int | None = DEFAULT_MARKER_VALUE,
+                           count: int = DEFAULT_CHAT_MEMBERS_LIMIT, ) -> tuple[list[Member], int | None]:
         """
         Загружает список участников канала/чата с поддержкой пагинации.
         
@@ -200,7 +202,7 @@ class ChannelMixin(ClientProtocol):
         """
         # Создаём payload для получения участников
         payload = GetGroupMembersPayload(chat_id=chat_id, marker=marker, count=count)
-        
+
         # Вызываем внутренний метод для запроса
         return await self._query_members(payload)
 
@@ -231,6 +233,6 @@ class ChannelMixin(ClientProtocol):
         """
         # Создаём payload для поиска участников
         payload = SearchGroupMembersPayload(chat_id=chat_id, query=query)
-        
+
         # Вызываем внутренний метод для запроса
         return await self._query_members(payload)

@@ -17,6 +17,7 @@ class MixinsUtils:
     """
     Класс утилит для обработки ошибок и работы с версиями.
     """
+
     @staticmethod
     def handle_error(data: dict[str, Any]) -> NoReturn:
         """

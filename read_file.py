@@ -28,7 +28,7 @@ def read_file():
             # Пропускаем пустые строки
             if number:
                 numbers.append(number)
-    
+
     # Логируем количество найденных номеров
     logger.warning(f"Найдено {len(numbers)} телефонных номер(а)ов в файле numbers.txt")
     return numbers

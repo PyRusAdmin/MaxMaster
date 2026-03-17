@@ -10,7 +10,8 @@ from PyMax.src.pymax.protocols import ClientProtocol
 
 
 class HandlerMixin(ClientProtocol):
-    def on_message(self, filter: BaseFilter[Message] | None = None) -> Callable[[Callable[[Any], Any | Awaitable[Any]]],Callable[[Any], Any | Awaitable[Any]],]:
+    def on_message(self, filter: BaseFilter[Message] | None = None) -> Callable[
+        [Callable[[Any], Any | Awaitable[Any]]], Callable[[Any], Any | Awaitable[Any]],]:
         """
         Декоратор для регистрации обработчика входящих сообщений.
 
@@ -32,7 +33,7 @@ class HandlerMixin(ClientProtocol):
                 )
         """
 
-        def decorator(handler: Callable[[Any], Any | Awaitable[Any]],) -> Callable[[Any], Any | Awaitable[Any]]:
+        def decorator(handler: Callable[[Any], Any | Awaitable[Any]], ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_handlers.append((handler, filter))
             logger.debug(f"on_message handler set: {handler}, filter: {filter}")
             return handler
@@ -52,14 +53,15 @@ class HandlerMixin(ClientProtocol):
         :rtype: Callable
         """
 
-        def decorator(handler: Callable[[Any], Any | Awaitable[Any]],) -> Callable[[Any], Any | Awaitable[Any]]:
+        def decorator(handler: Callable[[Any], Any | Awaitable[Any]], ) -> Callable[[Any], Any | Awaitable[Any]]:
             self._on_message_edit_handlers.append((handler, filter))
             logger.debug(f"on_message_edit handler set: {handler}, filter: {filter}")
             return handler
 
         return decorator
 
-    def on_message_delete(self, filter: BaseFilter[Message] | None = None) -> Callable[[Callable[[Any], Any | Awaitable[Any]]],Callable[[Any], Any | Awaitable[Any]],]:
+    def on_message_delete(self, filter: BaseFilter[Message] | None = None) -> Callable[
+        [Callable[[Any], Any | Awaitable[Any]]], Callable[[Any], Any | Awaitable[Any]],]:
         """
         Декоратор для установки обработчика удаленных сообщений.
 
@@ -78,7 +80,8 @@ class HandlerMixin(ClientProtocol):
 
         return decorator
 
-    def on_reaction_change(self,handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],) -> Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]:
+    def on_reaction_change(self, handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]], ) -> Callable[
+        [str, int, ReactionInfo], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик изменения реакций на сообщения.
 
@@ -104,7 +107,8 @@ class HandlerMixin(ClientProtocol):
         logger.debug("on_chat_update handler set: %r", handler)
         return handler
 
-    def on_raw_receive(self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]) -> Callable[[dict[str, Any]], Any | Awaitable[Any]]:
+    def on_raw_receive(self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]) -> Callable[
+        [dict[str, Any]], Any | Awaitable[Any]]:
         """
         Устанавливает обработчик для получения необработанных данных от сервера.
 
@@ -150,7 +154,7 @@ class HandlerMixin(ClientProtocol):
                 await client.send_message(chat_id=123, text="Hello!")
         """
 
-        def decorator(handler: Callable[[], Any | Awaitable[Any]],) -> Callable[[], Any | Awaitable[Any]]:
+        def decorator(handler: Callable[[], Any | Awaitable[Any]], ) -> Callable[[], Any | Awaitable[Any]]:
             self._scheduled_tasks.append((handler, seconds + minutes * 60 + hours * 3600))
             logger.debug(
                 f"task scheduled: {handler}, interval: {seconds + minutes * 60 + hours * 3600}s"
@@ -159,7 +163,8 @@ class HandlerMixin(ClientProtocol):
 
         return decorator
 
-    def add_message_handler(self,handler: Callable[[Message], Any | Awaitable[Any]],filter: BaseFilter[Message] | None = None,) -> Callable[[Message], Any | Awaitable[Any]]:
+    def add_message_handler(self, handler: Callable[[Message], Any | Awaitable[Any]],
+                            filter: BaseFilter[Message] | None = None, ) -> Callable[[Message], Any | Awaitable[Any]]:
         """
         Добавляет обработчик входящих сообщений.
 
@@ -187,7 +192,8 @@ class HandlerMixin(ClientProtocol):
         self._on_start_handler = handler
         return handler
 
-    def add_reaction_change_handler(self,handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]],) -> Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]:
+    def add_reaction_change_handler(self, handler: Callable[[str, int, ReactionInfo], Any | Awaitable[Any]], ) -> \
+            Callable[[str, int, ReactionInfo], Any | Awaitable[Any]]:
         """
         Добавляет обработчик изменения реакций на сообщения.
 
@@ -202,7 +208,8 @@ class HandlerMixin(ClientProtocol):
         )
         return handler
 
-    def add_chat_update_handler(self, handler: Callable[[Chat], Any | Awaitable[Any]]) -> Callable[[Chat], Any | Awaitable[Any]]:
+    def add_chat_update_handler(self, handler: Callable[[Chat], Any | Awaitable[Any]]) -> Callable[
+        [Chat], Any | Awaitable[Any]]:
         """
         Добавляет обработчик обновления информации о чате.
 
@@ -215,7 +222,8 @@ class HandlerMixin(ClientProtocol):
         self._on_chat_update_handlers.append(handler)
         return handler
 
-    def add_raw_receive_handler(self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]) -> Callable[[dict[str, Any]], Any | Awaitable[Any]]:
+    def add_raw_receive_handler(self, handler: Callable[[dict[str, Any]], Any | Awaitable[Any]]) -> Callable[
+        [dict[str, Any]], Any | Awaitable[Any]]:
         """
         Добавляет обработчик для получения необработанных данных от сервера.
 
@@ -228,7 +236,8 @@ class HandlerMixin(ClientProtocol):
         self._on_raw_receive_handlers.append(handler)
         return handler
 
-    def add_scheduled_task(self,handler: Callable[[], Any | Awaitable[Any]],interval: float,) -> Callable[[], Any | Awaitable[Any]]:
+    def add_scheduled_task(self, handler: Callable[[], Any | Awaitable[Any]], interval: float, ) -> Callable[
+        [], Any | Awaitable[Any]]:
         """
         Добавляет периодическую задачу.
 

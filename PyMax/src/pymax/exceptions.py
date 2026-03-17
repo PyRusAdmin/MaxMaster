@@ -37,6 +37,7 @@ class WebSocketNotConnectedError(Exception):
     Возникает при попытке отправить сообщение или выполнить запрос
     через неподключённое WebSocket соединение.
     """
+
     def __init__(self) -> None:
         super().__init__("WebSocket is not connected")
 
@@ -48,6 +49,7 @@ class SocketNotConnectedError(Exception):
     
     Возникает при попытке отправить данные через неподключённый сокет.
     """
+
     def __init__(self) -> None:
         super().__init__("Socket is not connected")
 
@@ -58,6 +60,7 @@ class SocketSendError(Exception):
     
     Возникает, если отправка данных через сокет завершилась ошибкой.
     """
+
     def __init__(self) -> None:
         super().__init__("Send and wait failed (socket)")
 
@@ -68,6 +71,7 @@ class ResponseError(Exception):
     
     Возникает, если сервер вернул ответ с ошибкой.
     """
+
     def __init__(self, message: str) -> None:
         super().__init__(f"Response error: {message}")
 
@@ -78,6 +82,7 @@ class ResponseStructureError(Exception):
     
     Возникает, если структура ответа сервера не соответствует ожидаемой.
     """
+
     def __init__(self, message: str) -> None:
         super().__init__(f"Response structure error: {message}")
 
@@ -89,6 +94,7 @@ class Error(Exception):
     Содержит информацию об ошибке: код, сообщение, заголовок.
     Используется как основа для специфичных исключений (RateLimitError, LoginError).
     """
+
     def __init__(self, error: str, message: str, title: str, localized_message: str | None = None, ) -> None:
         """
         Инициализирует исключение.
@@ -127,6 +133,7 @@ class RateLimitError(Error):
     Возникает, когда клиент отправляет слишком много запросов
     за короткий промежуток времени.
     """
+
     def __init__(self, error: str, message: str, title: str, localized_message: str | None = None) -> None:
         super().__init__(error, message, title, localized_message)
 
@@ -140,5 +147,6 @@ class LoginError(Error):
     - Неверный токен
     - Ошибка сервера при авторизации
     """
+
     def __init__(self, error: str, message: str, title: str, localized_message: str | None = None) -> None:
         super().__init__(error, message, title, localized_message)

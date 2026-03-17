@@ -92,10 +92,7 @@ class WebSocketMixin(BaseTransport):
             raise WebSocketNotConnectedError
         return self._ws
 
-    async def connect(
-        self,
-        user_agent: UserAgentPayload | None = None,
-    ) -> dict[str, Any] | None:
+    async def connect(self, user_agent: UserAgentPayload | None = None) -> dict[str, Any] | None:
         """
         Устанавливает соединение WebSocket с сервером и выполняет handshake.
 
@@ -155,7 +152,7 @@ class WebSocketMixin(BaseTransport):
         self._recv_task = asyncio.create_task(self._recv_loop())  # Задача приёма
         self._outgoing_task = asyncio.create_task(self._outgoing_loop())  # Задача отправки
 
-        logger.info("WebSocket connected, starting handshake")
+        logger.info("WebSocket подключён, запуск handshake")
         # Выполняем процедуру handshake для авторизации
         return await self._handshake(user_agent)
 
@@ -216,9 +213,7 @@ class WebSocketMixin(BaseTransport):
 
             except websockets.exceptions.ConnectionClosed as e:
                 # Обработка разрыва соединения
-                logger.info(
-                    f"WebSocket connection closed with error: {e.code}, {e.reason}; exiting recv loop"
-                )
+                logger.info(f"WebSocket соединение закрыто с ошибкой: {e.code}, {e.reason}; выход из цикла приёма")
                 # Устанавливаем ошибку во все ожидающие Future
                 for fut in self._pending.values():
                     if not fut.done():
@@ -233,18 +228,12 @@ class WebSocketMixin(BaseTransport):
                 break  # Выход из цикла получения
             except Exception:
                 # Обработка непредвиденных ошибок с логированием
-                logger.exception("Error in recv_loop; backing off briefly")
+                logger.exception("Ошибка в recv_loop; кратковременная задержка")
                 # Задержка перед повторной попыткой (backoff)
                 await asyncio.sleep(RECV_LOOP_BACKOFF_DELAY)
 
     @override
-    async def _send_and_wait(
-        self,
-        opcode: Opcode,
-        payload: dict[str, Any],
-        cmd: int = 0,
-        timeout: float = DEFAULT_TIMEOUT,
-    ) -> dict[str, Any]:
+    async def _send_and_wait(self, opcode: Opcode, payload: dict[str, Any], cmd: int = 0, timeout: float = DEFAULT_TIMEOUT) -> dict[str, Any]:
         """
         Отправляет сообщение и ожидает ответ от сервера.
 
@@ -303,31 +292,22 @@ class WebSocketMixin(BaseTransport):
 
         try:
             # Логирование отправки сообщения
-            logger.debug(
-                "Sending frame opcode=%s cmd=%s seq=%s",
-                opcode,
-                cmd,
-                msg["seq"],
-            )
+            logger.debug("Отправка фрейма opcode=%s cmd=%s seq=%s", opcode, cmd, msg["seq"])
             # Отправка JSON сообщения в WebSocket
             await ws.send(json.dumps(msg))
             # Ожидание ответа с таймаутом
             data = await asyncio.wait_for(fut, timeout=timeout)
             # Логирование полученного ответа
-            logger.debug(
-                "Received frame for seq=%s opcode=%s",
-                data.get("seq"),
-                data.get("opcode"),
-            )
+            logger.debug("Получен фрейм seq=%s opcode=%s", data.get("seq"), data.get("opcode"))
             return data
         except asyncio.TimeoutError:
             # Обработка истечения таймаута ожидания
-            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
-            raise RuntimeError("Send and wait failed")
+            logger.exception("Отправка и ожидание не удались (opcode=%s, seq=%s)", opcode, msg["seq"])
+            raise RuntimeError("Отправка и ожидание не удались")
         except Exception:
             # Обработка прочих ошибок отправки/ожидания
-            logger.exception("Send and wait failed (opcode=%s, seq=%s)", opcode, msg["seq"])
-            raise RuntimeError("Send and wait failed")
+            logger.exception("Отправка и ожидание не удались (opcode=%s, seq=%s)", opcode, msg["seq"])
+            raise RuntimeError("Отправка и ожидание не удались")
         finally:
             # Очищаем словарь ожидающих (гарантированно выполняется)
             self._pending.pop(seq_key, None)

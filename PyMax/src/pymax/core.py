@@ -11,8 +11,19 @@
 - Автоматическое переподключение при разрыве соединения
 
 Пример использования:
+    from PyMax.src.pymax.core import MaxClient
+
+    # Создание и запуск клиента
     client = MaxClient(phone="79991234567", work_dir="accounts")
     await client.start()
+
+    # Использование контекстного менеджера
+    async with MaxClient(phone="79991234567") as client:
+        # Работа с клиентом
+        pass
+
+Автор: MaxMaster Team
+Версия: 0.0.1
 """
 from __future__ import annotations
 
@@ -51,15 +62,43 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 BaseClient):
     """
     Основной клиент для работы с WebSocket API сервиса Max.
-    
+
     Наследуется от нескольких mixin-классов, предоставляющих функциональность:
-    - AuthMixin: авторизация по номеру телефона
-    - ApiMixin: базовые API-запросы к серверу
-    - HandlerMixin: обработка входящих сообщений
-    - SchedulerMixin: планирование задач
-    - TelemetryMixin: отправка телеметрии
-    - UserMixin: управление пользователями
-    - WebSocketMixin: работа с WebSocket соединением
+    - AuthMixin: авторизация по номеру телефона, получение кода подтверждения
+    - ApiMixin: базовые API-запросы к серверу, отправка сообщений
+    - HandlerMixin: обработка входящих сообщений, событий, реакций
+    - SchedulerMixin: планирование периодических задач (ping, телеметрия)
+    - TelemetryMixin: отправка телеметрии о действиях пользователя
+    - UserMixin: управление пользователями, поиск по номеру телефона
+    - WebSocketMixin: работа с WebSocket соединением, отправка/получение данных
+
+    Атрибуты:
+        allowed_device_types: Множество поддерживаемых типов устройств (WEB).
+        uri: URI WebSocket сервера для подключения.
+        phone: Номер телефона аккаунта Max.
+        host: Хост API сервера.
+        port: Порт API сервера.
+        is_connected: Флаг состояния подключения к серверу.
+        chats: Список объектов Chat (групповые чаты).
+        dialogs: Список объектов Dialog (личные диалоги).
+        channels: Список объектов Channel (каналы).
+        me: Объект Me с информацией о текущем пользователе.
+        contacts: Список объектов User (контакты пользователя).
+        user_agent: Заголовки пользователя для подключения.
+
+    Пример:
+        # Базовое использование
+        client = MaxClient(phone="79991234567", work_dir="accounts")
+        await client.start()
+
+        # С контекстным менеджером
+        async with MaxClient(phone="79991234567") as client:
+            # Клиент автоматически подключится
+            pass
+
+        # С токеном (без повторной авторизации)
+        client = MaxClient(phone="79991234567", token="existing_token")
+        await client.start()
 
     :param phone: Номер телефона для авторизации.
     :type phone: str
@@ -71,7 +110,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
     :type work_dir: str, optional
     :param headers: Заголовки для подключения к WebSocket.
     :type headers: UserAgentPayload
-    :param token: Токен авторизации. Если не передан, будет выполнен процесс логина по номеру телефона.
+    :param token: Токен авторизации. Если не передан, будет выполнен процесс логина.
     :type token: str | None, optional
     :param host: Хост API сервера.
     :type host: str, optional
@@ -85,12 +124,17 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
     :type last_name: str | None, optional
     :param send_fake_telemetry: Флаг отправки фейковой телеметрии.
     :type send_fake_telemetry: bool, optional
-    :param proxy: Прокси для подключения к WebSocket (см. https://websockets.readthedocs.io/en/stable/topics/proxies.html).
+    :param proxy: Прокси для подключения к WebSocket.
     :type proxy: str | Literal[True] | None, optional
     :param reconnect: Флаг автоматического переподключения при потере соединения.
     :type reconnect: bool, optional
+    :param device_id: ID устройства. Если не передан, генерируется новый.
+    :type device_id: UUID | None, optional
+    :param reconnect_delay: Задержка между переподключениями в секундах.
+    :type reconnect_delay: float, optional
 
     :raises InvalidPhoneError: Если формат номера телефона неверный.
+    :raises ValueError: Если registration=True и не передан first_name.
     """
     allowed_device_types: set[str] = {"WEB"}  # Поддерживаемые типы устройств (только WEB)
 
@@ -253,7 +297,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         try:
             await self.ws.wait_closed()
         except asyncio.CancelledError:
-            logger.debug("wait_closed отменили")
+            logger.debug("Задача wait_closed отменена")
         except WebSocketNotConnectedError:
             logger.info("WebSocket не подключён, выход из wait_forever")
 
@@ -264,7 +308,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         :return: None
         """
         try:
-            logger.info("Closing client")
+            logger.info("Закрытие клиента")
             self._stop_event.set()
         except Exception as e:
             logger.exception(e)
@@ -280,7 +324,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         if sync:
             await self._sync()
 
-        logger.debug("is_connected=%s before starting ping", self.is_connected)
+        logger.debug("is_connected=%s перед запуском ping", self.is_connected)
         ping_task = asyncio.create_task(self._send_interactive_ping())
         ping_task.add_done_callback(self._log_task_exception)
         self._background_tasks.add(ping_task)
@@ -294,7 +338,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
             self._background_tasks.add(telemetry_task)
 
         if self._on_start_handler:
-            logger.debug("Calling on_start handler")
+            logger.debug("Вызов on_start handler")
             result = self._on_start_handler()
             if asyncio.iscoroutine(result):
                 await self._safe_execute(result, context="on_start handler")
@@ -336,10 +380,10 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 finally:
                     await self._cleanup_client()
 
-                logger.info("Reconnecting after post-login tasks failure")
+                logger.info("Переподключение после неудачи пост-логин задач")
                 await asyncio.sleep(self.reconnect_delay)
         else:
-            logger.info("Login successful, token saved to database, exiting...")
+            logger.info("Вход успешен, токен сохранён в базе данных, выход...")
 
     async def start(self) -> None:
         """
@@ -382,7 +426,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                         await task
 
             except asyncio.CancelledError:
-                logger.info("Задача клиента отменена, останавливается")
+                logger.info("Задача клиента отменена, остановка")
                 break
             except Exception as e:
                 logger.exception(e)
@@ -390,21 +434,29 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 await self._cleanup_client()
 
             if not self.reconnect or self._stop_event.is_set():
-                logger.info("Восстановление подключения отключено или запрошено остановка — выход из start()")
+                logger.info("Повторное подключение отключено или запрошена остановка — выход из start()")
                 break
 
-            logger.info("Включено повторное подключение — перезагрузка клиента")
+            logger.info("Повторное подключение включено — перезапуск клиента")
             await asyncio.sleep(self.reconnect_delay)
 
-        logger.info("Клиент ушёл чисто")
+        logger.info("Клиент завершил работу корректно")
 
 
 class SocketMaxClient(SocketMixin, MaxClient):
     """
-    Клиент для работы с Max API через сокеты (Android, iOS, Desktop).
+    Клиент для работы с Max API через TCP сокеты (Android, iOS, Desktop).
 
-    Наследуется от MaxClient, переопределяет методы для работы с TCP сокетами.
+    Наследуется от MaxClient, переопределяет методы для работы с TCP сокетами
+    вместо WebSocket. Использует SSL/TLS шифрование для безопасного соединения.
     Поддерживаемые типы устройств: ANDROID, IOS, DESKTOP.
+
+    Атрибуты:
+        allowed_device_types: Множество поддерживаемых типов устройств.
+
+    Пример:
+        client = SocketMaxClient(phone="79991234567", work_dir="accounts")
+        await client.start()
     """
     allowed_device_types = {"ANDROID", "IOS", "DESKTOP"}
 
@@ -415,31 +467,63 @@ class SocketMaxClient(SocketMixin, MaxClient):
 
         :return: Заголовки пользователя для устройства DESKTOP.
         :rtype: UserAgentPayload
+
+        Пример:
+            headers = SocketMaxClient._default_headers()
+            # UserAgentPayload(device_type="DESKTOP", ...)
         """
         return UserAgentPayload(device_type="DESKTOP")
 
     @override
-    async def _wait_forever(self):
+    async def _wait_forever(self) -> None:
         """
         Ожидает закрытия socket соединения.
 
+        Блокирует выполнение до тех пор, пока задача получения сообщений
+        (_recv_task) не завершится или не будет отменена.
+
         :return: None
+
+        Пример:
+            await client.connect()
+            await client._wait_forever()  # Ожидание закрытия соединения
+
+        Примечание:
+            Метод используется в основном цикле клиента для поддержания соединения.
         """
         if self._recv_task:
             try:
                 await self._recv_task
             except asyncio.CancelledError:
-                logger.debug("Разъём recv_task отключён")
+                logger.debug("Задача recv_task отменена")
             except Exception as e:
-                logger.exception("Разъём recv_task вышел из строя: %s", e)
+                logger.exception("Ошибка в задаче recv_task: %s", e)
 
     @override
-    async def _cleanup_client(self):
+    async def _cleanup_client(self) -> None:
         """
         Очищает ресурсы клиента: отменяет задачи, закрывает сокет.
 
+        Выполняет следующие действия:
+        1. Отменяет все фоновые задачи из _background_tasks
+        2. Отменяет задачи получения и отправки сообщений
+        3. Устанавливает ошибку во все ожидающие Future в _pending
+        4. Закрывает socket соединение
+        5. Сбрасывает флаг is_connected
+
         :return: None
+
+        Пример:
+            try:
+                await client.start()
+            finally:
+                await client._cleanup_client()
+
+        Примечание:
+            Метод вызывается автоматически при остановке клиента.
+            Все исключения при очистке логируются, но не пробрасываются.
         """
+        # Отмена всех фоновых задач
         for task in list(self._background_tasks):
             task.cancel()
             try:
@@ -450,23 +534,27 @@ class SocketMaxClient(SocketMixin, MaxClient):
                 logger.exception(e)
             self._background_tasks.discard(task)
 
+        # Отмена задачи получения сообщений
         if self._recv_task:
             self._recv_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._recv_task
             self._recv_task = None
 
+        # Отмена задачи отправки сообщений
         if self._outgoing_task:
             self._outgoing_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._outgoing_task
             self._outgoing_task = None
 
+        # Установка ошибки в ожидающие Future
         for fut in self._pending.values():
             if not fut.done():
                 fut.set_exception(SocketNotConnectedError())
         self._pending.clear()
 
+        # Закрытие сокета
         if self._socket:
             try:
                 self._socket.close()
@@ -474,5 +562,6 @@ class SocketMaxClient(SocketMixin, MaxClient):
                 logger.exception(e)
             self._socket = None
 
+        # Сброс состояния подключения
         self.is_connected = False
-        logger.info("Запуск клиента() очищен (розетка)")
+        logger.info("Ресурсы клиента очищены")
