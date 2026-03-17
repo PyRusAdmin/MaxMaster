@@ -955,11 +955,7 @@ class MessageMixin(ClientProtocol):
         logger.debug("get_reactions success")
         return reactions
 
-    async def remove_reaction(
-            self,
-            chat_id: int,
-            message_id: str,
-    ) -> ReactionInfo | None:
+    async def remove_reaction(self, chat_id: int, message_id: str) -> ReactionInfo | None:
         """Удаляет реакцию с сообщения.
 
         Метод убирает реакцию текущего пользователя с указанного сообщения,
