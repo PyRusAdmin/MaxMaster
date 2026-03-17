@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Модуль типов данных для клиента Max API.
+
+Содержит классы для представления данных, получаемых от сервера Max:
+- Присутствие пользователей (Presence)
+- Имена и контакты (Name, Names, Contact, User, Me)
+- Чаты и диалоги (Chat, Dialog, Channel)
+- Сообщения и вложения (Message,各种 Attach классы)
+- Реакции (ReactionInfo, ReactionCounter)
+- Папки (Folder, FolderList, FolderUpdate)
+
+Все классы имеют метод from_dict() для десериализации из JSON.
+"""
 from typing import Any
 
 from typing_extensions import Self, override
@@ -14,19 +27,28 @@ from PyMax.src.pymax.static.enum import AttachType, FormattingType, MessageStatu
 
 
 class Presence:
+    """
+    Присутствие пользователя в сети.
+    
+    Содержит информацию о времени последнего посещения пользователя.
+    """
     def __init__(self, seen: int | None) -> None:
         """
-        Присутствие пользователя.
+        Инициализирует присутствие.
 
-        {
-            "seen": {{ unix timestamp }}
-        },
+        :param seen: Unix timestamp последнего посещения.
         """
         # TODO надо сделать пребразование в datetime с учетом таймзоны
         self.seen = seen
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Presence из словаря.
+        
+        :param data: Словарь с данными присутствия.
+        :return: Новый экземпляр Presence.
+        """
         return cls(seen=data.get("seen"))
 
     @override
@@ -39,18 +61,20 @@ class Presence:
 
 
 class Name:
+    """
+    Структура имени пользователя.
+    
+    Может содержать несколько вариантов имени (name, firstName, lastName)
+    и тип имени (например, ONEME).
+    """
     def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
-        Структура имени пользователя.
+        Инициализирует структуру имени.
 
-        Структура может поменяться, ничего не гарантируется.
-        На данный момент она такая:
-        {
-            "name": "Василий",
-            "firstName": "Пупкин",
-            "lastName": "Чеевич",
-            "type": "ONEME"
-        }
+        :param name: Полное имя.
+        :param first_name: Имя.
+        :param last_name: Фамилия.
+        :param type: Тип имени (например, ONEME).
         """
         self.name = name
         self.first_name = first_name
@@ -59,6 +83,12 @@ class Name:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Name из словаря.
+        
+        :param data: Словарь с данными имени.
+        :return: Новый экземпляр Name.
+        """
         return cls(
             name=data.get("name"),
             first_name=data.get("firstName"),
@@ -76,9 +106,14 @@ class Name:
 
 
 class Names(Name):
+    """
+    Синоним для класса Name.
+    
+    Используется для обратной совместимости.
+    """
     def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
-        Синоним для класса Name.
+        Инициализирует структуру имени (синоним Name).
         """
         super().__init__(name=name, first_name=first_name, last_name=last_name, type=type)
 

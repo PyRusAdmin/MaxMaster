@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+"""
+Основной модуль клиента Max API.
+
+Содержит класс MaxClient - основной клиент для работы с WebSocket API сервиса Max.
+Поддерживает:
+- Авторизацию по номеру телефона
+- Синхронизацию чатов, контактов и профиля
+- Отправку и получение сообщений
+- Работу с файлами и медиа
+- Автоматическое переподключение при разрыве соединения
+
+Пример использования:
+    client = MaxClient(phone="79991234567", work_dir="accounts")
+    await client.start()
+"""
 from __future__ import annotations
 
 import asyncio
@@ -35,6 +51,15 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                 BaseClient):
     """
     Основной клиент для работы с WebSocket API сервиса Max.
+    
+    Наследуется от нескольких mixin-классов, предоставляющих функциональность:
+    - AuthMixin: авторизация по номеру телефона
+    - ApiMixin: базовые API-запросы к серверу
+    - HandlerMixin: обработка входящих сообщений
+    - SchedulerMixin: планирование задач
+    - TelemetryMixin: отправка телеметрии
+    - UserMixin: управление пользователями
+    - WebSocketMixin: работа с WebSocket соединением
 
     :param phone: Номер телефона для авторизации.
     :type phone: str
@@ -67,7 +92,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
     :raises InvalidPhoneError: Если формат номера телефона неверный.
     """
-    allowed_device_types: set[str] = {"WEB"}
+    allowed_device_types: set[str] = {"WEB"}  # Поддерживаемые типы устройств (только WEB)
 
     def __init__(self, phone: str, uri: str = WEBSOCKET_URI, session_name: str = SESSION_STORAGE_DB,
                  headers: UserAgentPayload | None = None, token: str | None = None, send_fake_telemetry: bool = True,

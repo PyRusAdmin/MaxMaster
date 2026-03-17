@@ -2,7 +2,21 @@
 """
 Модели данных (payloads) для API запросов к серверу Max.
 
-Содержит классы для сериализации данных, отправляемых через WebSocket.
+Содержит классы для сериализации данных, отправляемых через WebSocket:
+- Базовые сообщения протокола (BaseWebSocketMessage)
+- Заголовки пользователя (UserAgentPayload)
+- Авторизация (RequestCodePayload, SendCodePayload)
+- Синхронизация (SyncPayload)
+- Сообщения (SendMessagePayload, EditMessagePayload, DeleteMessagePayload)
+- Чаты и группы (CreateGroupPayload, InviteUsersPayload, etc.)
+- Файлы и медиа (UploadPayload, AttachPhotoPayload, etc.)
+- Навигация и телеметрия (NavigationPayload)
+- Реакции (AddReactionPayload, GetReactionsPayload)
+- Папки (CreateFolderPayload, UpdateFolderPayload)
+- Двухфакторная аутентификация (SetTwoFactorPayload)
+
+Все классы наследуются от CamelModel для автоматического преобразования
+имён полей из snake_case в camelCase.
 """
 from typing import Any, Literal
 
@@ -19,11 +33,17 @@ from PyMax.src.pymax.static.enum import AuthType, AttachType, ContactAction, Rea
 def to_camel(string: str) -> str:
     """
     Преобразует строку из snake_case в camelCase.
+    
+    Используется alias_generator для моделей Pydantic.
 
     :param string: Строка в snake_case.
     :type string: str
     :return: Строка в camelCase.
     :rtype: str
+    
+    Пример:
+        >>> to_camel("device_type")
+        'deviceType'
     """
     parts = string.split("_")
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
@@ -32,23 +52,29 @@ def to_camel(string: str) -> str:
 class CamelModel(BaseModel):
     """
     Базовая модель для payload с автоматическим преобразованием имён полей в camelCase.
+    
+    Использует alias_generator для автоматического преобразования имён полей
+    из snake_case (Python стиль) в camelCase (стиль JSON API Max).
     """
     model_config = {
-        "alias_generator": to_camel,
-        "populate_by_name": True,
-        "arbitrary_types_allowed": True,
+        "alias_generator": to_camel,  # Автоматическое преобразование имён полей
+        "populate_by_name": True,  # Разрешить использование как имени, так и алиаса
+        "arbitrary_types_allowed": True,  # Разрешить произвольные типы
     }
 
 
 class BaseWebSocketMessage(BaseModel):
     """
     Базовое сообщение WebSocket протокола Max.
+    
+    Используется для отправки и получения сообщений через WebSocket.
+    Все сообщения протокола имеют эту структуру.
 
     :ivar ver: Версия протокола (10 или 11).
     :ivar cmd: Команда сообщения.
-    :ivar seq: Порядковый номер сообщения.
-    :ivar opcode: Код операции.
-    :ivar payload: Полезная нагрузка сообщения.
+    :ivar seq: Порядковый номер сообщения (sequence number).
+    :ivar opcode: Код операции (тип запроса/ответа).
+    :ivar payload: Полезная нагрузка сообщения (данные).
     """
     ver: Literal[10, 11] = 11
     cmd: int
@@ -60,16 +86,19 @@ class BaseWebSocketMessage(BaseModel):
 class UserAgentPayload(CamelModel):
     """
     Заголовки пользователя для подключения к WebSocket.
+    
+    Содержит информацию о клиенте: тип устройства, версию приложения,
+    локаль, часовой пояс и другие параметры для идентификации клиента.
 
     :ivar device_type: Тип устройства (WEB, ANDROID, IOS, DESKTOP).
-    :ivar locale: Локаль приложения.
+    :ivar locale: Локаль приложения (например, 'ru').
     :ivar device_locale: Локаль устройства.
     :ivar os_version: Версия операционной системы.
     :ivar device_name: Имя устройства.
-    :ivar header_user_agent: User Agent строка.
+    :ivar header_user_agent: User Agent строка браузера/клиента.
     :ivar app_version: Версия приложения.
-    :ivar screen: Разрешение экрана.
-    :ivar timezone: Часовой пояс.
+    :ivar screen: Разрешение экрана (например, '1920x1080').
+    :ivar timezone: Часовой пояс (например, 'Europe/Moscow').
     :ivar client_session_id: ID клиентской сессии.
     :ivar build_number: Номер сборки приложения.
     """
@@ -89,9 +118,12 @@ class UserAgentPayload(CamelModel):
 class RequestCodePayload(CamelModel):
     """
     Payload для запроса кода подтверждения по номеру телефона.
+    
+    Используется на первом этапе авторизации для отправки SMS
+    или push-уведомления с кодом подтверждения.
 
-    :ivar phone: Номер телефона.
-    :ivar type: Тип аутентификации.
+    :ivar phone: Номер телефона (например, '79991234567').
+    :ivar type: Тип аутентификации (по умолчанию START_AUTH).
     :ivar language: Язык для сообщений (по умолчанию 'ru').
     """
     phone: str
@@ -102,10 +134,13 @@ class RequestCodePayload(CamelModel):
 class SendCodePayload(CamelModel):
     """
     Payload для отправки кода подтверждения.
+    
+    Используется на втором этапе авторизации для проверки кода,
+    полученного пользователем через SMS или push.
 
-    :ivar token: Временный токен.
+    :ivar token: Временный токен, полученный из request_code.
     :ivar verify_code: Код верификации (6 цифр).
-    :ivar auth_token_type: Тип аутентификации.
+    :ivar auth_token_type: Тип аутентификации (по умолчанию CHECK_CODE).
     """
     token: str
     verify_code: str
@@ -115,14 +150,20 @@ class SendCodePayload(CamelModel):
 class SyncPayload(CamelModel):
     """
     Payload для синхронизации данных с сервером.
+    
+    Используется при начальном подключении для получения:
+    - Списка чатов
+    - Списка контактов
+    - Статусов присутствия
+    - Черновиков сообщений
 
-    :ivar interactive: Флаг интерактивного режима.
+    :ivar interactive: Флаг интерактивного режима (ожидание ответа).
     :ivar token: Токен авторизации.
-    :ivar chats_sync: Флаг синхронизации чатов.
-    :ivar contacts_sync: Флаг синхронизации контактов.
+    :ivar chats_sync: Флаг синхронизации чатов (0 = полная синхронизация).
+    :ivar contacts_sync: Флаг синхронизации контактов (0 = полная).
     :ivar presence_sync: Флаг синхронизации присутствия.
     :ivar drafts_sync: Флаг синхронизации черновиков.
-    :ivar chats_count: Количество чатов для синхронизации.
+    :ivar chats_count: Количество чатов для синхронизации (по умолчанию 40).
     :ivar user_agent: Заголовки пользователя.
     """
     interactive: bool = True

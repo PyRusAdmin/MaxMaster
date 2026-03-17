@@ -319,21 +319,21 @@ class AuthMixin(ClientProtocol):
                 if exc is not None:
                     raise exc
                 elif poll_qr_task.result():
-                    logger.info("QR login successful")
+                    logger.info("QR-вход успешен")
 
                     data = await self._get_qr_login_data(track_id)
 
                     return data
 
                 else:
-                    logger.error("QR login failed or expired")
-                    raise RuntimeError("QR login failed or expired")
+                    logger.error("QR-вход не удался или истек.")
+                    raise RuntimeError("QR-вход не удался или истек.")
 
     async def _submit_reg_info(
             self, first_name: str, last_name: str | None, token: str
     ) -> dict[str, Any]:
         try:
-            logger.info("Submitting registration info")
+            logger.info("Отправка регистрационных данных")
 
             payload = RegisterPayload(
                 first_name=first_name,
@@ -346,50 +346,50 @@ class AuthMixin(ClientProtocol):
                 MixinsUtils.handle_error(data)
 
             logger.debug(
-                "Registration info response opcode=%s seq=%s",
+                "Регистрационная информация ответ opcode=%s seq=%s",
                 data.get("opcode"),
                 data.get("seq"),
             )
             payload_data = data.get("payload")
             if isinstance(payload_data, dict):
                 return payload_data
-            raise ValueError("Invalid payload data received")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
         except Exception:
-            logger.error("Submit registration info failed", exc_info=True)
-            raise RuntimeError("Submit registration info failed")
+            logger.error("Отправка регистрационных данных не получила", exc_info=True)
+            raise RuntimeError("Отправка регистрационных данных не получила")
 
     async def _register(self, first_name: str, last_name: str | None = None) -> None:
-        logger.info("Starting registration flow")
+        logger.info("Начальный процесс регистрации")
 
         request_code_payload = await self.request_code(self.phone)
         temp_token = request_code_payload
 
         if not temp_token or not isinstance(temp_token, str):
-            logger.critical("Failed to request code: token missing")
-            raise ValueError("Failed to request code")
+            logger.critical("Не удалось запросить код: токен отсутствует")
+            raise ValueError("Не запросил код")
 
         print("Введите код: ", end="", flush=True)
         code = await asyncio.to_thread(lambda: sys.stdin.readline().strip())
         if len(code) != 6 or not code.isdigit():
-            logger.error("Invalid code format entered")
-            raise ValueError("Invalid code format")
+            logger.error("Введён некорректный формат кода")
+            raise ValueError("Некорректный формат кода")
 
         registration_response = await self._send_code(code, temp_token)
         token = registration_response.get("tokenAttrs", {}).get("REGISTER", {}).get("token", "")
         if not token:
-            logger.critical("Failed to register, token not received")
-            raise ValueError("Failed to register, token not received")
+            logger.critical("Не удалось зарегистрироваться, токен не получен")
+            raise ValueError("Не удалось зарегистрироваться, токен не получен")
 
         data = await self._submit_reg_info(first_name, last_name, token)
         self._token = data.get("token")
         if not self._token:
-            logger.critical("Failed to register, token not received")
-            raise ValueError("Failed to register, token not received")
+            logger.critical("Не удалось зарегистрироваться, токен не получен")
+            raise ValueError("Не удалось зарегистрироваться, токен не получен")
 
-        logger.info("Registration successful")
+        logger.info("Регистрация прошла успешно")
         logger.info("Token: %s", self._token)
         logger.warning(
-            "IMPORTANT: Use this token ONLY with device_type='DESKTOP' and the special init user agent"
+            "ВАЖНО: Используйте этот токен ТОЛЬКО с device_type='DESKTOP' и специальным init user agent"
         )
         logger.warning("Этот токен НЕ ДОЛЖЕН использоваться в веб-клиентах")
 
