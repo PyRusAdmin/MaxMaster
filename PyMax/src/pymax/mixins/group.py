@@ -20,21 +20,37 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 class GroupMixin(ClientProtocol):
     """
-    Mixin для работы с группами.
-    """
-    async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True, ) -> tuple[
-                                                                                                                    Chat, Message] | None:
-        """
-        Создает группу
+    Mixin, предоставляющий функциональность для работы с групповыми чатами.
 
-        :param: name (str): Название группы.
-        :param: participant_ids (list[int] | None, optional): Список идентификаторов участников. Defaults to None.
-        :param: notify (bool, optional): Флаг оповещения. Defaults to True.
-        :return: tuple[Chat, Message] | None : Объект Chat и Message или None при ошибке.
+    Содержит методы для создания групп, управления участниками, изменения настроек,
+    обработки ссылок-приглашений и синхронизации состояния чатов.
+
+    Attributes:
+        chats (list[Chat]): Кэш чатов, доступных клиенту.
+        _send_and_wait (callable): Асинхронный метод для отправки команд и ожидания ответа.
+    """
+    async def create_group(self, name: str, participant_ids: list[int] | None = None, notify: bool = True) -> tuple[Chat, Message] | None:
         """
+        Создает новую группу с указанными участниками.
+
+        Метод формирует и отправляет payload для создания группы, ожидает ответ от сервера,
+        обрабатывает возможные ошибки и обновляет локальный кэш чатов.
+
+        Args:
+            name (str): Название создаваемой группы.
+            participant_ids (list[int] | None, optional): Список ID участников для добавления. По умолчанию — None.
+            notify (bool, optional): Флаг, указывающий, нужно ли уведомлять участников. По умолчанию — True.
+
+        Returns:
+            tuple[Chat, Message] | None: Кортеж из объекта чата и сообщения о создании, или None при ошибке.
+
+        Raises:
+            Error: Если сервер вернул ошибку.
+        """
+        # Формируем payload для создания группы с уникальным cid
         payload = CreateGroupPayload(
             message=CreateGroupMessage(
-                cid=int(time.time() * 1000),
+                cid=int(time.time() * 1000),  # Уникальный идентификатор команды
                 attaches=[
                     CreateGroupAttach(
                         _type="CONTROL",
@@ -46,32 +62,47 @@ class GroupMixin(ClientProtocol):
             notify=notify,
         ).model_dump(by_alias=True)
 
+        # Отправляем команду на сервер и ожидаем ответ
         data = await self._send_and_wait(opcode=Opcode.MSG_SEND, payload=payload)
+
+        # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
+        # Преобразуем данные чата и сообщения из ответа
         chat = Chat.from_dict(data["payload"]["chat"])
         message = Message.from_dict(data["payload"])
 
+        # Обновляем локальный кэш чатов
         if chat:
             cached_chat = await self._get_chat(chat.id)
             if cached_chat is None:
-                self.chats.append(chat)
+                self.chats.append(chat)  # Добавляем новый чат в кэш
             else:
                 idx = self.chats.index(cached_chat)
-                self.chats[idx] = chat
+                self.chats[idx] = chat  # Обновляем существующий чат
 
         return chat, message
 
     async def invite_users_to_group(self, chat_id: int, user_ids: list[int], show_history: bool = True) -> Chat | None:
         """
-        Приглашает пользователей в группу
+        Приглашает пользователей в существующую группу.
 
-        :param: chat_id (int): ID группы.
-        :param: user_ids (list[int]): Список идентификаторов пользователей.
-        :param: show_history (bool, optional): Флаг оповещения. Defaults to True.
-        :return: Chat | None
+        Отправляет запрос на добавление пользователей в группу, обновляет информацию о чате
+        и синхронизирует её с локальным кэшем.
+
+        Args:
+            chat_id (int): Идентификатор группы.
+            user_ids (list[int]): Список ID пользователей для приглашения.
+            show_history (bool, optional): Разрешить ли новым участникам видеть историю чата. По умолчанию — True.
+
+        Returns:
+            Chat | None: Объект обновлённого чата или None при ошибке.
+
+        Raises:
+            Error: Если сервер вернул ошибку.
         """
+        # Формируем payload для приглашения пользователей
         payload = InviteUsersPayload(
             chat_id=chat_id,
             user_ids=user_ids,
@@ -79,12 +110,17 @@ class GroupMixin(ClientProtocol):
             operation="add",
         ).model_dump(by_alias=True)
 
+        # Отправляем команду на обновление состава участников
         data = await self._send_and_wait(opcode=Opcode.CHAT_MEMBERS_UPDATE, payload=payload)
 
+        # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
+        # Преобразуем данные чата из ответа
         chat = Chat.from_dict(data["payload"]["chat"])
+
+        # Обновляем локальный кэш чатов
         if chat:
             cached_chat = await self._get_chat(chat.id)
             if cached_chat is None:
