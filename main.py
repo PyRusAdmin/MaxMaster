@@ -1037,11 +1037,10 @@ async def main():
 
         elif choice == "4":  # Подключить новый аккаунт
             print_header()
-            # Показываем список подключённых аккаунтов
-            show_accounts_list()
 
-            # Предлагаем подключить новый аккаунт
-            connect = Prompt.ask(
+            show_accounts_list()  # Показываем список подключённых аккаунтов
+
+            connect = Prompt.ask(  # Предлагаем подключить новый аккаунт
                 "[bold yellow]Подключить новый аккаунт?[/]",
                 choices=["y", "n"],
                 default="y",

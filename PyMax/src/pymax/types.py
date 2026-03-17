@@ -309,18 +309,40 @@ class ControlAttach:
 
 
 class AudioAttach:
+    """
+    Аудиовложение в сообщении (голосовое сообщение).
+    
+    Содержит данные об аудиофайле: длительность, URL, волновую форму и т.д.
+    """
     def __init__(self, duration: int, audio_id: int, url: str, wave: str, transcription_status: str, token: str,
                  type: AttachType, ) -> None:
-        self.duration = duration
-        self.audio_id = audio_id
-        self.url = url
-        self.wave = wave
-        self.transcription_status = transcription_status
-        self.token = token
-        self.type = type
+        """
+        Инициализирует аудиовложение.
+
+        :param duration: Длительность аудио в миллисекундах.
+        :param audio_id: ID аудиофайла.
+        :param url: URL для загрузки аудио.
+        :param wave: Волновая форма (визуальное представление).
+        :param transcription_status: Статус транскрибации.
+        :param token: Токен доступа к аудио.
+        :param type: Тип вложения (AUDIO).
+        """
+        self.duration = duration  # Длительность аудио в мс
+        self.audio_id = audio_id  # ID аудиофайла
+        self.url = url  # URL для загрузки
+        self.wave = wave  # Волновая форма
+        self.transcription_status = transcription_status  # Статус транскрибации
+        self.token = token  # Токен доступа
+        self.type = type  # Тип вложения (AUDIO)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр AudioAttach из словаря.
+        
+        :param data: Словарь с данными аудио.
+        :return: Новый экземпляр AudioAttach.
+        """
         return cls(
             duration=data["duration"],
             audio_id=data["audioId"],
@@ -345,18 +367,40 @@ class AudioAttach:
 
 
 class PhotoAttach:
+    """
+    Вложение фотографии в сообщении.
+    
+    Содержит данные о фотографии: URL, размеры, токен и т.д.
+    """
     def __init__(self, base_url: str, height: int, width: int, photo_id: int, photo_token: str,
                  preview_data: str | None, type: AttachType, ) -> None:
-        self.base_url = base_url
-        self.height = height
-        self.width = width
-        self.photo_id = photo_id
-        self.photo_token = photo_token
-        self.preview_data = preview_data
-        self.type = type
+        """
+        Инициализирует вложение фотографии.
+
+        :param base_url: Базовый URL для загрузки фото.
+        :param height: Высота фото в пикселях.
+        :param width: Ширина фото в пикселях.
+        :param photo_id: ID фотографии.
+        :param photo_token: Токен фотографии.
+        :param preview_data: Данные превью (сжатое изображение).
+        :param type: Тип вложения (PHOTO).
+        """
+        self.base_url = base_url  # Базовый URL для загрузки
+        self.height = height  # Высота в пикселях
+        self.width = width  # Ширина в пикселях
+        self.photo_id = photo_id  # ID фотографии
+        self.photo_token = photo_token  # Токен фотографии
+        self.preview_data = preview_data  # Данные превью
+        self.type = type  # Тип вложения (PHOTO)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр PhotoAttach из словаря.
+        
+        :param data: Словарь с данными фотографии.
+        :return: Новый экземпляр PhotoAttach.
+        """
         return cls(
             base_url=data["baseUrl"],
             height=data["height"],
@@ -381,20 +425,44 @@ class PhotoAttach:
 
 
 class VideoAttach:
+    """
+    Видеовложение в сообщении.
+    
+    Содержит данные о видеофайле: размеры, длительность, превью и т.д.
+    """
     def __init__(self, height: int, width: int, video_id: int, duration: int, preview_data: str, type: AttachType,
                  thumbnail: str, token: str, video_type: int, ) -> None:
-        self.height = height
-        self.width = width
-        self.video_id = video_id
-        self.duration = duration
-        self.preview_data = preview_data
-        self.type = type
-        self.thumbnail = thumbnail
-        self.token = token
-        self.video_type = video_type
+        """
+        Инициализирует видеовложение.
+
+        :param height: Высота видео в пикселях.
+        :param width: Ширина видео в пикселях.
+        :param video_id: ID видеофайла.
+        :param duration: Длительность видео в миллисекундах.
+        :param preview_data: Данные превью.
+        :param type: Тип вложения (VIDEO).
+        :param thumbnail: URL миниатюры.
+        :param token: Токен доступа к видео.
+        :param video_type: Тип видео.
+        """
+        self.height = height  # Высота в пикселях
+        self.width = width  # Ширина в пикселях
+        self.video_id = video_id  # ID видеофайла
+        self.duration = duration  # Длительность в мс
+        self.preview_data = preview_data  # Данные превью
+        self.type = type  # Тип вложения (VIDEO)
+        self.thumbnail = thumbnail  # Миниатюра
+        self.token = token  # Токен доступа
+        self.video_type = video_type  # Тип видео
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр VideoAttach из словаря.
+        
+        :param data: Словарь с данными видео.
+        :return: Новый экземпляр VideoAttach.
+        """
         return cls(
             height=data["height"],
             width=data["width"],
@@ -423,15 +491,35 @@ class VideoAttach:
 
 
 class FileAttach:
+    """
+    Вложение файла в сообщении (документ).
+    
+    Содержит данные о файле: имя, размер, токен для загрузки.
+    """
     def __init__(self, file_id: int, name: str, size: int, token: str, type: AttachType) -> None:
-        self.file_id = file_id
-        self.name = name
-        self.size = size
-        self.token = token
-        self.type = type
+        """
+        Инициализирует вложение файла.
+
+        :param file_id: ID файла.
+        :param name: Имя файла.
+        :param size: Размер файла в байтах.
+        :param token: Токен для загрузки.
+        :param type: Тип вложения (FILE).
+        """
+        self.file_id = file_id  # ID файла
+        self.name = name  # Имя файла
+        self.size = size  # Размер в байтах
+        self.token = token  # Токен для загрузки
+        self.type = type  # Тип вложения (FILE)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр FileAttach из словаря.
+        
+        :param data: Словарь с данными файла.
+        :return: Новый экземпляр FileAttach.
+        """
         return cls(
             file_id=data["fileId"],
             name=data["name"],
@@ -453,12 +541,29 @@ class FileAttach:
 
 
 class FileRequest:
+    """
+    Запрос на загрузку файла.
+    
+    Используется для получения URL загрузки файла.
+    """
     def __init__(self, unsafe: bool, url: str, ) -> None:
-        self.unsafe = unsafe
-        self.url = url
+        """
+        Инициализирует запрос на загрузку.
+
+        :param unsafe: Флаг небезопасного соединения.
+        :param url: URL для загрузки.
+        """
+        self.unsafe = unsafe  # Флаг небезопасного соединения
+        self.url = url  # URL для загрузки
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр FileRequest из словаря.
+        
+        :param data: Словарь с данными запроса.
+        :return: Новый экземпляр FileRequest.
+        """
         return cls(
             unsafe=data["unsafe"],
             url=data["url"],
@@ -466,14 +571,33 @@ class FileRequest:
 
 
 class VideoRequest:
+    """
+    Запрос на загрузку видео.
+    
+    Используется для получения URL загрузки видеофайла.
+    """
     def __init__(self, external: str, cache: bool, url: str, ) -> None:
-        self.external = external
-        self.cache = cache
-        self.url = url
+        """
+        Инициализирует запрос на загрузку видео.
+
+        :param external: Флаг внешнего источника.
+        :param cache: Флаг кэширования.
+        :param url: URL для загрузки.
+        """
+        self.external = external  # Флаг внешнего источника
+        self.cache = cache  # Флаг кэширования
+        self.url = url  # URL для загрузки
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр VideoRequest из словаря.
+        
+        :param data: Словарь с данными запроса.
+        :return: Новый экземпляр VideoRequest.
+        """
         # listdata = list(data.values()) # Костыль ✅
+        # Извлекаем URL, исключая служебные поля
         url = [v for k, v in data.items() if k not in ("EXTERNAL", "accounts")][
             0
         ]  # Еще больший костыль ✅
@@ -485,17 +609,42 @@ class VideoRequest:
 
 
 class Me:
+    """
+    Текущий пользователь (я).
+    
+    Содержит информацию о текущем авторизованном пользователе:
+    - ID и статус аккаунта
+    - Номер телефона
+    - Имена
+    - Опции платформ
+    """
     def __init__(self, id: int, account_status: int, phone: str, names: list[Names], update_time: int,
                  options: list[str] | None = None, ) -> None:
-        self.id = id
-        self.account_status = account_status
-        self.phone = phone
-        self.update_time = update_time
-        self.options = options
-        self.names = names
+        """
+        Инициализирует текущего пользователя.
+
+        :param id: ID пользователя.
+        :param account_status: Статус аккаунта.
+        :param phone: Номер телефона.
+        :param names: Список имён.
+        :param update_time: Время обновления (timestamp).
+        :param options: Опции платформ.
+        """
+        self.id = id  # ID пользователя
+        self.account_status = account_status  # Статус аккаунта
+        self.phone = phone  # Номер телефона
+        self.update_time = update_time  # Время обновления
+        self.options = options  # Опции платформ
+        self.names = names  # Список имён
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Me из словаря.
+        
+        :param data: Словарь с данными пользователя.
+        :return: Новый экземпляр Me.
+        """
         return cls(
             id=data["id"],
             account_status=data["accountStatus"],
@@ -515,13 +664,37 @@ class Me:
 
 
 class Element:
+    """
+    Элемент форматирования текста сообщения.
+    
+    Используется для выделения частей текста:
+    - Жирный (bold)
+    - Курсив (italic)
+    - Подчёркнутый (underline)
+    - Зачёркнутый (strike)
+    - Ссылка (link)
+    - Код (code)
+    """
     def __init__(self, type: FormattingType | str, length: int, from_: int | None = None) -> None:
-        self.type = type
-        self.length = length
-        self.from_ = from_
+        """
+        Инициализирует элемент форматирования.
+
+        :param type: Тип форматирования.
+        :param length: Длина элемента в символах.
+        :param from_: Позиция начала элемента в тексте.
+        """
+        self.type = type  # Тип форматирования
+        self.length = length  # Длина в символах
+        self.from_ = from_  # Позиция начала
 
     @classmethod
     def from_dict(cls, data: dict[Any, Any]) -> Self:
+        """
+        Создаёт экземпляр Element из словаря.
+        
+        :param data: Словарь с данными элемента.
+        :return: Новый экземпляр Element.
+        """
         return cls(type=data["type"], length=data["length"], from_=data.get("from"))
 
     @override
@@ -534,13 +707,31 @@ class Element:
 
 
 class MessageLink:
+    """
+    Ссылка на сообщение (для ответов и пересылок).
+    
+    Содержит информацию о сообщении, на которое ссылается текущее.
+    """
     def __init__(self, chat_id: int, message: "Message", type: str) -> None:
-        self.chat_id = chat_id
-        self.message = message
-        self.type = type
+        """
+        Инициализирует ссылку на сообщение.
+
+        :param chat_id: ID чата с сообщением.
+        :param message: Объект сообщения.
+        :param type: Тип ссылки (REPLY, FORWARD и т.д.).
+        """
+        self.chat_id = chat_id  # ID чата
+        self.message = message  # Объект сообщения
+        self.type = type  # Тип ссылки
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр MessageLink из словаря.
+        
+        :param data: Словарь с данными ссылки.
+        :return: Новый экземпляр MessageLink.
+        """
         return cls(
             chat_id=data["chatId"],
             message=Message.from_dict(data["message"]),
@@ -559,12 +750,29 @@ class MessageLink:
 
 
 class ReactionCounter:
+    """
+    Счётчик реакции на сообщение.
+    
+    Содержит информацию о количестве конкретных реакций.
+    """
     def __init__(self, count: int, reaction: str) -> None:
-        self.count = count
-        self.reaction = reaction
+        """
+        Инициализирует счётчик реакции.
+
+        :param count: Количество реакций.
+        :param reaction: Тип реакции (эмодзи).
+        """
+        self.count = count  # Количество реакций
+        self.reaction = reaction  # Тип реакции (эмодзи)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр ReactionCounter из словаря.
+        
+        :param data: Словарь с данными счётчика.
+        :return: Новый экземпляр ReactionCounter.
+        """
         return cls(count=data["count"], reaction=data["reaction"])
 
     @override
@@ -577,14 +785,32 @@ class ReactionCounter:
 
 
 class ReactionInfo:
+    """
+    Информация о реакциях на сообщение.
+    
+    Содержит общую информацию о всех реакциях на сообщение.
+    """
     def __init__(self, total_count: int, counters: list[ReactionCounter], your_reaction: str | None = None,
                  ) -> None:
-        self.total_count = total_count
-        self.counters = counters
-        self.your_reaction = your_reaction
+        """
+        Инициализирует информацию о реакциях.
+
+        :param total_count: Общее количество реакций.
+        :param counters: Список счётчиков по типам реакций.
+        :param your_reaction: Ваша реакция (если есть).
+        """
+        self.total_count = total_count  # Общее количество
+        self.counters = counters  # Счётчики по типам
+        self.your_reaction = your_reaction  # Ваша реакция
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр ReactionInfo из словаря.
+        
+        :param data: Словарь с данными о реакциях.
+        :return: Новый экземпляр ReactionInfo.
+        """
         return cls(
             total_count=data.get("totalCount", 0),
             counters=[ReactionCounter.from_dict(c) for c in data.get("counters", [])],
@@ -593,16 +819,36 @@ class ReactionInfo:
 
 
 class ContactAttach:
+    """
+    Вложение контакта в сообщении.
+    
+    Используется для отправки контакта пользователя.
+    """
     def __init__(self, contact_id: int, first_name: str, last_name: str, name: str, photo_url: str) -> None:
-        self.contact_id = contact_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.name = name
-        self.photo_url = photo_url
-        self.type = AttachType.CONTACT
+        """
+        Инициализирует вложение контакта.
+
+        :param contact_id: ID контакта.
+        :param first_name: Имя контакта.
+        :param last_name: Фамилия контакта.
+        :param name: Полное имя.
+        :param photo_url: URL фото контакта.
+        """
+        self.contact_id = contact_id  # ID контакта
+        self.first_name = first_name  # Имя
+        self.last_name = last_name  # Фамилия
+        self.name = name  # Полное имя
+        self.photo_url = photo_url  # URL фото
+        self.type = AttachType.CONTACT  # Тип вложения (CONTACT)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр ContactAttach из словаря.
+        
+        :param data: Словарь с данными контакта.
+        :return: Новый экземпляр ContactAttach.
+        """
         return cls(
             contact_id=data["contactId"],
             first_name=data["firstName"],
@@ -621,6 +867,17 @@ class ContactAttach:
 
 
 class Message:
+    """
+    Сообщение в чате.
+    
+    Основной класс для представления сообщений в мессенджере Max.
+    Содержит всю информацию о сообщении:
+    - Текст и элементы форматирования
+    - Вложения (фото, видео, файлы, стикеры, аудио)
+    - Реакции
+    - Ссылки (ответы, пересылки)
+    - Статус доставки
+    """
     def __init__(self, chat_id: int | None, sender: int | None, elements: list[Element] | None,
                  reaction_info: ReactionInfo | None, options: int | None, id: int, time: int, link: MessageLink | None,
                  text: str, status: MessageStatus | None, type: MessageType | str,
@@ -637,21 +894,43 @@ class Message:
                          | None
                  ),
                  ) -> None:
-        self.chat_id = chat_id
-        self.sender = sender
-        self.elements = elements
-        self.options = options
-        self.id = id
-        self.time = time
-        self.text = text
-        self.type = type
-        self.attaches = attaches
-        self.status = status
-        self.link = link
-        self.reactionInfo = reaction_info
+        """
+        Инициализирует сообщение.
+
+        :param chat_id: ID чата, в котором отправлено сообщение.
+        :param sender: ID отправителя.
+        :param elements: Элементы форматирования текста.
+        :param reaction_info: Информация о реакциях.
+        :param options: Опции сообщения.
+        :param id: ID сообщения.
+        :param time: Время отправки (timestamp).
+        :param link: Ссылка на другое сообщение.
+        :param text: Текст сообщения.
+        :param status: Статус сообщения.
+        :param type: Тип сообщения.
+        :param attaches: Список вложений.
+        """
+        self.chat_id = chat_id  # ID чата
+        self.sender = sender  # ID отправителя
+        self.elements = elements  # Элементы форматирования
+        self.options = options  # Опции
+        self.id = id  # ID сообщения
+        self.time = time  # Время отправки
+        self.text = text  # Текст сообщения
+        self.type = type  # Тип сообщения
+        self.attaches = attaches  # Вложения
+        self.status = status  # Статус
+        self.link = link  # Ссылка
+        self.reactionInfo = reaction_info  # Информация о реакциях
 
     @classmethod
     def from_dict(cls, data: dict[Any, Any]) -> Self:
+        """
+        Создаёт экземпляр Message из словаря.
+        
+        :param data: Словарь с данными сообщения.
+        :return: Новый экземпляр Message.
+        """
         message = data["message"] if data.get("message") else data
         attaches: list[
             PhotoAttach
@@ -662,6 +941,8 @@ class Message:
             | AudioAttach
             | ContactAttach
             ] = []
+        
+        # Обрабатываем каждое вложение в зависимости от типа
         for a in message.get("attaches", []):
             if a["_type"] == AttachType.PHOTO:
                 attaches.append(PhotoAttach.from_dict(a))
@@ -677,16 +958,21 @@ class Message:
                 attaches.append(AudioAttach.from_dict(a))
             elif a["_type"] == AttachType.CONTACT:
                 attaches.append(ContactAttach.from_dict(a))
+        
+        # Обрабатываем ссылку (ответ/пересылка)
         link_value = message.get("link")
         if isinstance(link_value, dict):
             link = MessageLink.from_dict(link_value)
         else:
             link = None
+        
+        # Обрабатываем информацию о реакциях
         reaction_info_value = message.get("reactionInfo")
         if isinstance(reaction_info_value, dict):
             reaction_info = ReactionInfo.from_dict(reaction_info_value)
         else:
             reaction_info = None
+        
         return cls(
             chat_id=data.get("chatId"),
             sender=message.get("sender"),
@@ -716,29 +1002,61 @@ class Message:
 
 
 class Dialog:
+    """
+    Личный диалог (чат один на один).
+    
+    Представляет диалог между двумя пользователями.
+    Наследуется от базового типа чата.
+    """
     def __init__(self, cid: int | None, owner: int, has_bots: bool | None, join_time: int, created: int,
                  last_message: Message | None, type: ChatType | str, last_fire_delayed_error_time: int,
                  last_delayed_update_time: int, prev_message_id: str | None, options: dict[str, bool], modified: int,
                  last_event_time: int, id: int, status: str, participants: dict[str, int]) -> None:
-        self.cid = cid
-        self.owner = owner
-        self.has_bots = has_bots
-        self.join_time = join_time
-        self.created = created
-        self.last_message = last_message
-        self.type = type
-        self.last_fire_delayed_error_time = last_fire_delayed_error_time
-        self.last_delayed_update_time = last_delayed_update_time
-        self.prev_message_id = prev_message_id
-        self.options = options
-        self.modified = modified
-        self.last_event_time = last_event_time
-        self.id = id
-        self.status = status
-        self.participants = participants
+        """
+        Инициализирует диалог.
+
+        :param cid: ID чата.
+        :param owner: ID владельца.
+        :param has_bots: Наличие ботов.
+        :param join_time: Время вступления.
+        :param created: Время создания.
+        :param last_message: Последнее сообщение.
+        :param type: Тип чата (DIALOG).
+        :param last_fire_delayed_error_time: Время последней ошибки.
+        :param last_delayed_update_time: Время последнего обновления.
+        :param prev_message_id: ID предыдущего сообщения.
+        :param options: Опции чата.
+        :param modified: Время изменения.
+        :param last_event_time: Время последнего события.
+        :param id: ID диалога.
+        :param status: Статус.
+        :param participants: Участники.
+        """
+        self.cid = cid  # ID чата
+        self.owner = owner  # ID владельца
+        self.has_bots = has_bots  # Наличие ботов
+        self.join_time = join_time  # Время вступления
+        self.created = created  # Время создания
+        self.last_message = last_message  # Последнее сообщение
+        self.type = type  # Тип чата
+        self.last_fire_delayed_error_time = last_fire_delayed_error_time  # Время ошибки
+        self.last_delayed_update_time = last_delayed_update_time  # Время обновления
+        self.prev_message_id = prev_message_id  # ID предыдущего сообщения
+        self.options = options  # Опции
+        self.modified = modified  # Время изменения
+        self.last_event_time = last_event_time  # Время последнего события
+        self.id = id  # ID диалога
+        self.status = status  # Статус
+        self.participants = participants  # Участники
 
     @classmethod
     def from_dict(cls, data: dict[Any, Any]) -> Self:
+        """
+        Создаёт экземпляр Dialog из словаря.
+        
+        :param data: Словарь с данными диалога.
+        :return: Новый экземпляр Dialog.
+        """
         return cls(
             cid=data.get("cid"),
             owner=data["owner"],
@@ -770,6 +1088,12 @@ class Dialog:
 
 
 class Chat:
+    """
+    Групповой чат.
+    
+    Представляет групповой чат с несколькими участниками.
+    Содержит полную информацию о чате: участники, админы, настройки и т.д.
+    """
     def __init__(self, participants_count: int, access: AccessType | str, invited_by: int | None, link: str | None,
                  chat_type: ChatType | str, title: str | None, last_fire_delayed_error_time: int,
                  last_delayed_update_time: int, options: dict[str, bool], base_raw_icon_url: str | None,
@@ -778,41 +1102,82 @@ class Chat:
                  join_time: int, created: int, last_message: Message | None, prev_message_id: str | None,
                  last_event_time: int, messages_count: int, admins: list[int], restrictions: int | None, status: str,
                  cid: int) -> None:
-        self.participants_count = participants_count
-        self.access = access
-        self.invited_by = invited_by
-        self.link = link
-        self.type = chat_type
-        self.title = title
-        self.last_fire_delayed_error_time = last_fire_delayed_error_time
-        self.last_delayed_update_time = last_delayed_update_time
-        self.options = options
-        self.base_raw_icon_url = base_raw_icon_url
-        self.base_icon_url = base_icon_url
-        self.description = description
-        self.modified = modified
-        self.id = id_
-        self.admin_participants = admin_participants
-        self.participants = participants
-        self.owner = owner
-        self.join_time = join_time
-        self.created = created
-        self.last_message = last_message
-        self.prev_message_id = prev_message_id
-        self.last_event_time = last_event_time
-        self.messages_count = messages_count
-        self.admins = admins
-        self.restrictions = restrictions
-        self.status = status
-        self.cid = cid
+        """
+        Инициализирует групповой чат.
+
+        :param participants_count: Количество участников.
+        :param access: Тип доступа (публичный/приватный).
+        :param invited_by: ID пригласившего.
+        :param link: Ссылка-приглашение.
+        :param chat_type: Тип чата.
+        :param title: Название чата.
+        :param last_fire_delayed_error_time: Время последней ошибки.
+        :param last_delayed_update_time: Время последнего обновления.
+        :param options: Опции чата.
+        :param base_raw_icon_url: URL иконки (исходная).
+        :param base_icon_url: URL иконки (сжатая).
+        :param description: Описание чата.
+        :param modified: Время изменения.
+        :param id_: ID чата.
+        :param admin_participants: Администраторы.
+        :param participants: Участники.
+        :param owner: ID владельца.
+        :param join_time: Время вступления.
+        :param created: Время создания.
+        :param last_message: Последнее сообщение.
+        :param prev_message_id: ID предыдущего сообщения.
+        :param last_event_time: Время последнего события.
+        :param messages_count: Количество сообщений.
+        :param admins: Список админов.
+        :param restrictions: Ограничения.
+        :param status: Статус.
+        :param cid: ID чата.
+        """
+        self.participants_count = participants_count  # Количество участников
+        self.access = access  # Тип доступа
+        self.invited_by = invited_by  # ID пригласившего
+        self.link = link  # Ссылка-приглашение
+        self.type = chat_type  # Тип чата
+        self.title = title  # Название
+        self.last_fire_delayed_error_time = last_fire_delayed_error_time  # Время ошибки
+        self.last_delayed_update_time = last_delayed_update_time  # Время обновления
+        self.options = options  # Опции
+        self.base_raw_icon_url = base_raw_icon_url  # URL иконки (исходная)
+        self.base_icon_url = base_icon_url  # URL иконки (сжатая)
+        self.description = description  # Описание
+        self.modified = modified  # Время изменения
+        self.id = id_  # ID чата
+        self.admin_participants = admin_participants  # Администраторы
+        self.participants = participants  # Участники
+        self.owner = owner  # ID владельца
+        self.join_time = join_time  # Время вступления
+        self.created = created  # Время создания
+        self.last_message = last_message  # Последнее сообщение
+        self.prev_message_id = prev_message_id  # ID предыдущего сообщения
+        self.last_event_time = last_event_time  # Время последнего события
+        self.messages_count = messages_count  # Количество сообщений
+        self.admins = admins  # Список админов
+        self.restrictions = restrictions  # Ограничения
+        self.status = status  # Статус
+        self.cid = cid  # ID чата
 
     @classmethod
     def from_dict(cls, data: dict[Any, Any]) -> Self:
+        """
+        Создаёт экземпляр Chat из словаря.
+        
+        :param data: Словарь с данными чата.
+        :return: Новый экземпляр Chat.
+        """
+        # Преобразуем ключи словарей в int
         raw_admins = data.get("adminParticipants", {}) or {}
         admin_participants: dict[int, dict[Any, Any]] = {int(k): v for k, v in raw_admins.items()}
         raw_participants = data.get("participants", {}) or {}
         participants: dict[int, int] = {int(k): v for k, v in raw_participants.items()}
+        
+        # Обрабатываем последнее сообщение
         last_msg = Message.from_dict(data["lastMessage"]) if data.get("lastMessage") else None
+        
         return cls(
             participants_count=data.get("participantsCount", 0),
             access=AccessType(data.get("access", AccessType.PUBLIC.value)),
@@ -853,6 +1218,12 @@ class Chat:
 
 
 class Channel(Chat):
+    """
+    Канал.
+    
+    Наследуется от Chat, представляет публичный или приватный канал.
+    Отличается от чата тем, что сообщения могут отправлять только администраторы.
+    """
     @override
     def __repr__(self) -> str:
         return f"Channel(id={self.id!r}, title={self.title!r})"
@@ -863,6 +1234,17 @@ class Channel(Chat):
 
 
 class User:
+    """
+    Пользователь мессенджера Max.
+    
+    Содержит полную информацию о пользователе:
+    - Имя и фамилия
+    - Аватар
+    - Описание (статус)
+    - Пол
+    - Ссылка на профиль
+    - Веб-приложение и кнопка меню
+    """
     def __init__(
             self,
             account_status: int,
@@ -879,22 +1261,45 @@ class User:
             web_app: str | None = None,
             menu_button: dict[str, Any] | None = None,
     ) -> None:
-        self.account_status = account_status
-        self.update_time = update_time
-        self.id = id
-        self.names = names
-        self.options = options or []
-        self.base_url = base_url
-        self.base_raw_url = base_raw_url
-        self.photo_id = photo_id
-        self.description = description
-        self.gender = gender
-        self.link = link
-        self.web_app = web_app
-        self.menu_button = menu_button
+        """
+        Инициализирует пользователя.
+
+        :param account_status: Статус аккаунта.
+        :param update_time: Время обновления (timestamp).
+        :param id: ID пользователя.
+        :param names: Список имён.
+        :param options: Опции платформ.
+        :param base_url: URL аватара (сжатый).
+        :param base_raw_url: URL аватара (исходный).
+        :param photo_id: ID фотографии.
+        :param description: Описание (статус).
+        :param gender: Пол.
+        :param link: Ссылка на профиль.
+        :param web_app: Веб-приложение.
+        :param menu_button: Кнопка меню.
+        """
+        self.account_status = account_status  # Статус аккаунта
+        self.update_time = update_time  # Время обновления
+        self.id = id  # ID пользователя
+        self.names = names  # Список имён
+        self.options = options or []  # Опции платформ
+        self.base_url = base_url  # URL аватара (сжатый)
+        self.base_raw_url = base_raw_url  # URL аватара (исходный)
+        self.photo_id = photo_id  # ID фотографии
+        self.description = description  # Описание
+        self.gender = gender  # Пол
+        self.link = link  # Ссылка на профиль
+        self.web_app = web_app  # Веб-приложение
+        self.menu_button = menu_button  # Кнопка меню
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр User из словаря.
+        
+        :param data: Словарь с данными пользователя.
+        :return: Новый экземпляр User.
+        """
         return cls(
             account_status=data["accountStatus"],
             update_time=data["updateTime"],
@@ -921,6 +1326,12 @@ class User:
 
 
 class Attach:  # УБРАТЬ ГАДА!!! или нет...
+    """
+    Базовое вложение.
+    
+    Примечание разработчика: класс-заглушка для совместимости.
+    Возможно, будет удалён в будущих версиях.
+    """
     def __init__(
             self,
             _type: AttachType,
@@ -929,14 +1340,29 @@ class Attach:  # УБРАТЬ ГАДА!!! или нет...
             file_id: int | None = None,
             token: str | None = None,
     ) -> None:
-        self.type = _type
-        self.video_id = video_id
-        self.photo_token = photo_token
-        self.file_id = file_id
-        self.token = token
+        """
+        Инициализирует базовое вложение.
+
+        :param _type: Тип вложения.
+        :param video_id: ID видео.
+        :param photo_token: Токен фото.
+        :param file_id: ID файла.
+        :param token: Токен доступа.
+        """
+        self.type = _type  # Тип вложения
+        self.video_id = video_id  # ID видео
+        self.photo_token = photo_token  # Токен фото
+        self.file_id = file_id  # ID файла
+        self.token = token  # Токен доступа
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Attach из словаря.
+        
+        :param data: Словарь с данными вложения.
+        :return: Новый экземпляр Attach.
+        """
         return cls(
             _type=AttachType(data["type"]),
             video_id=data.get("videoId"),
@@ -958,6 +1384,11 @@ class Attach:  # УБРАТЬ ГАДА!!! или нет...
 
 
 class Session:
+    """
+    Сессия пользователя (устройство).
+    
+    Содержит информацию об активном устройстве пользователя.
+    """
     def __init__(
             self,
             client: str,
@@ -966,14 +1397,29 @@ class Session:
             time: int,
             current: bool | None = None,
     ) -> None:
-        self.client = client
-        self.info = info
-        self.location = location
-        self.time = time
-        self.current = current if current is not None else False
+        """
+        Инициализирует сессию.
+
+        :param client: Название клиента (устройства).
+        :param info: Дополнительная информация.
+        :param location: Местоположение.
+        :param time: Время создания (timestamp).
+        :param current: Флаг текущей сессии.
+        """
+        self.client = client  # Название клиента
+        self.info = info  # Информация
+        self.location = location  # Местоположение
+        self.time = time  # Время создания
+        self.current = current if current is not None else False  # Флаг текущей
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Session из словаря.
+        
+        :param data: Словарь с данными сессии.
+        :return: Новый экземпляр Session.
+        """
         return cls(
             client=data["client"],
             info=data["info"],
@@ -997,18 +1443,40 @@ class Session:
 
 
 class Folder:
+    """
+    Папка чатов.
+    
+    Используется для группировки чатов по категориям.
+    """
     def __init__(self, source_id: int, include: list[int], options: list[Any], update_time: int, id: str,
                  filters: list[Any], title: str, ) -> None:
-        self.source_id = source_id
-        self.include = include
-        self.options = options
-        self.update_time = update_time
-        self.id = id
-        self.filters = filters
-        self.title = title
+        """
+        Инициализирует папку чатов.
+
+        :param source_id: ID источника.
+        :param include: Список ID чатов в папке.
+        :param options: Опции папки.
+        :param update_time: Время обновления.
+        :param id: ID папки.
+        :param filters: Фильтры папки.
+        :param title: Название папки.
+        """
+        self.source_id = source_id  # ID источника
+        self.include = include  # Список чатов
+        self.options = options  # Опции
+        self.update_time = update_time  # Время обновления
+        self.id = id  # ID папки
+        self.filters = filters  # Фильтры
+        self.title = title  # Название
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр Folder из словаря.
+        
+        :param data: Словарь с данными папки.
+        :return: Новый экземпляр Folder.
+        """
         return cls(
             source_id=data.get("sourceId", 0),
             include=data.get("include", []),
@@ -1033,15 +1501,33 @@ class Folder:
 
 
 class FolderUpdate:
+    """
+    Обновление папки.
+    
+    Содержит информацию об обновлении папки чатов.
+    """
     def __init__(
             self, folder_order: list[str] | None, folder: Folder | None, folder_sync: int
     ) -> None:
-        self.folder_order = folder_order
-        self.folder = folder
-        self.folder_sync = folder_sync
+        """
+        Инициализирует обновление папки.
+
+        :param folder_order: Порядок папок.
+        :param folder: Объект папки.
+        :param folder_sync: Флаг синхронизации.
+        """
+        self.folder_order = folder_order  # Порядок папок
+        self.folder = folder  # Объект папки
+        self.folder_sync = folder_sync  # Флаг синхронизации
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр FolderUpdate из словаря.
+        
+        :param data: Словарь с данными обновления.
+        :return: Новый экземпляр FolderUpdate.
+        """
         folder_order = data.get("foldersOrder", [])
         folder_sync = data.get("folderSync", 0)
         folder_data = data.get("folder", {})
@@ -1065,15 +1551,34 @@ class FolderUpdate:
 
 
 class FolderList:
+    """
+    Список папок.
+    
+    Содержит все папки чатов пользователя.
+    """
     def __init__(self, folders_order: list[str], folders: list[Folder], folder_sync: int,
                  all_filter_exclude_folders: list[Any] | None = None) -> None:
-        self.folders_order = folders_order
-        self.folders = folders
-        self.all_filter_exclude_folders = all_filter_exclude_folders or []
-        self.folder_sync = folder_sync
+        """
+        Инициализирует список папок.
+
+        :param folders_order: Порядок папок.
+        :param folders: Список папок.
+        :param folder_sync: Флаг синхронизации.
+        :param all_filter_exclude_folders: Исключения фильтра.
+        """
+        self.folders_order = folders_order  # Порядок папок
+        self.folders = folders  # Список папок
+        self.all_filter_exclude_folders = all_filter_exclude_folders or []  # Исключения
+        self.folder_sync = folder_sync  # Флаг синхронизации
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр FolderList из словаря.
+        
+        :param data: Словарь со списком папок.
+        :return: Новый экземпляр FolderList.
+        """
         return cls(
             folders_order=data.get("foldersOrder", []),
             folders=[Folder.from_dict(f) for f in data.get("folders", [])],
@@ -1096,16 +1601,33 @@ class FolderList:
 
 
 class ReadState:
+    """
+    Состояние прочтения сообщений.
+    
+    Содержит информацию о непрочитанных сообщениях.
+    """
     def __init__(
             self,
             unread: int,
             mark: int,
     ) -> None:
-        self.unread = unread
-        self.mark = mark
+        """
+        Инициализирует состояние прочтения.
+
+        :param unread: Количество непрочитанных сообщений.
+        :param mark: Метка прочтения.
+        """
+        self.unread = unread  # Количество непрочитанных
+        self.mark = mark  # Метка прочтения
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр ReadState из словаря.
+        
+        :param data: Словарь с данными состояния.
+        :return: Новый экземпляр ReadState.
+        """
         return cls(
             unread=data["unread"],
             mark=data["mark"],
