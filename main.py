@@ -1,4 +1,18 @@
 # -*- coding: utf-8 -*-
+"""
+MaxMaster - приложение для парсинга пользователей мессенджера Max по номерам телефона.
+
+Основные возможности:
+- Подключение аккаунтов Max через QR-код
+- Перебор номеров телефона из очереди
+- Поиск пользователей по номеру телефона
+- Сохранение результатов в Excel
+- Автоматическая ротация аккаунтов при блокировках
+- Обработка rate limit ограничений
+
+Автор: MaxMaster Team
+Версия: 0.0.1
+"""
 import asyncio
 import os
 import sys
@@ -22,23 +36,25 @@ from database import AccountLog, MaxAccount, PhoneQueue
 from read_file import read_file
 
 # ─── Логгер ───────────────────────────────────────────────────────────────────
-logger.remove()
-logger.add("logs/log.log", rotation="1 MB", level="INFO")
-logger.add(sys.stderr, level="WARNING")
+# Настройка логгера: запись в файл и вывод в консоль
+logger.remove()  # Удаляем стандартный обработчик
+logger.add("logs/log.log", rotation="1 MB", level="INFO")  # Запись в файл с ротацией по размеру
+logger.add(sys.stderr, level="WARNING")  # Вывод предупреждений и ошибок в консоль
 
 # ─── Rich консоль ─────────────────────────────────────────────────────────────
+# Инициализация консоли для красивого вывода с поддержкой цветов и форматирования
 console = Console()
 
 # ─── Max клиент ───────────────────────────────────────────────────────────────
-
 # Глобальное хранилище клиентов: {phone: MaxClient}
+# Кэширует подключённых клиентов для повторного использования
 active_clients: dict[str, MaxClient] = {}
 
 
 async def client_connect(phone: str | None = None, work_dir: str = "accounts", timeout: float = 30.0) -> MaxClient:
     """
     Создаёт и возвращает клиента MaxClient.
-    
+
     Если клиент для этого телефона уже существует — возвращает его.
 
     :param phone: Номер телефона аккаунта Max.
@@ -47,7 +63,7 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts", t
     :return: Экземпляр MaxClient.
     :raises TimeoutError: Если подключение не удалось в течение timeout.
     """
-    # Проверяем, есть ли уже клиент для этого телефона
+    # Проверяем, есть ли уже клиент для этого телефона (кэширование)
     if phone and phone in active_clients:
         client = active_clients[phone]
         if client.is_connected:
@@ -57,12 +73,14 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts", t
             # Клиент отключён, удаляем из кэша
             del active_clients[phone]
 
+    # Настройка заголовков User-Agent для веб-устройства
     headers = UserAgentPayload(device_type="WEB")
 
+    # Создание клиента Max
     client = MaxClient(
-        phone=phone,  # Номер телефона аккаунта Max
+        phone=phone,  # Номер телефона аккаунта
         work_dir=work_dir,  # Рабочая директория для хранения базы данных с аккаунтами Max
-        reconnect=True,  # Включаем авто-переподключение
+        reconnect=True,  # Включаем авто-переподключение при разрыве соединения
         headers=headers,
     )
 
@@ -104,7 +122,7 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts", t
             pass
         raise
 
-    # Сохраняем в глобальное хранилище
+    # Сохраняем в глобальное хранилище (кэш)
     if phone:
         active_clients[phone] = client
         logger.info(f"✅ Клиент для {phone} подключён и сохранён в кэш")
@@ -115,15 +133,15 @@ async def client_connect(phone: str | None = None, work_dir: str = "accounts", t
 async def client_disconnect(phone: str) -> bool:
     """
     Отключает клиента и удаляет из кэша.
-    
+
     :param phone: Номер телефона аккаунта.
     :return: True если успешно отключён.
     """
     if phone in active_clients:
         client = active_clients[phone]
         try:
-            await client.close()
-            del active_clients[phone]
+            await client.close()  # Закрываем соединение с сервером Max
+            del active_clients[phone]  # Удаляем из кэша
             logger.info(f"Клиент {phone} отключён")
             return True
         except Exception as e:
@@ -132,7 +150,7 @@ async def client_disconnect(phone: str) -> bool:
 
 
 async def disconnect_all_clients():
-    """Отключает всех клиентов."""
+    """Отключает всех клиентов из глобального хранилища."""
     for phone in list(active_clients.keys()):
         await client_disconnect(phone)
 
