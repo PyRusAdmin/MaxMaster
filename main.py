@@ -658,12 +658,23 @@ def print_menu() -> str:
 async def parse_phones_with_rotation():
     """
     Перебор номеров с ротацией аккаунтов.
+    
+    Основная функция парсинга, которая:
+    1. Получает активные аккаунты из базы
+    2. Подключается к первому доступному аккаунту
+    3. Перебирает номера из очереди по одному
+    4. Ищет пользователей по номеру телефона
+    5. Сохраняет результаты в Excel
+    6. При блокировке аккаунта переключается на следующий
+    7. Обрабатывает rate limit ограничения
+    
     Если аккаунт получает блокировку — переключается на следующий.
     Использует client_connect() для подключения.
     """
-    # Получаем активные аккаунты
+    # Получаем активные аккаунты из базы данных
     accounts = get_active_accounts()
 
+    # Проверяем наличие доступных аккаунтов
     if not accounts:
         console.print(Panel(
             "[bold red]❌ Нет доступных аккаунтов![/]\n\n"
@@ -674,6 +685,7 @@ async def parse_phones_with_rotation():
         ))
         return
 
+    # Получаем общее количество номеров в очереди
     total_start = get_queue_count()
     if total_start == 0:
         console.print(Panel(
@@ -682,6 +694,7 @@ async def parse_phones_with_rotation():
         ))
         return
 
+    # Вывод сообщения о начале обработки
     console.print(Panel(
         f"[green]Начинаем обработку [bold]{total_start}[/bold] номеров...[/]\n"
         f"[dim]Аккаунтов доступно: {len(accounts)}[/]\n"
@@ -690,34 +703,37 @@ async def parse_phones_with_rotation():
         padding=(1, 3),
     ))
 
-    processed = 0
-    found = 0
-    errors = 0
-    account_switches = 0
-    consecutive_errors = 0
-    current_account_index = 0
-    current_account = None
+    # Счётчики для статистики
+    processed = 0  # Обработано номеров
+    found = 0  # Найдено пользователей
+    errors = 0  # Количество ошибок
+    account_switches = 0  # Переключений между аккаунтами
+    consecutive_errors = 0  # Счётчик последовательных ошибок
+    current_account_index = 0  # Индекс текущего аккаунта в списке
+    current_account = None  # Текущий объект аккаунта
 
     try:
         # Подключаем первый аккаунт через client_connect
         current_account = accounts[current_account_index]
         console.print(f"\n[bold cyan]🔌 Подключение к аккаунту: {current_account.phone}[/]")
 
+        # Подключение к аккаунту (с кэшированием)
         current_client = await client_connect(
             phone=current_account.phone,
             work_dir=current_account.account_path
         )
 
+        # Отмечаем аккаунт как работающий
         mark_account_working(current_account.phone)
         log_account_action(current_account.phone, "start", "Начал работу")
 
-        # Ждём пока загрузится профиль пользователя
-        for _ in range(20):  # Ждём до 2 секунд
+        # Ждём пока загрузится профиль пользователя (до 2 секунд)
+        for _ in range(20):
             await asyncio.sleep(0.1)
             if current_client.me and current_client.me.id:
                 break
 
-        # Отображаем текущий аккаунт с ID
+        # Отображаем информацию о текущем аккаунте
         account_info = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
         account_info.add_column(style="dim")
         account_info.add_column(style="bold cyan")
@@ -725,7 +741,7 @@ async def parse_phones_with_rotation():
         account_info.add_row("Текущий аккаунт:", current_account.phone)
         account_info.add_row("ID пользователя:", str(me.id) if me and me.id else "загрузка...")
 
-        # Получаем имя из разных полей
+        # Получаем имя пользователя из различных полей профиля
         if me:
             name_parts = []
             if hasattr(me, 'first_name') and me.first_name:
@@ -733,7 +749,7 @@ async def parse_phones_with_rotation():
             if hasattr(me, 'last_name') and me.last_name:
                 name_parts.append(me.last_name)
             if hasattr(me, 'names') and me.names:
-                # Если есть список имён
+                # Если есть список имён — берём первое
                 if isinstance(me.names, list) and len(me.names) > 0:
                     name_parts.append(str(me.names[0]))
 
@@ -746,6 +762,7 @@ async def parse_phones_with_rotation():
         console.print(account_info)
         console.print()
 
+        # Создаём прогресс-бар для отображения хода обработки
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
                       BarColumn(), TaskProgressColumn(), TextColumn("[dim]{task.fields[status]}[/]"),
                       console=console, transient=False) as progress:
@@ -756,19 +773,24 @@ async def parse_phones_with_rotation():
                 status="",
             )
 
+            # Основной цикл обработки номеров
             while True:
+                # Получаем следующий номер из очереди
                 phones = get_next_phones(1)
                 if not phones:
-                    break
+                    break  # Очередь пуста
 
                 phone = phones[0]
                 progress.update(task, description=f"[cyan]📞 {phone}", status="запрос...")
 
+                # Задержка между запросами (защита от rate limit)
                 await asyncio.sleep(SLEEP_TIME)
 
                 try:
+                    # Поиск пользователя по номеру с автоматическим переподключением
                     result = await safe_search(phone=phone, client=current_client)
 
+                    # Если результат None — ошибка соединения
                     if result is None:
                         logger.error(f"Не удалось получить данные для {phone} после нескольких попыток")
                         status_text = "❌ нет соединения"
@@ -806,21 +828,23 @@ async def parse_phones_with_rotation():
 
                     consecutive_errors = 0  # Сбрасываем счётчик ошибок
 
+                    # Если пользователь найден — извлекаем данные и сохраняем
                     if result and not isinstance(result, (str, int, bool)):
                         user_data = extract_user_data(result)
-                        user_data['searched_phone'] = phone
+                        user_data['searched_phone'] = phone  # Добавляем искомый номер
                         save_to_excel([user_data], EXCEL_FILE)
                         found += 1
                         status_text = f"✅ найден: {user_data.get('names', ['?'])[0] if user_data.get('names') else '?'}"
                         logger.info(f"Найден пользователь {phone}: {user_data}")
                     else:
+                        # Пользователь не найден в Max
                         status_text = "⚪ не найден"
                         logger.info(f"Пользователь не найден: {phone}")
 
                 except Exception as e:
                     err_str = str(e)
 
-                    # Проверяем на блокировку
+                    # Проверяем на rate limit (слишком много запросов)
                     if 'too-many' in err_str.lower() or 'ratelimit' in err_str.lower():
                         progress.update(task, status=f"⏳ rate limit, ждём {SLEEP_ON_RATELIMIT}с...")
                         logger.warning(f"Rate limit на {phone}, ждём {SLEEP_ON_RATELIMIT}с")
@@ -829,7 +853,7 @@ async def parse_phones_with_rotation():
                         progress.update(task, status="продолжение...")
                         continue
 
-                    # Проверяем на ошибку авторизации/блока
+                    # Проверяем на ошибку авторизации/блокировку аккаунта
                     if 'FAIL_LOGIN_TOKEN' in err_str or 'авторизируйтесь' in err_str.lower():
                         console.print(f"\n[red]❌ Аккаунт {current_account.phone} заблокирован![/]")
                         mark_account_blocked(current_account.phone, "FAIL_LOGIN_TOKEN")
@@ -864,7 +888,7 @@ async def parse_phones_with_rotation():
                         logger.info(f"Номер {phone} не найден в базе Max")
                         # Не считаем это ошибкой, просто идём дальше
 
-                    # Другая ошибка
+                    # Другая ошибка — сохраняем в Excel и регистрируем как ошибку аккаунта
                     else:
                         error_data = {'searched_phone': phone, 'error': f"{type(e).__name__}: {e}"}
                         save_to_excel([error_data], EXCEL_FILE)
@@ -898,16 +922,19 @@ async def parse_phones_with_rotation():
                 progress.update(task, advance=1, status=status_text)
 
     except KeyboardInterrupt:
+        # Обработка прерывания пользователем (Ctrl+C)
         console.print("\n[yellow]⏸ Остановлено пользователем[/]")
     except Exception as e:
+        # Обработка критических ошибок
         console.print(f"\n[red]❌ Критическая ошибка: {e}[/]")
         logger.exception("Критическая ошибка в parse_phones_with_rotation")
     finally:
-        # Отключаем всех клиентов
+        # Завершение работы: отключаем всех клиентов и освобождаем аккаунт
         await disconnect_all_clients()
         if current_account:
             mark_account_idle(current_account.phone)
 
+    # Вывод итоговой статистики
     console.print()
     summary_table = Table(box=box.ROUNDED, border_style="green", title="📊 Результаты")
     summary_table.add_column("Параметр", style="dim")
@@ -930,10 +957,14 @@ async def parse_phones(client=None):
 async def safe_search(phone: str, client, retries: int = 3):
     """
     Поиск с автоматическим переподключением.
-    
+
+    Пытается выполнить поиск пользователя по номеру телефона.
+    При ошибке WebSocket/not connected ждёт переподключения и повторяет попытку.
+
     :param phone: Номер телефона для поиска.
     :param client: Экземпляр MaxClient.
     :param retries: Количество попыток при ошибке подключения.
+    :return: Результат поиска или None если все попытки не удались.
     """
     for attempt in range(retries):
         try:
@@ -942,6 +973,7 @@ async def safe_search(phone: str, client, retries: int = 3):
         except Exception as e:
             err = str(e).lower()
             if 'not connected' in err or 'websocket' in err:
+                # Ошибка соединения — ждём переподключения
                 logger.warning(f"WebSocket отключён, ждём переподключения... (попытка {attempt + 1}/{retries})")
                 await asyncio.sleep(10)  # даём pymax время переподключиться
                 continue
@@ -954,7 +986,14 @@ async def safe_search(phone: str, client, retries: int = 3):
 
 async def main():
     """
-    Основное меню программы
+    Основное меню программы.
+    
+    Запускает бесконечный цикл меню с обработкой выбора пользователя:
+    0 - Выход из программы
+    1 - Запуск парсинга номеров
+    2 - Загрузка номеров из файла
+    3 - Показать статистику очереди
+    4 - Подключить новый аккаунт Max
     """
 
     print_header()

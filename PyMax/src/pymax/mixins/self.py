@@ -9,8 +9,9 @@ from loguru import logger
 
 from PyMax.src.pymax.files import Photo
 from PyMax.src.pymax.exceptions import Error
-from PyMax.src.pymax.payloads import UploadPayload, ChangeProfilePayload, CreateFolderPayload, GetFolderPayload, \
-    UpdateFolderPayload, DeleteFolderPayload
+from PyMax.src.pymax.payloads import (
+    UploadPayload, ChangeProfilePayload, CreateFolderPayload, GetFolderPayload, UpdateFolderPayload, DeleteFolderPayload
+)
 from PyMax.src.pymax.protocols import ClientProtocol
 from PyMax.src.pymax.static.enum import Opcode
 from PyMax.src.pymax.types import FolderUpdate, FolderList, Me
@@ -69,13 +70,7 @@ class SelfMixin(ClientProtocol):
                 "token"
             ]  # TODO: сделать нормальную типизацию и чекнинг ответа
 
-    async def change_profile(
-            self,
-            first_name: str,
-            last_name: str | None = None,
-            description: str | None = None,
-            photo: Photo | None = None,
-    ) -> bool:
+    async def change_profile(self,first_name: str,last_name: str | None = None,description: str | None = None,photo: Photo | None = None) -> bool:
         """
         Изменяет информацию профиля текущего пользователя.
 

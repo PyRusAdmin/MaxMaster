@@ -184,12 +184,7 @@ class GroupMixin(ClientProtocol):
                 idx = self.chats.index(cached_chat)
                 self.chats[idx] = chat
 
-    async def change_group_profile(
-            self,
-            chat_id: int,
-            name: str | None,
-            description: str | None = None,
-    ) -> None:
+    async def change_group_profile(self, chat_id: int, name: str | None, description: str | None = None) -> None:
         """
         Изменяет профиль группы
 
