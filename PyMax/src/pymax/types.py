@@ -39,13 +39,7 @@ class Presence:
 
 
 class Name:
-    def __init__(
-            self,
-            name: str | None,
-            first_name: None | str,
-            last_name: str | None,
-            type: str | None,
-    ) -> None:
+    def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
         Структура имени пользователя.
 
@@ -82,13 +76,7 @@ class Name:
 
 
 class Names(Name):
-    def __init__(
-            self,
-            name: str | None,
-            first_name: None | str,
-            last_name: str | None,
-            type: str | None,
-    ) -> None:
+    def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
         Синоним для класса Name.
         """
@@ -96,17 +84,9 @@ class Names(Name):
 
 
 class Contact:
-    def __init__(
-            self,
-            id: int | None,
-            account_status: int | None,
-            base_raw_url: str | None,
-            base_url: str | None,
-            names: list[Name] | None,
-            options: list[str] | None,
-            photo_id: int | None,
-            update_time: int | None,
-    ) -> None:
+    def __init__(self, id: int | None, account_status: int | None, base_raw_url: str | None, base_url: str | None,
+                 names: list[Name] | None, options: list[str] | None, photo_id: int | None,
+                 update_time: int | None, ) -> None:
         """
         Контакт.
 
@@ -160,12 +140,7 @@ class Contact:
 
 
 class Member:
-    def __init__(
-            self,
-            contact: Contact,
-            presence: Presence,
-            read_mark: int | None,
-    ) -> None:
+    def __init__(self, contact: Contact, presence: Presence, read_mark: int | None, ) -> None:
         """
         Участник чата.
 
@@ -209,21 +184,17 @@ class Member:
 
 
 class StickerAttach:
-    def __init__(
-            self,
-            author_type: str,
-            lottie_url: str | None,
-            url: str,
-            sticker_id: int,
-            tags: list[str] | None,
-            width: int,
-            set_id: int,
-            time: int,
-            sticker_type: str,
-            audio: bool,
-            height: int,
-            type: AttachType,
-    ):
+    def __init__(self, author_type: str, lottie_url: str | None, url: str,
+                 sticker_id: int,
+                 tags: list[str] | None,
+                 width: int,
+                 set_id: int,
+                 time: int,
+                 sticker_type: str,
+                 audio: bool,
+                 height: int,
+                 type: AttachType,
+                 ):
         self.author_type = author_type
         self.lottie_url = lottie_url
         self.url = url

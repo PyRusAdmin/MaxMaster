@@ -25,6 +25,7 @@ class WebSocketMixin(BaseTransport):
     """
     Mixin для работы с WebSocket подключением.
     """
+
     @property
     def ws(self) -> websockets.ClientConnection:
         if self._ws is None or not self.is_connected:

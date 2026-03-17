@@ -19,6 +19,16 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 class SelfMixin(ClientProtocol):
     async def _request_photo_upload_url(self) -> str:
+        """
+        Запрашивает URL для загрузки фотографии профиля.
+
+        Отправляет запрос на сервер для получения временного URL,
+        по которому можно загрузить фотографию профиля.
+
+        :return: Временный URL для загрузки фотографии.
+        :rtype: str
+        :raises Exception: Если сервер вернул ошибку.
+        """
         logger.info("Requesting profile photo upload URL")
 
         data = await self._send_and_wait(
