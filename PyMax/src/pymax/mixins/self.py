@@ -116,9 +116,7 @@ class SelfMixin(ClientProtocol):
 
         return True
 
-    async def create_folder(
-            self, title: str, chat_include: list[int], filters: list[Any] | None = None
-    ) -> FolderUpdate:
+    async def create_folder(self, title: str, chat_include: list[int], filters: list[Any] | None = None) -> FolderUpdate:
         """
         Создает новую папку для группировки чатов.
 

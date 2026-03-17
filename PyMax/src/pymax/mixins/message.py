@@ -51,7 +51,28 @@ class MessageMixin(ClientProtocol):
     """
     CHUNK_SIZE = 6 * 1024 * 1024
 
-    async def _upload_file(self, file: File) -> None | Attach:
+    async def _upload_file(self, file: File) -> Attach | None:
+        """Загружает файл на сервер.
+
+        Метод выполняет поэтапную загрузку файла:
+        1. Запрашивает URL для загрузки у сервера
+        2. Потоково отправляет файл по чанкам
+        3. Ожидает подтверждения обработки от сервера
+
+        Args:
+            file (File): Объект файла для загрузки, содержащий путь или байты.
+
+        Returns:
+            Attach | None: Объект вложения с file_id при успешной загрузке, иначе None.
+
+        Raises:
+            Exception: При ошибках сети, чтения файла или других непредвиденных ошибках.
+
+        Note:
+            - Использует CHUNK_SIZE для потоковой передачи
+            - Регистрирует waiter для ожидания подтверждения от сервера
+            - Автоматически удаляет waiter при таймауте или ошибке
+        """
         try:
             logger.info("Uploading file")
 
@@ -175,7 +196,29 @@ class MessageMixin(ClientProtocol):
             logger.exception("Upload file failed")
             raise
 
-    async def _upload_video(self, video: Video) -> None | Attach:
+    async def _upload_video(self, video: Video) -> Attach | None:
+        """Загружает видео на сервер.
+
+        Метод загружает видеофайл на сервер с поддержкой больших файлов:
+        1. Получает URL и токен для загрузки
+        2. Отправляет видео одним запросом (не потоково)
+        3. Ожидает подтверждения обработки
+
+        Args:
+            video (Video): Объект видео для загрузки.
+
+        Returns:
+            Attach | None: Объект вложения с video_id и token при успехе, иначе None.
+
+        Raises:
+            Exception: При ошибках сети, памяти (malloc failure) или других ошибках.
+            OSError: При ошибках операционной системы, связанных с памятью.
+
+        Note:
+            - Использует увеличенный таймаут (15 минут) для больших видео
+            - Обрабатывает специфические ошибки памяти при загрузке
+            - Требует достаточного объема оперативной памяти для буферизации видео
+        """
         try:
             logger.info("Uploading video")
             payload = UploadPayload().model_dump(by_alias=True)
@@ -253,7 +296,29 @@ class MessageMixin(ClientProtocol):
             logger.exception("Upload video failed")
             raise
 
-    async def _upload_photo(self, photo: Photo) -> None | Attach:
+    async def _upload_photo(self, photo: Photo) -> Attach | None:
+        """Загружает фотографию на сервер.
+
+        Метод загружает изображение в формате multipart/form-data:
+        1. Получает URL для загрузки
+        2. Валидирует формат изображения
+        3. Отправляет фото с правильным content-type
+        4. Извлекает токен из ответа
+
+        Args:
+            photo (Photo): Объект фотографии для загрузки.
+
+        Returns:
+            Attach | None: Объект вложения с photo_token при успехе, иначе None.
+
+        Raises:
+            Exception: При ошибках сети, валидации фото или других ошибках.
+
+        Note:
+            - Поддерживает различные форматы изображений (определяются автоматически)
+            - Использует стандартный таймаут для HTTP-запросов
+            - Возвращает None при неудачной валидации или отсутствии токена
+        """
         try:
             logger.info("Uploading photo")
             payload = UploadPayload().model_dump(by_alias=True)
@@ -316,6 +381,24 @@ class MessageMixin(ClientProtocol):
             return None
 
     async def _upload_attachment(self, attach: Photo | File | Video) -> dict | None:
+        """Загружает вложение и возвращает соответствующий payload.
+
+        Метод определяет тип вложения и вызывает соответствующий метод загрузки:
+        - Photo -> _upload_photo
+        - File -> _upload_file
+        - Video -> _upload_video
+
+        Args:
+            attach (Photo | File | Video): Объект вложения для загрузки.
+
+        Returns:
+            dict | None: Словарь с данными вложения в формате payload при успехе, иначе None.
+
+        Note:
+            - Автоматически выбирает метод загрузки по типу вложения
+            - Возвращает None при неудачной загрузке любого типа вложения
+            - Логгирует ошибку при неудачной загрузке
+        """
         if isinstance(attach, Photo):
             uploaded = await self._upload_photo(attach)
             if uploaded and uploaded.photo_token:

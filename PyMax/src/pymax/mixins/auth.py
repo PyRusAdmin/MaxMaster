@@ -45,7 +45,7 @@ class AuthMixin(ClientProtocol):
         :raises ValueError: Если полученные данные имеют неверный формат.
         :raises Exception: Если сервер вернул ошибку.
         """
-        logger.info("Requesting auth code")
+        logger.info("Запрос кода аутентификации")
 
         payload = RequestCodePayload(
             phone=phone, type=AuthType.START_AUTH, language=language
@@ -57,7 +57,7 @@ class AuthMixin(ClientProtocol):
             MixinsUtils.handle_error(data)
 
         logger.debug(
-            "Code request response opcode=%s seq=%s",
+            "Код запроса кода на ответ=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
         )
@@ -65,8 +65,8 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data["token"]
         else:
-            logger.error("Invalid payload data received")
-            raise ValueError("Invalid payload data received")
+            logger.error("Полученные некорректные данные полезной нагрузки")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
 
     async def resend_code(self, phone: str, language: str = "ru") -> str:
         """
@@ -81,7 +81,7 @@ class AuthMixin(ClientProtocol):
         :raises ValueError: Если полученные данные имеют неверный формат.
         :raises Exception: Если сервер вернул ошибку.
         """
-        logger.info("Resending auth code")
+        logger.info("Повторная отправка кода аутентификации")
 
         payload = RequestCodePayload(
             phone=phone, type=AuthType.RESEND, language=language
@@ -93,7 +93,7 @@ class AuthMixin(ClientProtocol):
             MixinsUtils.handle_error(data)
 
         logger.debug(
-            "Code resend response opcode=%s seq=%s",
+            "Код повторной отправки ответа=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
         )
@@ -101,8 +101,8 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data["token"]
         else:
-            logger.error("Invalid payload data received")
-            raise ValueError("Invalid payload data received")
+            logger.error("Полученные некорректные данные полезной нагрузки")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
 
     async def _send_code(self, code: str, token: str) -> dict[str, Any]:
         """
@@ -117,7 +117,7 @@ class AuthMixin(ClientProtocol):
         :raises ValueError: Если полученные данные имеют неверный формат.
         :raises Exception: Если сервер вернул ошибку.
         """
-        logger.info("Sending verification code")
+        logger.info("Отправка кода для верификации")
 
         payload = SendCodePayload(
             token=token,
@@ -131,7 +131,7 @@ class AuthMixin(ClientProtocol):
             MixinsUtils.handle_error(data)
 
         logger.debug(
-            "Send code response opcode=%s seq=%s",
+            "Отправка кода ответа операции=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
         )
@@ -139,8 +139,8 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            logger.error("Invalid payload data received")
-            raise ValueError("Invalid payload data received")
+            logger.error("Полученные некорректные данные полезной нагрузки")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
 
     def _print_qr(self, qr_link: str) -> None:
         """
@@ -165,7 +165,7 @@ class AuthMixin(ClientProtocol):
         qr.print_ascii()
 
     async def _request_qr_login(self) -> dict[str, Any]:
-        logger.info("Requesting QR login data")
+        logger.info("Запрос QR-данных для входа")
 
         data = await self._send_and_wait(opcode=Opcode.GET_QR, payload={})
 
@@ -173,7 +173,7 @@ class AuthMixin(ClientProtocol):
             MixinsUtils.handle_error(data)
 
         logger.debug(
-            "QR login data response opcode=%s seq=%s",
+            "Оперативный код ответа на QR-данные входа=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
         )
@@ -181,8 +181,8 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            logger.error("Invalid payload data received")
-            raise ValueError("Invalid payload data received")
+            logger.error("Полученные некорректные данные полезной нагрузки")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
 
     def _validate_version(self, version: str, min_version: str) -> bool:
         def version_tuple(v: str) -> tuple[int, ...]:
@@ -191,25 +191,25 @@ class AuthMixin(ClientProtocol):
         return version_tuple(version) >= version_tuple(min_version)
 
     async def _login(self) -> None:
-        logger.info("Starting login flow")
+        logger.info("Запуск процесса входа")
 
         if self.user_agent.device_type == DeviceType.WEB.value and self._ws:
             if not self._validate_version(self.user_agent.app_version, "25.12.13"):
-                logger.error("Your app version is too old")
-                raise ValueError("Your app version is too old")
+                logger.error("Ваша версия приложения слишком старая")
+                raise ValueError("Ваша версия приложения слишком старая")
 
             login_resp = await self._login_by_qr()
         else:
             temp_token = await self.request_code(self.phone)
             if not temp_token or not isinstance(temp_token, str):
-                logger.critical("Failed to request code: token missing")
-                raise ValueError("Failed to request code")
+                logger.critical("Не удалось запросить код: токен отсутствует")
+                raise ValueError("Не запросил код")
 
             print("Введите код: ", end="", flush=True)
             code = await asyncio.to_thread(lambda: sys.stdin.readline().strip())
             if len(code) != 6 or not code.isdigit():
-                logger.error("Invalid code format entered")
-                raise ValueError("Invalid code format")
+                logger.error("Введён некорректный формат кода")
+                raise ValueError("Некорректный формат кода")
 
             login_resp = await self._send_code(code, temp_token)
 
@@ -222,15 +222,15 @@ class AuthMixin(ClientProtocol):
             token = login_attrs.get("token")
 
         if not token:
-            logger.critical("Failed to login, token not received")
-            raise ValueError("Failed to login, token not received")
+            logger.critical("Не удалось войти, токен не получен")
+            raise ValueError("Не удалось войти, токен не получен")
 
         self._token = token
         self._database.update_auth_token((self._device_id), self._token)
-        logger.info("Login successful, token saved to database")
+        logger.info("Вход успешен, токен сохранен в базе данных")
 
     async def _poll_qr_login(self, track_id: str, poll_interval: int) -> bool:
-        logger.info("Polling for QR login confirmation")
+        logger.info("Опрос для подтверждения QR-входа")
 
         while True:
             data = await self._send_and_wait(
@@ -245,11 +245,11 @@ class AuthMixin(ClientProtocol):
             status = payload.get("status")
 
             if not status:
-                logger.warning("No status in QR login response")
+                logger.warning("Нет статуса в ответе QR-входа")
                 continue
 
             if status.get("loginAvailable"):
-                logger.info("QR login confirmed")
+                logger.info("QR-логин подтверждён")
                 return True
             else:
                 exp_at = status.get("expiresAt")
