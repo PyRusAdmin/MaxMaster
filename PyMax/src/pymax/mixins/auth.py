@@ -492,8 +492,7 @@ class AuthMixin(ClientProtocol):
 
             return True
 
-    async def set_password(
-            self,
+    async def set_password(self,
             password: str,
             email: str | None = None,
             hint: str | None | _Unset = UNSET,
