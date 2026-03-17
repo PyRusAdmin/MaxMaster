@@ -62,13 +62,7 @@ class Error(Exception):
     Базовое исключение для ошибок PyMax.
     """
 
-    def __init__(
-            self,
-            error: str,
-            message: str,
-            title: str,
-            localized_message: str | None = None,
-    ) -> None:
+    def __init__(self, error: str, message: str, title: str, localized_message: str | None = None, ) -> None:
         self.error = error
         self.message = message
         self.title = title
@@ -91,9 +85,7 @@ class RateLimitError(Error):
     Исключение, вызываемое при превышении лимита запросов.
     """
 
-    def __init__(
-            self, error: str, message: str, title: str, localized_message: str | None = None
-    ) -> None:
+    def __init__(self, error: str, message: str, title: str, localized_message: str | None = None) -> None:
         super().__init__(error, message, title, localized_message)
 
 
@@ -102,7 +94,5 @@ class LoginError(Error):
     Исключение, вызываемое при ошибке авторизации.
     """
 
-    def __init__(
-            self, error: str, message: str, title: str, localized_message: str | None = None
-    ) -> None:
+    def __init__(self, error: str, message: str, title: str, localized_message: str | None = None) -> None:
         super().__init__(error, message, title, localized_message)

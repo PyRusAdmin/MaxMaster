@@ -105,9 +105,23 @@ class TextContainsFilter(BaseFilter[Message]):
 
 
 class RegexTextFilter(BaseFilter[Message]):
+    """
+    Фильтр сообщений по регулярному выражению.
+
+    Позволяет фильтровать входящие сообщения, проверяя, соответствует ли текст
+    сообщения заданному регулярному выражению.
+
+    Наследуется от BaseFilter и работает с событиями типа Message.
+    """
     event_type = Message
 
     def __init__(self, pattern: str) -> None:
+        """
+        Инициализирует фильтр с заданным регулярным выражением.
+
+        :param pattern: Строка с регулярным выражением для поиска в тексте сообщения.
+        :type pattern: str
+        """
         self.pattern = pattern
         self.regex = re.compile(pattern)
 
