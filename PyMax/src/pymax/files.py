@@ -20,9 +20,7 @@ class BaseFile(ABC):
 
     Поддерживает загрузку из URL, пути или raw данных.
     """
-    def __init__(
-            self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
-    ) -> None:
+    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None) -> None:
         """
         Инициализирует файл.
 

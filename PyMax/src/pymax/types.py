@@ -184,17 +184,8 @@ class Member:
 
 
 class StickerAttach:
-    def __init__(self, author_type: str, lottie_url: str | None, url: str,
-                 sticker_id: int,
-                 tags: list[str] | None,
-                 width: int,
-                 set_id: int,
-                 time: int,
-                 sticker_type: str,
-                 audio: bool,
-                 height: int,
-                 type: AttachType,
-                 ):
+    def __init__(self, author_type: str, lottie_url: str | None, url: str, sticker_id: int, tags: list[str] | None,
+                 width: int, set_id: int, time: int, sticker_type: str, audio: bool, height: int, type: AttachType, ):
         self.author_type = author_type
         self.lottie_url = lottie_url
         self.url = url
@@ -248,6 +239,19 @@ class ControlAttach:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
+        """
+        Создаёт экземпляр ControlAttach из словаря.
+
+        Метод извлекает тип вложения и событие из входных данных,
+        удаляя их из словаря, а затем передаёт оставшиеся поля как дополнительные параметры.
+
+        Используется для десериализации данных, полученных от API.
+
+        :param data: Словарь с данными вложения.
+        :type data: dict[str, Any]
+        :return: Новый экземпляр ControlAttach.
+        :rtype: Self
+        """
         data = dict(data)
         attach_type = AttachType(data.pop("_type"))
         event = data.pop("event")

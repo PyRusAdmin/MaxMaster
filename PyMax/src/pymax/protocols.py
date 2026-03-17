@@ -29,6 +29,7 @@ class ClientProtocol(ABC):
 
     Определяет общий интерфейс и атрибуты для MaxClient и SocketMaxClient.
     """
+
     def __init__(self) -> None:
         """
         Инициализирует базовые атрибуты клиента.
@@ -92,13 +93,8 @@ class ClientProtocol(ABC):
         self._socket: socket.socket | None = None
 
     @abstractmethod
-    async def _send_and_wait(
-            self,
-            opcode: Opcode,
-            payload: dict[str, Any],
-            cmd: int = 0,
-            timeout: float = DEFAULT_TIMEOUT,
-    ) -> dict[str, Any]:
+    async def _send_and_wait(self, opcode: Opcode, payload: dict[str, Any], cmd: int = 0,
+                             timeout: float = DEFAULT_TIMEOUT, ) -> dict[str, Any]:
         """
         Отправляет сообщение и ожидает ответ.
 
@@ -128,14 +124,8 @@ class ClientProtocol(ABC):
         pass
 
     @abstractmethod
-    async def _queue_message(
-            self,
-            opcode: int,
-            payload: dict[str, Any],
-            cmd: int = 0,
-            timeout: float = DEFAULT_TIMEOUT,
-            max_retries: int = 3,
-    ) -> Message | None:
+    async def _queue_message(self, opcode: int, payload: dict[str, Any], cmd: int = 0, timeout: float = DEFAULT_TIMEOUT,
+                             max_retries: int = 3, ) -> Message | None:
         """
         Ставит сообщение в очередь на отправку.
 
@@ -155,9 +145,7 @@ class ClientProtocol(ABC):
         pass
 
     @abstractmethod
-    def _create_safe_task(
-            self, coro: Awaitable[Any], name: str | None = None
-    ) -> asyncio.Task[Any]:
+    def _create_safe_task(self, coro: Awaitable[Any], name: str | None = None) -> asyncio.Task[Any]:
         """
         Создаёт безопасную задачу с обработкой исключений.
 
