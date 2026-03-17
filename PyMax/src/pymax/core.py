@@ -138,14 +138,30 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
     """
     allowed_device_types: set[str] = {"WEB"}  # Поддерживаемые типы устройств (только WEB)
 
-    def __init__(self, phone: str, uri: str = WEBSOCKET_URI, session_name: str = SESSION_STORAGE_DB,
-                 headers: UserAgentPayload | None = None, token: str | None = None, send_fake_telemetry: bool = True,
-                 host: str = HOST, port: int = PORT, proxy: str | Literal[True] | None = None,
-                 work_dir: str = ".", registration: bool = False, first_name: str = "",
-                 last_name: str | None = None, device_id: UUID | None = None, reconnect: bool = True,
-                 reconnect_delay: float = 1.0, ) -> None:
+    def __init__(
+        self,
+        phone: str,
+        uri: str = WEBSOCKET_URI,
+        session_name: str = SESSION_STORAGE_DB,
+        headers: UserAgentPayload | None = None,
+        token: str | None = None,
+        send_fake_telemetry: bool = True,
+        host: str = HOST,
+        port: int = PORT,
+        proxy: str | Literal[True] | None = None,
+        work_dir: str = ".",
+        registration: bool = False,
+        first_name: str = "",
+        last_name: str | None = None,
+        device_id: UUID | None = None,
+        reconnect: bool = True,
+        reconnect_delay: float = 1.0,
+    ) -> None:
         """
         Инициализирует клиент MaxClient.
+
+        Создаёт экземпляр клиента, инициализирует базы данных, настраивает SSL контекст
+        и подготавливает все необходимые атрибуты для работы.
 
         :param phone: Номер телефона для авторизации.
         :type phone: str
@@ -155,7 +171,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         :type session_name: str
         :param headers: Заголовки для подключения к WebSocket.
         :type headers: UserAgentPayload | None
-        :param token: Токен авторизации.
+        :param token: Токен авторизации. Если None, будет выполнена авторизация.
         :type token: str | None
         :param send_fake_telemetry: Флаг отправки фейковой телеметрии.
         :type send_fake_telemetry: bool
@@ -173,16 +189,16 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         :type first_name: str
         :param last_name: Фамилия пользователя для регистрации.
         :type last_name: str | None
-        :param device_id: ID устройства.
+        :param device_id: ID устройства. Если None, генерируется новый.
         :type device_id: UUID | None
         :param reconnect: Флаг автоматического переподключения.
         :type reconnect: bool
         :param reconnect_delay: Задержка между переподключениями в секундах.
         :type reconnect_delay: float
         """
+        # Настройки подключения
         self.uri: str = uri
         self.phone: str = phone  # Номер телефона аккаунта Max
-
         self.host: str = host
         self.port: int = port
         self.registration: bool = registration
@@ -192,21 +208,25 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self.reconnect: bool = reconnect
         self.reconnect_delay: float = reconnect_delay
 
+        # Состояние подключения
         self.is_connected: bool = False
 
-        self.chats: list[Chat] = []
-        self.dialogs: list[Dialog] = []
-        self.channels: list[Channel] = []
-        self.me: Me | None = None
-        self.contacts: list[User] = []
-        self._users: dict[int, User] = {}
+        # Данные пользователя
+        self.chats: list[Chat] = []  # Групповые чаты
+        self.dialogs: list[Dialog] = []  # Личные диалоги
+        self.channels: list[Channel] = []  # Каналы
+        self.me: Me | None = None  # Информация о текущем пользователе
+        self.contacts: list[User] = []  # Контакты
+        self._users: dict[int, User] = {}  # Кэш пользователей
 
-        self._work_dir: str = work_dir  # Рабочая директория для хранения базы данных с аккаунтами Max
+        # База данных
+        self._work_dir: str = work_dir
         self._database_path: Path = Path(work_dir) / session_name
         self._database_path.parent.mkdir(parents=True, exist_ok=True)
         self._database_path.touch(exist_ok=True)
         self._database = Database(self._work_dir)
 
+        # Очереди и задачи
         self._incoming: asyncio.Queue[dict[str, Any]] | None = None
         self._outgoing: asyncio.Queue[dict[str, Any]] | None = None
         self._recv_task: asyncio.Task[Any] | None = None
@@ -216,24 +236,30 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self._background_tasks: set[asyncio.Task[Any]] = set()
         self._stop_event = asyncio.Event()
 
-        self._seq: int = 0
+        # Счётчики и состояние
+        self._seq: int = 0  # Sequence number для сообщений
         self._error_count: int = 0
         self._circuit_breaker: bool = False
         self._last_error_time: float = 0.0
 
+        # Устройство и авторизация
         self._device_id = device_id if device_id is not None else self._database.get_device_id()
         self._file_upload_waiters: dict[int, asyncio.Future[dict[str, Any]]] = {}
-
         self._token = self._database.get_auth_token() or token
+
+        # Заголовки пользователя
         if headers is None:
             headers = self._default_headers()
         self.user_agent = headers
         self._validate_device_type()
         self._send_fake_telemetry: bool = send_fake_telemetry
+
+        # Телеметрия
         self._session_id: int = int(time.time() * 1000)
         self._action_id: int = 1
         self._current_screen: str = "chats_list_tab"
 
+        # Обработчики событий
         self._on_message_handlers: list[
             tuple[Callable[[Message], Any], BaseFilter[Message] | None]
         ] = []
@@ -250,6 +276,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self._on_raw_receive_handlers: list[Callable[[dict[str, Any]], Any | Awaitable[Any]]] = []
         self._scheduled_tasks: list[tuple[Callable[[], Any | Awaitable[Any]], float]] = []
 
+        # SSL контекст
         self._ssl_context = ssl.create_default_context()
         self._ssl_context.set_ciphers("DEFAULT")
         self._ssl_context.check_hostname = True
@@ -259,6 +286,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         self._socket: socket.socket | None = None
         self._ws: websockets.ClientConnection | None = None
 
+        # Настройка логгера
         self._setup_logger()
         logger.debug(
             "Initialized MaxClient uri=%s work_dir=%s",
@@ -273,6 +301,10 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
         :return: Заголовки пользователя для устройства WEB.
         :rtype: UserAgentPayload
+
+        Пример:
+            headers = MaxClient._default_headers()
+            # UserAgentPayload(device_type="WEB", ...)
         """
         return UserAgentPayload(device_type="WEB")
 
@@ -280,7 +312,12 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         """
         Проверяет, поддерживается ли тип устройства.
 
+        Сравнивает тип устройства из user_agent с allowed_device_types.
+
         :raises ValueError: Если тип устройства не поддерживается.
+
+        Пример:
+            self._validate_device_type()  # Проверка перед подключением
         """
         if self.user_agent.device_type not in self.allowed_device_types:
             raise ValueError(
@@ -292,7 +329,17 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         """
         Ожидает закрытия WebSocket соединения.
 
+        Блокирует выполнение до тех пор, пока WebSocket соединение не будет закрыто.
+        Используется в основном цикле клиента для поддержания подключения.
+
         :return: None
+
+        Пример:
+            await client.connect()
+            await client._wait_forever()  # Ожидание до закрытия
+
+        Примечание:
+            Метод может быть отменён через asyncio.CancelledError.
         """
         try:
             await self.ws.wait_closed()
@@ -305,7 +352,17 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         """
         Закрывает клиент и освобождает ресурсы.
 
+        Устанавливает событие остановки (_stop_event), которое сигнализирует
+        основному циклу о необходимости завершения работы.
+
         :return: None
+
+        Пример:
+            await client.close()  # Корректное закрытие клиента
+
+        Примечание:
+            Метод не закрывает соединение напрямую, а сигнализирует о необходимости
+            остановки. Фактическая очистка происходит в _cleanup_client().
         """
         try:
             logger.info("Закрытие клиента")
@@ -317,50 +374,90 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
         """
         Выполняет пост-логин задачи: синхронизация, ping, телеметрия.
 
+        Запускает фоновые задачи для поддержания соединения:
+        1. Синхронизация чатов и контактов (если sync=True)
+        2. Отправка интерактивного ping
+        3. Запуск запланированных задач
+        4. Отправка телеметрии (если включено)
+        5. Вызов обработчика on_start
+
         :param sync: Флаг выполнения синхронизации.
         :type sync: bool
         :return: None
+
+        Пример:
+            await client._post_login_tasks(sync=True)  # С синхронизацией
+            await client._post_login_tasks(sync=False)  # Без синхронизации
+
+        Примечание:
+            Метод вызывается автоматически после успешной авторизации.
         """
+        # Синхронизация чатов и контактов
         if sync:
             await self._sync()
 
         logger.debug("is_connected=%s перед запуском ping", self.is_connected)
+        # Задача отправки ping
         ping_task = asyncio.create_task(self._send_interactive_ping())
         ping_task.add_done_callback(self._log_task_exception)
         self._background_tasks.add(ping_task)
 
+        # Запуск запланированных задач
         start_scheduled_task = asyncio.create_task(self._start_scheduled_tasks())
         start_scheduled_task.add_done_callback(self._log_task_exception)
 
+        # Задача отправки телеметрии
         if self._send_fake_telemetry:
             telemetry_task = asyncio.create_task(self._start())
             telemetry_task.add_done_callback(self._log_task_exception)
             self._background_tasks.add(telemetry_task)
 
+        # Вызов обработчика on_start
         if self._on_start_handler:
             logger.debug("Вызов on_start handler")
             result = self._on_start_handler()
             if asyncio.iscoroutine(result):
                 await self._safe_execute(result, context="on_start handler")
 
-    async def login_with_code(self, temp_token: str, code: str, start: bool = False) -> None:
+    async def login_with_code(
+        self,
+        temp_token: str,
+        code: str,
+        start: bool = False,
+    ) -> None:
         """
         Завершает кастомный login flow: отправляет код, сохраняет токен и запускает пост-логин задачи.
 
+        Используется для двухэтапной авторизации:
+        1. Сначала вызывается request_code() для получения temp_token
+        2. Затем login_with_code() для отправки кода и получения токена
+
         :param temp_token: Временный токен, полученный из request_code.
         :type temp_token: str
-        :param code: Код верификации (6 цифр).
+        :param code: Код верификации (6 цифр), полученный пользователем.
         :type code: str
-        :param start: Флаг запуска пост-логин задач и ожидания навсегда. Если False, только сохраняет токен.
+        :param start: Флаг запуска пост-логин задач и ожидания. Если False, только сохраняет токен.
         :type start: bool, optional
         :return: None
-        :rtype: None
+
+        Пример:
+            # Запрос кода
+            resp = await client.request_code("79991234567")
+            temp_token = resp["token"]
+
+            # Отправка кода (пользователь ввёл код из SMS)
+            await client.login_with_code(temp_token, "123456", start=True)
+
+        Примечание:
+            Если start=True, метод работает бесконечно с автоматическим переподключением.
         """
+        # Отправка кода верификации
         resp = await self._send_code(code, temp_token)
 
         login_attrs = resp.get("tokenAttrs", {}).get("LOGIN", {})
         password_challenge = resp.get("passwordChallenge")
 
+        # Проверка двухфакторной аутентификации
         if password_challenge and not login_attrs:
             token = await self._two_factor_auth(password_challenge)
         else:
@@ -368,9 +465,13 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
         if not token:
             raise ValueError("Login response did not contain tokenAttrs.LOGIN.token")
+
+        # Сохранение токена
         self._token = token
         self._database.update_auth_token(self._device_id, token)
+
         if start:
+            # Бесконечный цикл с переподключением
             while True:
                 try:
                     await self._post_login_tasks()
@@ -387,32 +488,68 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
 
     async def start(self) -> None:
         """
-        Запускает клиент, подключается к WebSocket, авторизует
-        пользователя (если нужно) и запускает фоновый цикл.
-        Теперь включает безопасный reconnect-loop, если self.reconnect=True.
+        Запускает клиент, подключается к WebSocket, авторизует пользователя и запускает фоновый цикл.
+
+        Основной метод клиента, который:
+        1. Подключается к WebSocket серверу
+        2. Выполняет регистрацию (если registration=True)
+        3. Выполняет авторизацию (если токен не предоставлен)
+        4. Синхронизирует данные (чаты, контакты)
+        5. Запускает пост-логин задачи
+        6. Ожидает события остановки или разрыва соединения
+        7. При разрыве и reconnect=True - выполняет переподключение
+
+        Процесс подключения:
+        - Подключение → Авторизация → Синхронизация → Ожидание
+        - При ошибке: Очистка → Пауза → Переподключение (если reconnect=True)
 
         :return: None
-        :rtype: None
+
+        Пример:
+            # Базовое использование
+            client = MaxClient(phone="79991234567")
+            await client.start()
+
+            # С контекстным менеджером
+            async with MaxClient(phone="79991234567") as client:
+                # Клиент автоматически подключится
+                pass
+
+            # С переподключением
+            client = MaxClient(phone="79991234567", reconnect=True)
+            await client.start()  # Будет переподключаться при разрыве
+
+        Примечание:
+            Метод работает бесконечно до вызова close() или отмены задачи.
+            При reconnect=True автоматически переподключается при разрыве.
         """
         logger.info("Запуск клиента")
+
+        # Основной цикл с переподключением
         while not self._stop_event.is_set():
             try:
+                # Подключение к WebSocket
                 await self.connect(self.user_agent)
 
+                # Регистрация нового пользователя
                 if self.registration:
                     if not self.first_name:
                         raise ValueError("Для регистрации требуется имя")
                     await self._register(self.first_name, self.last_name)
 
+                # Сохранение токена в базу данных
                 if self._token and self._database.get_auth_token() is None:
                     self._database.update_auth_token(self._device_id, self._token)
 
+                # Авторизация по номеру телефона
                 if self._token is None:
                     await self._login()
 
+                # Синхронизация данных
                 await self._sync(self.user_agent)
                 await self._post_login_tasks(sync=False)
 
+                # Ожидание закрытия соединения или остановки
                 wait_task = asyncio.create_task(self._wait_forever())
                 stop_task = asyncio.create_task(self._stop_event.wait())
 
@@ -420,6 +557,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
                     [wait_task, stop_task], return_when=asyncio.FIRST_COMPLETED
                 )
 
+                # Отмена оставшихся задач
                 for task in pending:
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
@@ -433,6 +571,7 @@ class MaxClient(AuthMixin, ApiMixin, HandlerMixin, SchedulerMixin, TelemetryMixi
             finally:
                 await self._cleanup_client()
 
+            # Проверка необходимости переподключения
             if not self.reconnect or self._stop_event.is_set():
                 logger.info("Повторное подключение отключено или запрошена остановка — выход из start()")
                 break
