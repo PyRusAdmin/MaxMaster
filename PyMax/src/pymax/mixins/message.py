@@ -428,26 +428,31 @@ class MessageMixin(ClientProtocol):
             reply_to: int | None = None,
             use_queue: bool = False,
     ) -> Message | None:
-        """
-        Отправляет текстовое сообщение в чат с опциональными вложениями.
+        """Отправляет текстовое сообщение в чат с опциональными вложениями.
 
-        :param text: Текст сообщения.
-        :type text: str
-        :param chat_id: Идентификатор чата, в который отправляется сообщение.
-        :type chat_id: int
-        :param notify: Флаг оповещения о новом сообщении. По умолчанию True.
-        :type notify: bool
-        :param attachment: Одно вложение (фото, файл или видео).
-        :type attachment: Photo | File | Video | None
-        :param attachments: Список множественных вложений.
-        :type attachments: list[Photo | File | Video] | None
-        :param reply_to: Идентификатор сообщения для ответа.
-        :type reply_to: int | None
-        :param use_queue: Использовать очередь для отправки. По умолчанию False.
-        :type use_queue: bool
-        :return: Объект сообщения или None, если используется очередь.
-        :rtype: Message | None
-        :raises Error: Если загрузка вложения или отправка сообщения не удалась.
+        Метод поддерживает отправку сообщений с различными типами вложений
+        и возможностью ответа на существующее сообщение. При наличии markdown-разметки
+        автоматически извлекает элементы форматирования.
+
+        Args:
+            text (str): Текст сообщения. Может содержать markdown-разметку.
+            chat_id (int): Идентификатор чата для отправки.
+            notify (bool, optional): Флаг уведомления участников чата. Defaults to True.
+            attachment (Photo | File | Video | None, optional): Одиночное вложение. Defaults to None.
+            attachments (list[Photo | File | Video] | None, optional): Список вложений. Defaults to None.
+            reply_to (int | None, optional): ID сообщения, на которое идет ответ. Defaults to None.
+            use_queue (bool, optional): Использовать очередь отправки. Defaults to False.
+
+        Returns:
+            Message | None: Объект отправленного сообщения или None при использовании очереди.
+
+        Raises:
+            Error: При ошибках загрузки вложений или отправки сообщения.
+
+        Note:
+            - Если указаны и attachment, и attachments, используется только attachments
+            - При использовании очереди возвращается None
+            - Автоматически обрабатывает markdown-разметку в тексте
         """
 
         logger.info("Sending message to chat_id=%s notify=%s", chat_id, notify)
@@ -522,24 +527,29 @@ class MessageMixin(ClientProtocol):
             attachments: list[Photo | Video | File] | None = None,
             use_queue: bool = False,
     ) -> Message | None:
-        """
-        Редактирует текст и/или вложения существующего сообщения.
+        """Редактирует существующее сообщение.
 
-        :param chat_id: Идентификатор чата.
-        :type chat_id: int
-        :param message_id: Идентификатор сообщения для редактирования.
-        :type message_id: int
-        :param text: Новый текст сообщения.
-        :type text: str
-        :param attachment: Новое вложение (фото, файл или видео).
-        :type attachment: Photo | File | Video | None
-        :param attachments: Список новых множественных вложений.
-        :type attachments: list[Photo | Video | File] | None
-        :param use_queue: Использовать очередь для отправки.
-        :type use_queue: bool
-        :return: Отредактированное сообщение или None.
-        :rtype: Message | None
-        :raises Error: Если редактирование не удалось.
+        Метод позволяет изменить текст и/или вложения сообщения. Поддерживает
+        markdown-форматирование и добавление новых вложений.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_id (int): Идентификатор редактируемого сообщения.
+            text (str): Новый текст сообщения с возможной markdown-разметкой.
+            attachment (Photo | File | Video | None, optional): Новое одиночное вложение. Defaults to None.
+            attachments (list[Photo | Video | File] | None, optional): Новый список вложений. Defaults to None.
+            use_queue (bool, optional): Использовать очередь отправки. Defaults to False.
+
+        Returns:
+            Message | None: Объект отредактированного сообщения или None при использовании очереди.
+
+        Raises:
+            Error: При ошибках загрузки вложений или редактирования сообщения.
+
+        Note:
+            - Если указаны и attachment, и attachments, используется только attachments
+            - При использовании очереди возвращается None
+            - Автоматически обрабатывает markdown-разметку в тексте
         """
         logger.info("Editing message chat_id=%s message_id=%s", chat_id, message_id)
 
@@ -608,19 +618,24 @@ class MessageMixin(ClientProtocol):
             for_me: bool,
             use_queue: bool = False,
     ) -> bool:
-        """
-        Удаляет одно или несколько сообщений.
+        """Удаляет одно или несколько сообщений в чате.
 
-        :param chat_id: Идентификатор чата.
-        :type chat_id: int
-        :param message_ids: Список идентификаторов сообщений для удаления.
-        :type message_ids: list[int]
-        :param for_me: Удалить только для себя (не видимо другим).
-        :type for_me: bool
-        :param use_queue: Использовать очередь для отправки.
-        :type use_queue: bool
-        :return: True, если сообщения успешно удалены.
-        :rtype: bool
+        Метод предоставляет возможность удаления сообщений либо только для
+        текущего пользователя, либо для всех участников чата.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_ids (list[int]): Список ID сообщений для удаления.
+            for_me (bool): Флаг удаления только для себя (если True) или для всех.
+            use_queue (bool, optional): Использовать очередь отправки. Defaults to False.
+
+        Returns:
+            bool: True при успешном удалении, иначе False.
+
+        Note:
+            - При for_me=True сообщение удаляется только из локального интерфейса
+            - При for_me=False сообщение удаляется для всех участников чата
+            - Поддерживает удаление нескольких сообщений за один вызов
         """
         logger.info(
             "Deleting messages chat_id=%s ids=%s for_me=%s",
@@ -647,17 +662,23 @@ class MessageMixin(ClientProtocol):
         return True
 
     async def pin_message(self, chat_id: int, message_id: int, notify_pin: bool) -> bool:
-        """
-        Закрепляет сообщение в чате.
+        """Закрепляет сообщение в чате.
 
-        :param chat_id: Идентификатор чата.
-        :type chat_id: int
-        :param message_id: Идентификатор сообщения.
-        :type message_id: int
-        :param notify_pin: Отправить уведомление о закреплении.
-        :type notify_pin: bool
-        :return: True, если сообщение успешно закреплено.
-        :rtype: bool
+        Метод фиксирует сообщение в верхней части чата, делая его более заметным.
+        Поддерживает отправку уведомления о закреплении всем участникам чата.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_id (int): Идентификатор сообщения для закрепления.
+            notify_pin (bool): Флаг отправки уведомления о закреплении.
+
+        Returns:
+            bool: True при успешном закреплении, иначе False.
+
+        Note:
+            - Только один пользователь может закрепить сообщение
+            - Уведомление видно всем участникам чата при notify_pin=True
+            - Закрепленные сообщения обычно отображаются в специальном разделе чата
         """
         payload = PinMessagePayload(
             chat_id=chat_id,

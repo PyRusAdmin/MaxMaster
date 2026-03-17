@@ -391,7 +391,7 @@ class AuthMixin(ClientProtocol):
         logger.warning(
             "IMPORTANT: Use this token ONLY with device_type='DESKTOP' and the special init user agent"
         )
-        logger.warning("This token MUST NOT be used in web clients")
+        logger.warning("Этот токен НЕ ДОЛЖЕН использоваться в веб-клиентах")
 
     async def _check_password(self, password: str, track_id: str) -> dict[str, Any] | None:
         payload = CheckPasswordChallengePayload(
@@ -407,12 +407,12 @@ class AuthMixin(ClientProtocol):
         return token_attrs
 
     async def _two_factor_auth(self, password_challenge: dict[str, Any]) -> None:
-        logger.info("Starting two-factor authentication flow")
+        logger.info("Начальный поток двухфакторной аутентификации")
 
         track_id = password_challenge.get("trackId")
         if not track_id:
-            logger.critical("Password challenge missing track ID")
-            raise ValueError("Password challenge missing track ID")
+            logger.critical("Проблема с паролем: отсутствует трек ID")
+            raise ValueError("Проблема с паролем: отсутствует трек ID")
 
         hint = password_challenge.get("hint", "No hint provided")
 
@@ -421,20 +421,20 @@ class AuthMixin(ClientProtocol):
                 lambda: input(f"Введите пароль (Подсказка: {hint}): ").strip()
             )
             if not password:
-                logger.warning("Password is empty, please try again")
+                logger.warning("Пароль пустой, пожалуйста, попробуйте ещё раз")
                 continue
 
             token_attrs = await self._check_password(password, track_id)
             if not token_attrs:
-                logger.error("Incorrect password, please try again")
+                logger.error("Неправильный пароль, пожалуйста, попробуйте ещё раз")
                 continue
 
             login_attrs = token_attrs.get("LOGIN", {})
             if login_attrs:
                 token = login_attrs.get("token")
                 if not token:
-                    logger.critical("Login response did not contain tokenAttrs.LOGIN.token")
-                    raise ValueError("Login response did not contain tokenAttrs.LOGIN.token")
+                    logger.critical("Ответ входа не содержал tokenAttrs.LOGIN.token")
+                    raise ValueError("Ответ входа не содержал tokenAttrs.LOGIN.token")
                 return token
 
     async def _set_password(self, password: str, track_id: str) -> bool:
@@ -473,7 +473,7 @@ class AuthMixin(ClientProtocol):
                 lambda: input(f"Введите код подтверждения, отправленный на {email}: ").strip()
             )
             if not verify_code:
-                logger.warning("Verification code is empty, please try again")
+                logger.warning("Код проверки пуст, пожалуйста, попробуйте ещё раз")
                 continue
 
             payload = SendEmailCodePayload(
@@ -487,7 +487,7 @@ class AuthMixin(ClientProtocol):
             )
 
             if data.get("payload", {}).get("error"):
-                logger.error("Incorrect verification code, please try again")
+                logger.error("Неправильный код подтверждения, пожалуйста, попробуйте ещё раз")
                 continue
 
             return True
@@ -508,7 +508,7 @@ class AuthMixin(ClientProtocol):
         :return: None
         :rtype: None
         """
-        logger.info("Setting account password")
+        logger.info("Установка пароля аккаунта")
 
         payload = CreateTrackPayload().model_dump(by_alias=True)
 
@@ -522,22 +522,22 @@ class AuthMixin(ClientProtocol):
 
         track_id = data.get("payload", {}).get("trackId")
         if not track_id:
-            logger.critical("Failed to create password track: track ID missing")
-            raise ValueError("Failed to create password track")
+            logger.critical("Не удалось создать трек пароля: отсутствует идентификатор трека")
+            raise ValueError("Не удалось создать трек пароля")
 
         while True:
             if not password:
                 password = await asyncio.to_thread(lambda: input("Введите пароль: ").strip())
                 if not password:
-                    logger.warning("Password is empty, please try again")
+                    logger.warning("Пароль пустой, пожалуйста, попробуйте ещё раз")
                     continue
 
             success = await self._set_password(password, track_id)
             if success:
-                logger.info("Password set successfully")
+                logger.info("Пароль установлен успешно")
                 break
             else:
-                logger.error("Failed to set password, please try again")
+                logger.error("Не удалось установить пароль, пожалуйста, попробуйте снова")
 
         while True:
             if hint is UNSET:
@@ -552,10 +552,10 @@ class AuthMixin(ClientProtocol):
 
             success = await self._set_hint(hint, track_id)
             if success:
-                logger.info("Password hint set successfully")
+                logger.info("Подсказка пароля успешно установлена")
                 break
             else:
-                logger.error("Failed to set password hint, please try again")
+                logger.error("Не удалось настроить подсказку пароля, пожалуйста, попробуйте ещё раз")
 
         while True:
             if not email:
@@ -563,12 +563,12 @@ class AuthMixin(ClientProtocol):
                     lambda: input("Введите email для восстановления пароля: ").strip()
                 )
                 if not email:
-                    logger.warning("Email is empty, please try again")
+                    logger.warning("Электронная почта пустая, пожалуйста, попробуйте ещё раз")
                     continue
 
             success = await self._set_email(email, track_id)
             if success:
-                logger.info("Recovery email set successfully")
+                logger.info("Восстановление электронной почты успешно установлены")
                 break
 
         payload = SetTwoFactorPayload(
