@@ -106,13 +106,7 @@ class WebSocketMixin(BaseTransport):
                 await asyncio.sleep(RECV_LOOP_BACKOFF_DELAY)
 
     @override
-    async def _send_and_wait(
-            self,
-            opcode: Opcode,
-            payload: dict[str, Any],
-            cmd: int = 0,
-            timeout: float = DEFAULT_TIMEOUT,
-    ) -> dict[str, Any]:
+    async def _send_and_wait(self, opcode: Opcode, payload: dict[str, Any], cmd: int = 0, timeout: float = DEFAULT_TIMEOUT) -> dict[str, Any]:
         ws = self.ws
         msg = self._make_message(opcode, payload, cmd)
         loop = asyncio.get_running_loop()

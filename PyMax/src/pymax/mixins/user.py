@@ -180,13 +180,11 @@ class UserMixin(ClientProtocol):
         :rtype: Contact
         :raises ResponseStructureError: Если структура ответа неверна
         """
-        payload = await self._contact_action(
-            ContactActionPayload(contact_id=contact_id, action=ContactAction.ADD)
-        )
+        payload = await self._contact_action(ContactActionPayload(contact_id=contact_id, action=ContactAction.ADD))
         contact_dict = payload.get("contact")
         if isinstance(contact_dict, dict):
             return Contact.from_dict(contact_dict)
-        raise ResponseStructureError("Wrong contact structure in response")
+        raise ResponseStructureError("Неправильная структура контакта в ответ")
 
     async def remove_contact(self, contact_id: int) -> Literal[True]:
         """
@@ -198,9 +196,7 @@ class UserMixin(ClientProtocol):
         :rtype: Literal[True]
         :raises ResponseStructureError: Если структура ответа неверна
         """
-        await self._contact_action(
-            ContactActionPayload(contact_id=contact_id, action=ContactAction.REMOVE)
-        )
+        await self._contact_action(ContactActionPayload(contact_id=contact_id, action=ContactAction.REMOVE))
         return True
 
     def get_chat_id(self, first_user_id: int, second_user_id: int) -> int:
