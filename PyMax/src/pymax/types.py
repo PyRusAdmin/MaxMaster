@@ -32,6 +32,7 @@ class Presence:
     
     Содержит информацию о времени последнего посещения пользователя.
     """
+
     def __init__(self, seen: int | None) -> None:
         """
         Инициализирует присутствие.
@@ -67,6 +68,7 @@ class Name:
     Может содержать несколько вариантов имени (name, firstName, lastName)
     и тип имени (например, ONEME).
     """
+
     def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
         Инициализирует структуру имени.
@@ -111,6 +113,7 @@ class Names(Name):
     
     Используется для обратной совместимости.
     """
+
     def __init__(self, name: str | None, first_name: None | str, last_name: str | None, type: str | None) -> None:
         """
         Инициализирует структуру имени (синоним Name).
@@ -306,16 +309,8 @@ class ControlAttach:
 
 
 class AudioAttach:
-    def __init__(
-            self,
-            duration: int,
-            audio_id: int,
-            url: str,
-            wave: str,
-            transcription_status: str,  # TODO: сделать энам
-            token: str,
-            type: AttachType,
-    ) -> None:
+    def __init__(self, duration: int, audio_id: int, url: str, wave: str, transcription_status: str, token: str,
+                 type: AttachType, ) -> None:
         self.duration = duration
         self.audio_id = audio_id
         self.url = url
@@ -350,16 +345,8 @@ class AudioAttach:
 
 
 class PhotoAttach:
-    def __init__(
-            self,
-            base_url: str,
-            height: int,
-            width: int,
-            photo_id: int,
-            photo_token: str,
-            preview_data: str | None,
-            type: AttachType,
-    ) -> None:
+    def __init__(self, base_url: str, height: int, width: int, photo_id: int, photo_token: str,
+                 preview_data: str | None, type: AttachType, ) -> None:
         self.base_url = base_url
         self.height = height
         self.width = width
@@ -394,18 +381,8 @@ class PhotoAttach:
 
 
 class VideoAttach:
-    def __init__(
-            self,
-            height: int,
-            width: int,
-            video_id: int,
-            duration: int,
-            preview_data: str,
-            type: AttachType,
-            thumbnail: str,
-            token: str,
-            video_type: int,
-    ) -> None:
+    def __init__(self, height: int, width: int, video_id: int, duration: int, preview_data: str, type: AttachType,
+                 thumbnail: str, token: str, video_type: int, ) -> None:
         self.height = height
         self.width = width
         self.video_id = video_id
@@ -476,11 +453,7 @@ class FileAttach:
 
 
 class FileRequest:
-    def __init__(
-            self,
-            unsafe: bool,
-            url: str,
-    ) -> None:
+    def __init__(self, unsafe: bool, url: str, ) -> None:
         self.unsafe = unsafe
         self.url = url
 
@@ -493,12 +466,7 @@ class FileRequest:
 
 
 class VideoRequest:
-    def __init__(
-            self,
-            external: str,
-            cache: bool,
-            url: str,
-    ) -> None:
+    def __init__(self, external: str, cache: bool, url: str, ) -> None:
         self.external = external
         self.cache = cache
         self.url = url
@@ -517,15 +485,8 @@ class VideoRequest:
 
 
 class Me:
-    def __init__(
-            self,
-            id: int,
-            account_status: int,
-            phone: str,
-            names: list[Names],
-            update_time: int,
-            options: list[str] | None = None,
-    ) -> None:
+    def __init__(self, id: int, account_status: int, phone: str, names: list[Names], update_time: int,
+                 options: list[str] | None = None, ) -> None:
         self.id = id
         self.account_status = account_status
         self.phone = phone
@@ -616,12 +577,8 @@ class ReactionCounter:
 
 
 class ReactionInfo:
-    def __init__(
-            self,
-            total_count: int,
-            counters: list[ReactionCounter],
-            your_reaction: str | None = None,
-    ) -> None:
+    def __init__(self, total_count: int, counters: list[ReactionCounter], your_reaction: str | None = None,
+                 ) -> None:
         self.total_count = total_count
         self.counters = counters
         self.your_reaction = your_reaction
@@ -636,9 +593,7 @@ class ReactionInfo:
 
 
 class ContactAttach:
-    def __init__(
-            self, contact_id: int, first_name: str, last_name: str, name: str, photo_url: str
-    ) -> None:
+    def __init__(self, contact_id: int, first_name: str, last_name: str, name: str, photo_url: str) -> None:
         self.contact_id = contact_id
         self.first_name = first_name
         self.last_name = last_name
@@ -761,25 +716,10 @@ class Message:
 
 
 class Dialog:
-    def __init__(
-            self,
-            cid: int | None,
-            owner: int,
-            has_bots: bool | None,
-            join_time: int,
-            created: int,
-            last_message: Message | None,
-            type: ChatType | str,
-            last_fire_delayed_error_time: int,
-            last_delayed_update_time: int,
-            prev_message_id: str | None,
-            options: dict[str, bool],
-            modified: int,
-            last_event_time: int,
-            id: int,
-            status: str,
-            participants: dict[str, int],
-    ) -> None:
+    def __init__(self, cid: int | None, owner: int, has_bots: bool | None, join_time: int, created: int,
+                 last_message: Message | None, type: ChatType | str, last_fire_delayed_error_time: int,
+                 last_delayed_update_time: int, prev_message_id: str | None, options: dict[str, bool], modified: int,
+                 last_event_time: int, id: int, status: str, participants: dict[str, int]) -> None:
         self.cid = cid
         self.owner = owner
         self.has_bots = has_bots
@@ -830,36 +770,14 @@ class Dialog:
 
 
 class Chat:
-    def __init__(
-            self,
-            participants_count: int,
-            access: AccessType | str,
-            invited_by: int | None,
-            link: str | None,
-            chat_type: ChatType | str,
-            title: str | None,
-            last_fire_delayed_error_time: int,
-            last_delayed_update_time: int,
-            options: dict[str, bool],
-            base_raw_icon_url: str | None,
-            base_icon_url: str | None,
-            description: str | None,
-            modified: int,
-            id_: int,
-            admin_participants: dict[int, dict[Any, Any]],
-            participants: dict[int, int],
-            owner: int,
-            join_time: int,
-            created: int,
-            last_message: Message | None,
-            prev_message_id: str | None,
-            last_event_time: int,
-            messages_count: int,
-            admins: list[int],
-            restrictions: int | None,
-            status: str,
-            cid: int,
-    ) -> None:
+    def __init__(self, participants_count: int, access: AccessType | str, invited_by: int | None, link: str | None,
+                 chat_type: ChatType | str, title: str | None, last_fire_delayed_error_time: int,
+                 last_delayed_update_time: int, options: dict[str, bool], base_raw_icon_url: str | None,
+                 base_icon_url: str | None, description: str | None, modified: int, id_: int,
+                 admin_participants: dict[int, dict[Any, Any]], participants: dict[int, int], owner: int,
+                 join_time: int, created: int, last_message: Message | None, prev_message_id: str | None,
+                 last_event_time: int, messages_count: int, admins: list[int], restrictions: int | None, status: str,
+                 cid: int) -> None:
         self.participants_count = participants_count
         self.access = access
         self.invited_by = invited_by
@@ -1079,16 +997,8 @@ class Session:
 
 
 class Folder:
-    def __init__(
-            self,
-            source_id: int,
-            include: list[int],
-            options: list[Any],
-            update_time: int,
-            id: str,
-            filters: list[Any],
-            title: str,
-    ) -> None:
+    def __init__(self, source_id: int, include: list[int], options: list[Any], update_time: int, id: str,
+                 filters: list[Any], title: str, ) -> None:
         self.source_id = source_id
         self.include = include
         self.options = options
@@ -1155,13 +1065,8 @@ class FolderUpdate:
 
 
 class FolderList:
-    def __init__(
-            self,
-            folders_order: list[str],
-            folders: list[Folder],
-            folder_sync: int,
-            all_filter_exclude_folders: list[Any] | None = None,
-    ) -> None:
+    def __init__(self, folders_order: list[str], folders: list[Folder], folder_sync: int,
+                 all_filter_exclude_folders: list[Any] | None = None) -> None:
         self.folders_order = folders_order
         self.folders = folders
         self.all_filter_exclude_folders = all_filter_exclude_folders or []

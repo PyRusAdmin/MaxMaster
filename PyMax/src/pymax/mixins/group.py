@@ -144,25 +144,40 @@ class GroupMixin(ClientProtocol):
 
     async def remove_users_from_group(self, chat_id: int, user_ids: list[int], clean_msg_period: int) -> bool:
         """
-        Удаляет пользователей из группы
+        Удаляет пользователей из группы.
 
-        :param: chat_id (int): ID группы.
-        :param: user_ids (list[int]): Список идентификаторов пользователей.
-        :param: clean_msg_period (int): Период очистки сообщений.
-        :return: bool: True, если удаление прошло успешно, иначе False.
+        Отправляет запрос на удаление участников, обновляет информацию о чате
+        и синхронизирует её с локальным кэшем.
+
+        Args:
+            chat_id (int): Идентификатор группы.
+            user_ids (list[int]): Список ID пользователей для удаления.
+            clean_msg_period (int): Период очистки сообщений для удалённых пользователей (в секундах).
+
+        Returns:
+            bool: True, если удаление прошло успешно.
+
+        Raises:
+            Error: Если сервер вернул ошибку.
         """
+        # Формируем payload для удаления пользователей
         payload = RemoveUsersPayload(
             chat_id=chat_id,
             user_ids=user_ids,
             clean_msg_period=clean_msg_period,
         ).model_dump(by_alias=True)
 
+        # Отправляем команду на обновление состава участников
         data = await self._send_and_wait(opcode=Opcode.CHAT_MEMBERS_UPDATE, payload=payload)
 
+        # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
+        # Преобразуем данные чата из ответа
         chat = Chat.from_dict(data["payload"]["chat"])
+
+        # Обновляем локальный кэш чатов
         if chat:
             cached_chat = await self._get_chat(chat.id)
             if cached_chat is None:
@@ -183,18 +198,26 @@ class GroupMixin(ClientProtocol):
             members_can_see_private_link: bool | None = None,
     ) -> None:
         """
-        Изменяет настройки группы
+        Изменяет настройки приватности и поведения группы.
+
+        Обновляет указанные параметры группы, отправляет запрос на сервер
+        и синхронизирует обновлённый чат с локальным кэшем.
 
         Args:
-            chat_id (int): ID группы.
-            all_can_pin_message (bool | None, optional): Все могут закреплять сообщения. Defaults to None.
-            only_owner_can_change_icon_title (bool | None, optional): Только владелец может менять иконку и название. Defaults to None.
-            only_admin_can_add_member (bool | None, optional): Только администраторы могут добавлять участников. Defaults to None.
-            only_admin_can_call (bool | None, optional): Только администраторы могут звонить. Defaults to None.
-            members_can_see_private_link (bool | None, optional): Участники могут видеть приватную ссылку. Defaults to None.
+            chat_id (int): Идентификатор группы.
+            all_can_pin_message (bool | None, optional): Разрешить всем закреплять сообщения.
+            only_owner_can_change_icon_title (bool | None, optional): Только владелец может менять название и иконку.
+            only_admin_can_add_member (bool | None, optional): Только администраторы могут добавлять участников.
+            only_admin_can_call (bool | None, optional): Только администраторы могут инициировать звонки.
+            members_can_see_private_link (bool | None, optional): Участники могут видеть приватную ссылку-приглашение.
+
         Returns:
             None
+
+        Raises:
+            Error: Если сервер вернул ошибку.
         """
+        # Формируем payload с новыми настройками группы
         payload = ChangeGroupSettingsPayload(
             chat_id=chat_id,
             options=ChangeGroupSettingsOptions(
@@ -206,12 +229,17 @@ class GroupMixin(ClientProtocol):
             ),
         ).model_dump(by_alias=True, exclude_none=True)
 
+        # Отправляем команду на обновление настроек чата
         data = await self._send_and_wait(opcode=Opcode.CHAT_UPDATE, payload=payload)
 
+        # Проверяем наличие ошибки в ответе
         if data.get("payload", {}).get("error"):
             MixinsUtils.handle_error(data)
 
+        # Преобразуем данные чата из ответа
         chat = Chat.from_dict(data["payload"]["chat"])
+
+        # Обновляем локальный кэш чатов
         if chat:
             cached_chat = await self._get_chat(chat.id)
             if cached_chat is None:

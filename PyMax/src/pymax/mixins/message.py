@@ -1028,7 +1028,7 @@ class MessageMixin(ClientProtocol):
             - Используется для поддержания согласованности между устройствами
             - Вызывается автоматически при открытии чата или прокрутке к сообщению
         """
-        logger.info("Marking message as read chat_id=%s message_id=%s", chat_id, message_id)
+        logger.info("Отмечая сообщение как прочитанное chat_id=%s message_id=%s", chat_id, message_id)
 
         payload = ReadMessagesPayload(
             type=ReadAction.READ_MESSAGE,

@@ -22,9 +22,6 @@ from PyMax.src.pymax.utils import MixinsUtils
 
 
 class BaseClient(ClientProtocol):
-    # def _setup_logger(self) -> None:
-    #     """Настраивает логгер для клиента."""
-    #     pass  # Логгер настраивается пользователем (например, loguru)
 
     async def _safe_execute(self, coro, *, context: str = "unknown") -> Any:
         try:
