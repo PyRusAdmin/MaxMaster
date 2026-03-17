@@ -83,14 +83,7 @@ class Photo(BaseFile):
         ".bmp",
     }
 
-    def __init__(
-            self,
-            raw: bytes | None = None,
-            *,
-            url: str | None = None,
-            path: str | None = None,
-            name: str | None = None,
-    ) -> None:
+    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None, name: str | None = None) -> None:
         """
         Инициализирует фотографию.
 
@@ -161,9 +154,7 @@ class Video(BaseFile):
     Класс для работы с видеофайлами.
     """
 
-    def __init__(
-            self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
-    ) -> None:
+    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None) -> None:
         """
         Инициализирует видео.
 
@@ -200,9 +191,7 @@ class File(BaseFile):
     Класс для работы с файлами (документы).
     """
 
-    def __init__(
-            self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None
-    ) -> None:
+    def __init__(self, raw: bytes | None = None, *, url: str | None = None, path: str | None = None) -> None:
         """
         Инициализирует файл.
 

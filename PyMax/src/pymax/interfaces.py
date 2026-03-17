@@ -33,6 +33,20 @@ class BaseClient(ClientProtocol):
             logger.error(f"Unhandled exception in {context}: {e}\n{traceback.format_exc()}")
 
     def _create_safe_task(self, coro: Awaitable[Any], name: str | None = None) -> asyncio.Task[Any | None]:
+        """
+        Создаёт фоновую задачу с обработкой исключений.
+
+        Метод оборачивает переданную корутину в обёртку, которая перехватывает все исключения
+        (кроме отмены), логирует их и повторно поднимает. Задача добавляется в множество
+        фоновых задач клиента для отслеживания и корректной очистки при завершении.
+
+        :param coro: Корутина, которую необходимо выполнить в фоне.
+        :type coro: Awaitable[Any]
+        :param name: Опциональное имя задачи для идентификации в логах.
+        :type name: str | None
+        :return: Объект задачи asyncio.Task.
+        :rtype: asyncio.Task[Any | None]
+        """
         async def runner():
             try:
                 return await coro

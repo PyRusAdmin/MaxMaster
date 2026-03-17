@@ -1,17 +1,38 @@
 # -*- coding: utf-8 -*-
+"""
+Файл конфигурации приложения MaxMaster.
+
+Загружает настройки из переменных окружения (.env файла) и определяет
+версию приложения, пути к файлам и параметры работы.
+"""
 import os
 
 from dotenv import load_dotenv
 
 # ─── Версия приложения ────────────────────────────────────────────────────────
+# Версия и дата релиза приложения (отображаются в заголовке меню)
 APP_VERSION = "0.0.1"
 APP_DATE = "12.03.2026"
 
 # ─── Конфиг ───────────────────────────────────────────────────────────────────
+# Загрузка переменных окружения из файла .env
 load_dotenv()
+
+# Задержка между запросами к API Max (в секундах)
+# Используется для обхода rate-limit ограничений
 SLEEP_TIME = float(os.getenv("SLEEP_BETWEEN_REQUESTS", "5"))
+
+# Задержка при получении rate limit ошибки (в секундах)
+# При блокировке API программа ждёт указанное время перед повторной попыткой
 SLEEP_ON_RATELIMIT = float(os.getenv("SLEEP_ON_RATELIMIT", "10"))
-# phone = os.getenv("PHONE_NUMBER")  # Номер телефона аккаунта
-DB_PATH = os.getenv("DB_PATH", "data/queue.db")  # База номеров для перебора
-EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")  # Полученные номера после перебора
-NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")  # Номера для перебора
+
+# phone = os.getenv("PHONE_NUMBER")  # Номер телефона аккаунта (закомментировано, не используется)
+
+# Путь к SQLite базе данных очереди номеров телефонов
+DB_PATH = os.getenv("DB_PATH", "data/queue.db")
+
+# Путь к Excel файлу для сохранения результатов парсинга
+EXCEL_FILE = os.getenv("EXCEL_FILE", "output/users.xlsx")
+
+# Путь к текстовому файлу с номерами телефонов для обработки
+NUMBERS_FILE = os.getenv("NUMBERS_FILE", "input/numbers.txt")
