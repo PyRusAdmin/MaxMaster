@@ -5,7 +5,7 @@ import re
 import sys
 from typing import Any
 from loguru import logger
-import qrcode
+import qrcode  # https://github.com/lincolnloop/python-qrcode
 
 from PyMax.src.pymax.payloads import (
     RequestCodePayload, SendCodePayload, RegisterPayload, CheckPasswordChallengePayload, SetPasswordPayload,
@@ -162,7 +162,7 @@ class AuthMixin(ClientProtocol):
         qr.add_data(qr_link)
         qr.make(fit=True)
 
-        qr.print_ascii()
+        qr.print_ascii()  # Вывод QR-кода в консоль в ASCII-формате пользователя
 
     async def _request_qr_login(self) -> dict[str, Any]:
         logger.info("Запрос QR-данных для входа")
@@ -258,13 +258,13 @@ class AuthMixin(ClientProtocol):
                         and isinstance(exp_at, (int, float))
                         and exp_at < datetime.datetime.now().timestamp() * 1000
                 ):
-                    logger.warning("QR code expired")
+                    logger.warning("QR-код просрочен")
                     return False
 
             await asyncio.sleep(poll_interval / 1000)
 
     async def _get_qr_login_data(self, track_id: str) -> dict[str, Any]:
-        logger.info("Getting QR login data")
+        logger.info("Получение QR-данных входа")
 
         data = await self._send_and_wait(
             opcode=Opcode.LOGIN_BY_QR,
@@ -272,7 +272,7 @@ class AuthMixin(ClientProtocol):
         )
 
         logger.debug(
-            "QR login data response opcode=%s seq=%s",
+            "Оперативный код ответа на QR-данные входа=%s seq=%s",
             data.get("opcode"),
             data.get("seq"),
         )
@@ -280,8 +280,8 @@ class AuthMixin(ClientProtocol):
         if isinstance(payload_data, dict):
             return payload_data
         else:
-            logger.error("Invalid payload data received")
-            raise ValueError("Invalid payload data received")
+            logger.error("Полученные некорректные данные полезной нагрузки")
+            raise ValueError("Полученные некорректные данные полезной нагрузки")
 
     async def _login_by_qr(self) -> dict[str, Any]:
         data = await self._request_qr_login()
@@ -292,10 +292,10 @@ class AuthMixin(ClientProtocol):
         expires_at = data.get("expiresAt")
 
         if not poll_interval or not link or not track_id or not expires_at:
-            logger.critical("Invalid QR login data received")
-            raise ValueError("Invalid QR login data received")
+            logger.critical("Получены некорректные данные QR-входа")
+            raise ValueError("Получены некорректные данные QR-входа")
 
-        logger.info("Starting QR login flow")
+        logger.info("Запуск процесса входа в QR")
         self._print_qr(link)
 
         poll_qr_task = asyncio.create_task(self._poll_qr_login(track_id, poll_interval))
@@ -311,8 +311,8 @@ class AuthMixin(ClientProtocol):
 
             if now_ms >= expires_at:
                 poll_qr_task.cancel()
-                logger.error("QR code expired before confirmation")
-                raise RuntimeError("QR code expired before confirmation")
+                logger.error("QR-код истёк до подтверждения")
+                raise RuntimeError("QR-код истёк до подтверждения")
 
             if poll_qr_task in done:
                 exc = poll_qr_task.exception()

@@ -193,8 +193,10 @@ class SyncPayload(CamelModel):
 class ReplyLink(CamelModel):
     """
     Ссылка для ответа на сообщение.
+    
+    Используется для создания ответа на конкретное сообщение в чате.
 
-    :ivar type: Тип ссылки (REPLY).
+    :ivar type: Тип ссылки (по умолчанию 'REPLY').
     :ivar message_id: ID сообщения, на которое отвечаем.
     """
     type: str = "REPLY"
@@ -203,10 +205,12 @@ class ReplyLink(CamelModel):
 
 class UploadPayload(CamelModel):
     """
-    Payload для загрузки файлов.
+    Payload для загрузки файлов на сервер.
+    
+    Используется для получения URL для загрузки файлов (фото, видео, документы).
 
-    :ivar count: Количество файлов.
-    :ivar profile: Флаг загрузки фото профиля.
+    :ivar count: Количество файлов для загрузки.
+    :ivar profile: Флаг загрузки фото профиля (True для аватара).
     """
     count: int = 1
     profile: bool = False
@@ -215,9 +219,11 @@ class UploadPayload(CamelModel):
 class AttachPhotoPayload(CamelModel):
     """
     Payload для прикрепления фотографии к сообщению.
+    
+    Используется при отправке сообщений с фото.
 
     :ivar type: Тип вложения (PHOTO).
-    :ivar photo_token: Токен фотографии.
+    :ivar photo_token: Токен фотографии, полученный после загрузки.
     """
     type: AttachType = Field(default=AttachType.PHOTO, alias="_type")
     photo_token: str
@@ -226,6 +232,8 @@ class AttachPhotoPayload(CamelModel):
 class VideoAttachPayload(CamelModel):
     """
     Payload для прикрепления видео к сообщению.
+    
+    Используется при отправке сообщений с видео.
 
     :ivar type: Тип вложения (VIDEO).
     :ivar video_id: ID видео.
@@ -239,6 +247,8 @@ class VideoAttachPayload(CamelModel):
 class AttachFilePayload(CamelModel):
     """
     Payload для прикрепления файла к сообщению.
+    
+    Используется при отправке сообщений с документами.
 
     :ivar type: Тип вложения (FILE).
     :ivar file_id: ID файла.
@@ -249,11 +259,14 @@ class AttachFilePayload(CamelModel):
 
 class MessageElement(CamelModel):
     """
-    Элемент сообщения (для форматирования).
+    Элемент сообщения (для форматирования текста).
+    
+    Используется для выделения жирного, курсива, ссылок и т.д.
+    в тексте сообщения.
 
-    :ivar type: Тип элемента.
-    :ivar from_: Позиция начала элемента.
-    :ivar length: Длина элемента.
+    :ivar type: Тип элемента (bold, italic, link, etc.).
+    :ivar from_: Позиция начала элемента в тексте.
+    :ivar length: Длина элемента (количество символов).
     """
     type: str
     from_: int = Field(..., alias="from")
@@ -263,12 +276,14 @@ class MessageElement(CamelModel):
 class SendMessagePayloadMessage(CamelModel):
     """
     Сообщение для отправки.
+    
+    Содержит текст, вложения и элементы форматирования.
 
     :ivar text: Текст сообщения.
-    :ivar cid: ID чата.
-    :ivar elements: Элементы форматирования.
-    :ivar attaches: Вложения.
-    :ivar link: Ссылка для ответа.
+    :ivar cid: ID чата для отправки.
+    :ivar elements: Элементы форматирования текста.
+    :ivar attaches: Вложения (фото, видео, файлы).
+    :ivar link: Ссылка для ответа на другое сообщение.
     """
     text: str
     cid: int
@@ -280,10 +295,12 @@ class SendMessagePayloadMessage(CamelModel):
 class SendMessagePayload(CamelModel):
     """
     Payload для отправки сообщения.
+    
+    Используется для отправки текстовых сообщений с вложениями.
 
-    :ivar chat_id: ID чата.
-    :ivar message: Сообщение.
-    :ivar notify: Флаг отправки уведомления.
+    :ivar chat_id: ID чата для отправки.
+    :ivar message: Объект сообщения.
+    :ivar notify: Флаг отправки уведомления (по умолчанию False).
     """
     chat_id: int
     message: SendMessagePayloadMessage
@@ -293,10 +310,12 @@ class SendMessagePayload(CamelModel):
 class EditMessagePayload(CamelModel):
     """
     Payload для редактирования сообщения.
+    
+    Используется для изменения текста и вложений уже отправленного сообщения.
 
     :ivar chat_id: ID чата.
-    :ivar message_id: ID сообщения.
-    :ivar text: Новый текст.
+    :ivar message_id: ID редактируемого сообщения.
+    :ivar text: Новый текст сообщения.
     :ivar elements: Элементы форматирования.
     :ivar attaches: Вложения.
     """
@@ -310,10 +329,12 @@ class EditMessagePayload(CamelModel):
 class DeleteMessagePayload(CamelModel):
     """
     Payload для удаления сообщений.
+    
+    Используется для удаления одного или нескольких сообщений из чата.
 
     :ivar chat_id: ID чата.
     :ivar message_ids: Список ID сообщений для удаления.
-    :ivar for_me: Флаг удаления только для себя.
+    :ivar for_me: Флаг удаления только для себя (по умолчанию False).
     """
     chat_id: int
     message_ids: list[int]
@@ -322,22 +343,26 @@ class DeleteMessagePayload(CamelModel):
 
 class FetchContactsPayload(CamelModel):
     """
-    Payload для получения контактов.
+    Payload для получения информации о контактах.
+    
+    Используется для загрузки данных о пользователях по их ID.
 
-    :ivar contact_ids: Список ID контактов.
+    :ivar contact_ids: Список ID контактов для получения.
     """
     contact_ids: list[int]
 
 
 class FetchHistoryPayload(CamelModel):
     """
-    Payload для получения истории сообщений.
+    Payload для получения истории сообщений чата.
+    
+    Используется для загрузки предыдущих сообщений из чата.
 
     :ivar chat_id: ID чата.
-    :ivar from_time: Время начала выборки.
-    :ivar forward: Направление вперёд.
-    :ivar backward: Количество сообщений назад.
-    :ivar get_messages: Флаг получения сообщений.
+    :ivar from_time: Время начала выборки (timestamp).
+    :ivar forward: Количество сообщений вперёд.
+    :ivar backward: Количество сообщений назад (по умолчанию 200).
+    :ivar get_messages: Флаг получения сообщений (по умолчанию True).
     """
     chat_id: int
     from_time: int = Field(
@@ -352,12 +377,14 @@ class FetchHistoryPayload(CamelModel):
 class ChangeProfilePayload(CamelModel):
     """
     Payload для изменения профиля пользователя.
+    
+    Используется для обновления имени, фамилии, описания и аватара.
 
-    :ivar first_name: Имя.
-    :ivar last_name: Фамилия.
-    :ivar description: Описание профиля.
-    :ivar photo_token: Токен фотографии.
-    :ivar avatar_type: Тип аватара.
+    :ivar first_name: Имя пользователя.
+    :ivar last_name: Фамилия пользователя.
+    :ivar description: Описание профиля (статус).
+    :ivar photo_token: Токен новой фотографии профиля.
+    :ivar avatar_type: Тип аватара (по умолчанию 'USER_AVATAR').
     """
     first_name: str
     last_name: str | None = None
@@ -369,6 +396,9 @@ class ChangeProfilePayload(CamelModel):
 class ResolveLinkPayload(CamelModel):
     """
     Payload для разрешения ссылки (например, приглашение в чат).
+    
+    Используется для получения информации о ссылке-приглашении
+    и возможности присоединиться к чату.
 
     :ivar link: Ссылка для разрешения.
     """
@@ -377,7 +407,9 @@ class ResolveLinkPayload(CamelModel):
 
 class PinMessagePayload(CamelModel):
     """
-    Payload для закрепления сообщения.
+    Payload для закрепления сообщения в чате.
+    
+    Используется для закрепления важных сообщений вверху чата.
 
     :ivar chat_id: ID чата.
     :ivar notify_pin: Флаг уведомления о закреплении.
@@ -391,12 +423,14 @@ class PinMessagePayload(CamelModel):
 class CreateGroupAttach(CamelModel):
     """
     Вложение для создания группы.
+    
+    Содержит данные для создания нового группового чата.
 
     :ivar type: Тип вложения (CONTROL).
-    :ivar event: Событие (new).
-    :ivar chat_type: Тип чата (CHAT).
+    :ivar event: Событие (по умолчанию 'new' - создание).
+    :ivar chat_type: Тип чата (по умолчанию 'CHAT').
     :ivar title: Название группы.
-    :ivar user_ids: Список ID пользователей.
+    :ivar user_ids: Список ID пользователей для добавления.
     """
     type: Literal["CONTROL"] = Field("CONTROL", alias="_type")
     event: str = "new"
@@ -408,9 +442,11 @@ class CreateGroupAttach(CamelModel):
 class CreateGroupMessage(CamelModel):
     """
     Сообщение для создания группы.
+    
+    Используется как часть запроса на создание группового чата.
 
-    :ivar cid: ID чата.
-    :ivar attaches: Вложения.
+    :ivar cid: ID чата (0 для нового чата).
+    :ivar attaches: Вложения с данными группы.
     """
     cid: int
     attaches: list[CreateGroupAttach]
@@ -419,9 +455,11 @@ class CreateGroupMessage(CamelModel):
 class CreateGroupPayload(CamelModel):
     """
     Payload для создания группы.
+    
+    Используется для создания нового группового чата с участниками.
 
     :ivar message: Сообщение с данными группы.
-    :ivar notify: Флаг отправки уведомления.
+    :ivar notify: Флаг отправки уведомления участникам (по умолчанию True).
     """
     message: CreateGroupMessage
     notify: bool = True
@@ -429,12 +467,14 @@ class CreateGroupPayload(CamelModel):
 
 class InviteUsersPayload(CamelModel):
     """
-    Payload для приглаения пользователей в чат.
+    Payload для приглашения пользователей в чат.
+    
+    Используется для добавления новых участников в существующий чат.
 
     :ivar chat_id: ID чата.
-    :ivar user_ids: Список ID пользователей.
-    :ivar show_history: Флаг показа истории.
-    :ivar operation: Операция (add).
+    :ivar user_ids: Список ID пользователей для приглашения.
+    :ivar show_history: Флаг показа истории новым участникам.
+    :ivar operation: Операция (по умолчанию 'add').
     """
     chat_id: int
     user_ids: list[int]
@@ -445,11 +485,13 @@ class InviteUsersPayload(CamelModel):
 class RemoveUsersPayload(CamelModel):
     """
     Payload для удаления пользователей из чата.
+    
+    Используется для исключения участников из группового чата.
 
     :ivar chat_id: ID чата.
-    :ivar user_ids: Список ID пользователей.
-    :ivar operation: Операция (remove).
-    :ivar clean_msg_period: Период очистки сообщений.
+    :ivar user_ids: Список ID пользователей для удаления.
+    :ivar operation: Операция (по умолчанию 'remove').
+    :ivar clean_msg_period: Период очистки сообщений (в секундах).
     """
     chat_id: int
     user_ids: list[int]
@@ -460,12 +502,14 @@ class RemoveUsersPayload(CamelModel):
 class ChangeGroupSettingsOptions(BaseModel):
     """
     Опции для изменения настроек группы.
+    
+    Используется для управления правами участников группы.
 
     :ivar ONLY_OWNER_CAN_CHANGE_ICON_TITLE: Только владелец может менять иконку и название.
-    :ivar ALL_CAN_PIN_MESSAGE: Все могут закреплять сообщения.
+    :ivar ALL_CAN_PIN_MESSAGE: Все участники могут закреплять сообщения.
     :ivar ONLY_ADMIN_CAN_ADD_MEMBER: Только админы могут добавлять участников.
-    :ivar ONLY_ADMIN_CAN_CALL: Только админы могут звонить.
-    :ivar MEMBERS_CAN_SEE_PRIVATE_LINK: Участники видят приватную ссылку.
+    :ivar ONLY_ADMIN_CAN_CALL: Только админы могут создавать звонки.
+    :ivar MEMBERS_CAN_SEE_PRIVATE_LINK: Участники видят приватную ссылку-приглашение.
     """
     ONLY_OWNER_CAN_CHANGE_ICON_TITLE: bool | None
     ALL_CAN_PIN_MESSAGE: bool | None
@@ -477,9 +521,11 @@ class ChangeGroupSettingsOptions(BaseModel):
 class ChangeGroupSettingsPayload(CamelModel):
     """
     Payload для изменения настроек группы.
+    
+    Используется для обновления прав и настроек группового чата.
 
     :ivar chat_id: ID чата.
-    :ivar options: Опции настроек.
+    :ivar options: Опции настроек группы.
     """
     chat_id: int
     options: ChangeGroupSettingsOptions
@@ -488,9 +534,11 @@ class ChangeGroupSettingsPayload(CamelModel):
 class ChangeGroupProfilePayload(CamelModel):
     """
     Payload для изменения профиля группы.
+    
+    Используется для обновления названия, описания и оформления группы.
 
     :ivar chat_id: ID чата.
-    :ivar theme: Тема оформления.
+    :ivar theme: Тема оформления группы.
     :ivar description: Описание группы.
     """
     chat_id: int
@@ -501,11 +549,13 @@ class ChangeGroupProfilePayload(CamelModel):
 class GetGroupMembersPayload(CamelModel):
     """
     Payload для получения участников группы.
+    
+    Используется для загрузки списка участников чата с пагинацией.
 
-    :ivar type: Тип запроса (MEMBER).
-    :ivar marker: Маркер для пагинации.
+    :ivar type: Тип запроса (по умолчанию 'MEMBER').
+    :ivar marker: Маркер для пагинации (ID последнего полученного участника).
     :ivar chat_id: ID чата.
-    :ivar count: Количество участников.
+    :ivar count: Количество участников для получения.
     """
     type: Literal["MEMBER"] = "MEMBER"
     marker: int | None = None
@@ -516,9 +566,11 @@ class GetGroupMembersPayload(CamelModel):
 class SearchGroupMembersPayload(CamelModel):
     """
     Payload для поиска участников группы.
+    
+    Используется для поиска участников по имени в групповом чате.
 
-    :ivar type: Тип запроса (MEMBER).
-    :ivar query: Строка поиска.
+    :ivar type: Тип запроса (по умолчанию 'MEMBER').
+    :ivar query: Строка поиска (часть имени).
     :ivar chat_id: ID чата.
     """
     type: Literal["MEMBER"] = "MEMBER"
@@ -529,12 +581,14 @@ class SearchGroupMembersPayload(CamelModel):
 class NavigationEventParams(BaseModel):
     """
     Параметры события навигации.
+    
+    Используется для отслеживания переходов между экранами приложения.
 
-    :ivar action_id: ID действия.
-    :ivar screen_to: Целевой экран.
-    :ivar screen_from: Исходный экран.
-    :ivar source_id: ID источника.
-    :ivar session_id: ID сессии.
+    :ivar action_id: ID действия навигации.
+    :ivar screen_to: Целевой экран (код экрана).
+    :ivar screen_from: Исходный экран (код экрана).
+    :ivar source_id: ID источника перехода.
+    :ivar session_id: ID сессии навигации.
     """
     action_id: int
     screen_to: int
@@ -546,12 +600,15 @@ class NavigationEventParams(BaseModel):
 class NavigationEventPayload(CamelModel):
     """
     Событие навигации.
+    
+    Используется для отправки телеметрии о перемещениях пользователя
+    по экранам приложения.
 
-    :ivar event: Название события.
-    :ivar time: Время события.
-    :ivar type: Тип события (NAV).
+    :ivar event: Название события (например, 'screen_open').
+    :ivar time: Время события (timestamp в миллисекундах).
+    :ivar type: Тип события (по умолчанию 'NAV').
     :ivar user_id: ID пользователя.
-    :ivar params: Параметры события.
+    :ivar params: Параметры события навигации.
     """
     event: str
     time: int
@@ -563,6 +620,8 @@ class NavigationEventPayload(CamelModel):
 class NavigationPayload(CamelModel):
     """
     Payload для отправки навигационных событий.
+    
+    Используется для пакетной отправки событий навигации на сервер.
 
     :ivar events: Список событий навигации.
     """
@@ -572,10 +631,12 @@ class NavigationPayload(CamelModel):
 class GetVideoPayload(CamelModel):
     """
     Payload для получения видео.
+    
+    Используется для загрузки видео из сообщения.
 
     :ivar chat_id: ID чата.
-    :ivar message_id: ID сообщения.
-    :ivar video_id: ID видео.
+    :ivar message_id: ID сообщения с видео.
+    :ivar video_id: ID видео для загрузки.
     """
     chat_id: int
     message_id: int | str
@@ -585,10 +646,12 @@ class GetVideoPayload(CamelModel):
 class GetFilePayload(CamelModel):
     """
     Payload для получения файла.
+    
+    Используется для загрузки файлов из сообщения.
 
     :ivar chat_id: ID чата.
-    :ivar message_id: ID сообщения.
-    :ivar file_id: ID файла.
+    :ivar message_id: ID сообщения с файлом.
+    :ivar file_id: ID файла для загрузки.
     """
     chat_id: int
     message_id: str | int
@@ -598,6 +661,8 @@ class GetFilePayload(CamelModel):
 class SearchByPhonePayload(CamelModel):
     """
     Payload для поиска пользователя по номеру телефона.
+    
+    Используется для поиска пользователя в мессенджере по его номеру.
 
     :ivar phone: Номер телефона для поиска.
     """
@@ -607,8 +672,10 @@ class SearchByPhonePayload(CamelModel):
 class JoinChatPayload(CamelModel):
     """
     Payload для присоединения к чату по ссылке.
+    
+    Используется для входа в чат по ссылке-приглашению.
 
-    :ivar link: Ссылка-приглашение.
+    :ivar link: Ссылка-приглашение в чат.
     """
     link: str
 
@@ -616,9 +683,11 @@ class JoinChatPayload(CamelModel):
 class ReactionInfoPayload(CamelModel):
     """
     Информация о реакции.
+    
+    Используется для добавления реакции к сообщению.
 
-    :ivar reaction_type: Тип реакции (EMOJI).
-    :ivar id: ID реакции.
+    :ivar reaction_type: Тип реакции (по умолчанию 'EMOJI').
+    :ivar id: ID реакции (например, код эмодзи).
     """
     reaction_type: str = "EMOJI"
     id: str
@@ -627,6 +696,9 @@ class ReactionInfoPayload(CamelModel):
 class AddReactionPayload(CamelModel):
     """
     Payload для добавления реакции к сообщению.
+    
+    Используется для отправки реакции (лайк, сердечко и т.д.)
+    к сообщению в чате.
 
     :ivar chat_id: ID чата.
     :ivar message_id: ID сообщения.
@@ -640,6 +712,9 @@ class AddReactionPayload(CamelModel):
 class GetReactionsPayload(CamelModel):
     """
     Payload для получения реакций.
+    
+    Используется для загрузки информации о реакциях
+    к сообщениям в чате.
 
     :ivar chat_id: ID чата.
     :ivar message_ids: Список ID сообщений.
@@ -651,6 +726,8 @@ class GetReactionsPayload(CamelModel):
 class RemoveReactionPayload(CamelModel):
     """
     Payload для удаления реакции.
+    
+    Используется для удаления своей реакции с сообщения.
 
     :ivar chat_id: ID чата.
     :ivar message_id: ID сообщения.
@@ -662,8 +739,11 @@ class RemoveReactionPayload(CamelModel):
 class ReworkInviteLinkPayload(CamelModel):
     """
     Payload для перевыпуска ссылки-приглашения.
+    
+    Используется для отзыва старой и создания новой
+    приватной ссылки для приглашения в чат.
 
-    :ivar revoke_private_link: Флаг отзыва приватной ссылки.
+    :ivar revoke_private_link: Флаг отзыва приватной ссылки (по умолчанию True).
     :ivar chat_id: ID чата.
     """
     revoke_private_link: bool = True
@@ -673,9 +753,11 @@ class ReworkInviteLinkPayload(CamelModel):
 class ContactActionPayload(CamelModel):
     """
     Payload для действия с контактом.
+    
+    Используется для добавления или удаления контакта.
 
     :ivar contact_id: ID контакта.
-    :ivar action: Действие (ContactAction).
+    :ivar action: Действие (ContactAction: ADD или REMOVE).
     """
     contact_id: int
     action: ContactAction
@@ -684,11 +766,14 @@ class ContactActionPayload(CamelModel):
 class RegisterPayload(CamelModel):
     """
     Payload для регистрации пользователя.
+    
+    Используется для регистрации нового пользователя после
+    успешной авторизации по номеру телефона.
 
-    :ivar last_name: Фамилия.
-    :ivar first_name: Имя.
+    :ivar last_name: Фамилия пользователя.
+    :ivar first_name: Имя пользователя.
     :ivar token: Токен авторизации.
-    :ivar token_type: Тип токена.
+    :ivar token_type: Тип токена (по умолчанию REGISTER).
     """
     last_name: str | None = None
     first_name: str
@@ -699,11 +784,13 @@ class RegisterPayload(CamelModel):
 class CreateFolderPayload(CamelModel):
     """
     Payload для создания папки чатов.
+    
+    Используется для создания новой папки для группировки чатов.
 
-    :ivar id: ID папки.
+    :ivar id: ID папки (уникальный идентификатор).
     :ivar title: Название папки.
-    :ivar include: Список ID чатов.
-    :ivar filters: Фильтры папки.
+    :ivar include: Список ID чатов для включения в папку.
+    :ivar filters: Фильтры папки (по умолчанию пустой список).
     """
     id: str
     title: str
@@ -714,17 +801,21 @@ class CreateFolderPayload(CamelModel):
 class GetChatInfoPayload(CamelModel):
     """
     Payload для получения информации о чатах.
+    
+    Используется для загрузки подробной информации о чатах.
 
-    :ivar chat_ids: Список ID чатов.
+    :ivar chat_ids: Список ID чатов для получения информации.
     """
     chat_ids: list[int]
 
 
 class GetFolderPayload(CamelModel):
     """
-    Payload для получения папки.
+    Payload для получения папок.
+    
+    Используется для синхронизации папок чатов.
 
-    :ivar folder_sync: Флаг синхронизации папок.
+    :ivar folder_sync: Флаг синхронизации папок (0 = полная синхронизация).
     """
     folder_sync: int = 0
 
@@ -732,10 +823,12 @@ class GetFolderPayload(CamelModel):
 class UpdateFolderPayload(CamelModel):
     """
     Payload для обновления папки.
+    
+    Используется для изменения существующей папки чатов.
 
     :ivar id: ID папки.
     :ivar title: Название папки.
-    :ivar include: Список ID чатов.
+    :ivar include: Список ID чатов в папке.
     :ivar filters: Фильтры папки.
     :ivar options: Опции папки.
     """
@@ -749,6 +842,8 @@ class UpdateFolderPayload(CamelModel):
 class DeleteFolderPayload(CamelModel):
     """
     Payload для удаления папок.
+    
+    Используется для удаления одной или нескольких папок чатов.
 
     :ivar folder_ids: Список ID папок для удаления.
     """
@@ -758,6 +853,8 @@ class DeleteFolderPayload(CamelModel):
 class LeaveChatPayload(CamelModel):
     """
     Payload для выхода из чата.
+    
+    Используется для выхода из группового чата или канала.
 
     :ivar chat_id: ID чата.
     """
@@ -767,8 +864,10 @@ class LeaveChatPayload(CamelModel):
 class FetchChatsPayload(CamelModel):
     """
     Payload для получения списка чатов.
+    
+    Используется для загрузки чатов с пагинацией.
 
-    :ivar marker: Маркер для пагинации.
+    :ivar marker: Маркер для пагинации (ID последнего полученного чата).
     """
     marker: int
 
@@ -776,11 +875,13 @@ class FetchChatsPayload(CamelModel):
 class ReadMessagesPayload(CamelModel):
     """
     Payload для отметки сообщений как прочитанных.
+    
+    Используется для отправки информации о прочтении сообщений.
 
-    :ivar type: Тип действия (ReadAction).
+    :ivar type: Тип действия (ReadAction: READ или DELIVER).
     :ivar chat_id: ID чата.
     :ivar message_id: ID сообщения.
-    :ivar mark: Метка.
+    :ivar mark: Метка прочтения.
     """
     type: ReadAction
     chat_id: int
@@ -791,9 +892,11 @@ class ReadMessagesPayload(CamelModel):
 class CheckPasswordChallengePayload(CamelModel):
     """
     Payload для проверки парольного вызова.
+    
+    Используется для проверки пароля при двухфакторной аутентификации.
 
-    :ivar track_id: ID трека.
-    :ivar password: Пароль.
+    :ivar track_id: ID трека аутентификации.
+    :ivar password: Пароль пользователя.
     """
     track_id: str
     password: str
@@ -801,9 +904,12 @@ class CheckPasswordChallengePayload(CamelModel):
 
 class CreateTrackPayload(CamelModel):
     """
-    Payload для создания трека.
+    Payload для создания трека аутентификации.
+    
+    Используется для создания нового трека при настройке
+    двухфакторной аутентификации.
 
-    :ivar type: Тип трека.
+    :ivar type: Тип трека (по умолчанию 0).
     """
     type: int = 0
 
@@ -811,9 +917,11 @@ class CreateTrackPayload(CamelModel):
 class SetPasswordPayload(CamelModel):
     """
     Payload для установки пароля.
+    
+    Используется для установки пароля двухфакторной аутентификации.
 
-    :ivar track_id: ID трека.
-    :ivar password: Пароль.
+    :ivar track_id: ID трека аутентификации.
+    :ivar password: Пароль для установки.
     """
     track_id: str
     password: str
@@ -822,9 +930,12 @@ class SetPasswordPayload(CamelModel):
 class SetHintPayload(CamelModel):
     """
     Payload для установки подсказки к паролю.
+    
+    Используется для добавления подсказки к паролю
+    двухфакторной аутентификации.
 
-    :ivar track_id: ID трека.
-    :ivar hint: Подсказка.
+    :ivar track_id: ID трека аутентификации.
+    :ivar hint: Текст подсказки.
     """
     track_id: str
     hint: str
@@ -833,10 +944,13 @@ class SetHintPayload(CamelModel):
 class SetTwoFactorPayload(CamelModel):
     """
     Payload для установки двухфакторной аутентификации.
+    
+    Используется для полной настройки 2FA: пароль, подсказка
+    и ожидаемые возможности аккаунта.
 
-    :ivar expected_capabilities: Ожидаемые возможности.
-    :ivar track_id: ID трека.
-    :ivar password: Пароль.
+    :ivar expected_capabilities: Список ожидаемых возможностей аккаунта.
+    :ivar track_id: ID трека аутентификации.
+    :ivar password: Пароль для установки.
     :ivar hint: Подсказка к паролю.
     """
     expected_capabilities: list[Capability]
@@ -848,9 +962,12 @@ class SetTwoFactorPayload(CamelModel):
 class RequestEmailCodePayload(CamelModel):
     """
     Payload для запроса кода на email.
+    
+    Используется для отправки кода подтверждения на
+    адрес электронной почты.
 
-    :ivar track_id: ID трека.
-    :ivar email: Email адрес.
+    :ivar track_id: ID трека аутентификации.
+    :ivar email: Email адрес для отправки кода.
     """
     track_id: str
     email: str
@@ -859,9 +976,11 @@ class RequestEmailCodePayload(CamelModel):
 class SendEmailCodePayload(CamelModel):
     """
     Payload для отправки кода подтверждения email.
+    
+    Используется для проверки кода, полученного на email.
 
-    :ivar track_id: ID трека.
-    :ivar verify_code: Код верификации.
+    :ivar track_id: ID трека аутентификации.
+    :ivar verify_code: Код верификации из email.
     """
     track_id: str
     verify_code: str

@@ -701,19 +701,29 @@ class MessageMixin(ClientProtocol):
             forward: int = 0,
             backward: int = 200,
     ) -> list[Message] | None:
-        """
-        Получает историю сообщений из чата.
+        """Получает историю сообщений из чата.
 
-        :param chat_id: Идентификатор чата.
-        :type chat_id: int
-        :param from_time: Временная метка для начала выборки.
-        :type from_time: int | None
-        :param forward: Кол-во сообщений вперед от from_time.
-        :type forward: int
-        :param backward: Кол-во сообщений назад от from_time.
-        :type backward: int
-        :return: Список сообщений или None.
-        :rtype: list[Message] | None
+        Метод загружает сообщения из чата в указанном временном диапазоне,
+        позволяя получать как новые, так и старые сообщения относительно
+        заданной временной метки.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            from_time (int | None, optional): Временная метка начала выборки в мс.
+                Если None, используется текущее время. Defaults to None.
+            forward (int, optional): Количество сообщений в будущем (после from_time).
+                Defaults to 0.
+            backward (int, optional): Количество сообщений в прошлом (до from_time).
+                Defaults to 200.
+
+        Returns:
+            list[Message] | None: Список объектов сообщений или None при ошибке.
+
+        Note:
+            - Максимальное количество возвращаемых сообщений: forward + backward
+            - Сообщения сортируются по времени (от старых к новым)
+            - При from_time=None выборка идет от текущего времени
+            - Используется для первоначальной загрузки истории и подгрузки старых сообщений
         """
         if from_time is None:
             from_time = int(time.time() * 1000)
@@ -750,17 +760,26 @@ class MessageMixin(ClientProtocol):
             message_id: int,
             video_id: int,
     ) -> VideoRequest | None:
-        """
-        Получает видео
+        """Получает информацию о видео по его идентификатору.
 
-        :param chat_id: ID чата
-        :type chat_id: int
-        :param message_id: ID сообщения
-        :type message_id: int
-        :param video_id: ID видео
-        :type video_id: int
-        :return: Объект VideoRequest или None
-        :rtype: VideoRequest | None
+        Метод запрашивает у сервера данные о видеофайле, включая URL для просмотра
+        и другую метаинформацию, необходимую для воспроизведения.
+
+        Args:
+            chat_id (int): Идентификатор чата, содержащего сообщение с видео.
+            message_id (int): Идентификатор сообщения, содержащего видео.
+            video_id (int): Идентификатор видеофайла.
+
+        Returns:
+            VideoRequest | None: Объект с информацией о видео или None при ошибке.
+
+        Raises:
+            Error: При отсутствии данных о видео в ответе сервера.
+
+        Note:
+            - Используется для получения URL и метаданных видео перед воспроизведением
+            - Поддерживает работу как с подключенным, так и с отключенным состоянием
+            - Возвращает объект VideoRequest с полной информацией для воспроизведения
         """
         logger.info("Getting video_id=%s message_id=%s", video_id, message_id)
 
@@ -793,17 +812,26 @@ class MessageMixin(ClientProtocol):
             message_id: int,
             file_id: int,
     ) -> FileRequest | None:
-        """
-        Получает файл
+        """Получает информацию о файле по его идентификатору.
 
-        :param chat_id: ID чата
-        :type chat_id: int
-        :param message_id: ID сообщения
-        :type message_id: int
-        :param file_id: ID файла
-        :type file_id: int
-        :return: Объект FileRequest или None
-        :rtype: FileRequest | None
+        Метод запрашивает у сервера данные о файле, включая URL для скачивания
+        и другую метаинформацию, необходимую для загрузки.
+
+        Args:
+            chat_id (int): Идентификатор чата, содержащего сообщение с файлом.
+            message_id (int): Идентификатор сообщения, содержащего файл.
+            file_id (int): Идентификатор файла.
+
+        Returns:
+            FileRequest | None: Объект с информацией о файле или None при ошибке.
+
+        Raises:
+            Error: При отсутствии данных о файле в ответе сервера.
+
+        Note:
+            - Используется для получения URL и метаданных файла перед скачиванием
+            - Поддерживает работу как с подключенным, так и с отключенным состоянием
+            - Возвращает объект FileRequest с полной информацией для загрузки
         """
         logger.info("Getting file_id=%s message_id=%s", file_id, message_id)
         if self.is_connected and self._socket is not None:
@@ -835,17 +863,24 @@ class MessageMixin(ClientProtocol):
             message_id: str,
             reaction: str,
     ) -> ReactionInfo | None:
-        """
-        Добавляет реакцию к сообщению.
+        """Добавляет реакцию к сообщению.
 
-        :param chat_id: ID чата
-        :type chat_id: int
-        :param message_id: ID сообщения
-        :type message_id: str
-        :param reaction: Реакция для добавления
-        :type reaction: str (emoji)
-        :return: Объект ReactionInfo или None
-        :rtype: ReactionInfo | None
+        Метод устанавливает указанную реакцию (эмодзи) на сообщение,
+        отображая реакцию для других участников чата.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_id (str): Идентификатор сообщения.
+            reaction (str): Эмодзи-реакция для добавления.
+
+        Returns:
+            ReactionInfo | None: Объект с информацией о реакции или None при ошибке.
+
+        Note:
+            - Реакция отображается под сообщением для всех участников чата
+            - Пользователь может иметь только одну реакцию на сообщение
+            - При повторном вызове с другой реакцией предыдущая заменяется
+            - Поддерживает любые валидные эмодзи в качестве реакции
         """
         try:
             logger.info(
@@ -879,15 +914,24 @@ class MessageMixin(ClientProtocol):
     async def get_reactions(
             self, chat_id: int, message_ids: list[str]
     ) -> dict[str, ReactionInfo] | None:
-        """
-        Получает реакции на сообщения.
+        """Получает реакции на указанные сообщения.
 
-        :param chat_id: ID чата
-        :type chat_id: int
-        :param message_ids: Список ID сообщений
-        :type message_ids: list[str]
-        :return: Словарь с ID сообщений и соответствующими реакциями
-        :rtype: dict[str, ReactionInfo] | None
+        Метод запрашивает информацию о реакциях для списка сообщений,
+        возвращая данные о текущих реакциях на каждом сообщении.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_ids (list[str]): Список идентификаторов сообщений.
+
+        Returns:
+            dict[str, ReactionInfo] | None: Словарь с ID сообщений и объектами ReactionInfo
+                или None при ошибке.
+
+        Note:
+            - Возвращает только текущие активные реакции
+            - Каждый элемент словаря содержит полную информацию о реакции
+            - Используется для синхронизации состояния реакций в интерфейсе
+            - Поддерживает получение реакций для нескольких сообщений за один запрос
         """
         logger.info(
             "Getting reactions for messages chat_id=%s message_ids=%s",
@@ -916,15 +960,26 @@ class MessageMixin(ClientProtocol):
             chat_id: int,
             message_id: str,
     ) -> ReactionInfo | None:
-        """
-        Удаляет реакцию с сообщения.
+        """Удаляет реакцию с сообщения.
 
-        :param chat_id: ID чата
-        :type chat_id: int
-        :param message_id: ID сообщения
-        :type message_id: str
-        :return: Объект ReactionInfo или None
-        :rtype: ReactionInfo | None
+        Метод убирает реакцию текущего пользователя с указанного сообщения,
+        скрывая реакцию от других участников чата.
+
+        Args:
+            chat_id (int): Идентификатор чата.
+            message_id (str): Идентификатор сообщения.
+
+        Returns:
+            ReactionInfo | None: Объект с информацией об удаленной реакции или None при ошибке.
+
+        Raises:
+            Error: При отсутствии данных о реакции в ответе сервера.
+
+        Note:
+            - Удаляет только реакцию текущего пользователя
+            - Сообщение может сохранять реакции от других пользователей
+            - После удаления реакция больше не отображается под сообщением
+            - Возвращает информацию об удаленной реакции для возможного восстановления
         """
         logger.info(
             "Removing reaction from message chat_id=%s message_id=%s",
@@ -954,15 +1009,24 @@ class MessageMixin(ClientProtocol):
         return reaction
 
     async def read_message(self, message_id: int, chat_id: int) -> ReadState:
-        """
-        Отмечает сообщение как прочитанное.
+        """Отмечает сообщение как прочитанное.
 
-        :param message_id: ID сообщения
-        :type message_id: int
-        :param chat_id: ID чата
-        :type chat_id: int
-        :return: Объект ReadState
-        :rtype: ReadState
+        Метод обновляет состояние прочтения для указанного сообщения,
+        устанавливая отметку времени прочтения и обновляя индикаторы
+        непрочитанных сообщений в чате.
+
+        Args:
+            message_id (int): Идентификатор сообщения для отметки.
+            chat_id (int): Идентификатор чата, содержащего сообщение.
+
+        Returns:
+            ReadState: Объект с информацией о состоянии прочтения.
+
+        Note:
+            - Синхронизирует состояние прочтения с сервером
+            - Обновляет локальные индикаторы непрочитанных сообщений
+            - Используется для поддержания согласованности между устройствами
+            - Вызывается автоматически при открытии чата или прокрутке к сообщению
         """
         logger.info("Marking message as read chat_id=%s message_id=%s", chat_id, message_id)
 
